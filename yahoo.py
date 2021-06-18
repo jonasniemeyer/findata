@@ -34,25 +34,28 @@ class YahooReader(YahooReader):
     
     @classmethod
     def crumb(cls) -> str:
-        crumb = requests.get(
+        data = requests.get(
             url = __class__._crumb_url,
-            _eaders = __class__._headers
+            headers = __class__._headers
         ).text
-        return crumb
+        
+        return data
     
     @classmethod
     def currencies(cls) -> dict:
-        dct = requests.get(
+        data = requests.get(
             url = cls._currencies_url,
             headers = cls._headers
         ).json()
-        dct = dct["currencies"]["result"]
-        return dct
+        data = data["currencies"]["result"]
+        
+        return data
     
         
     def _get_stored_data(self) -> dict:
         if hasattr(self, "_stored_data"):
             return self._stored_data
+        
         parameters = {
             "modules": ",".join(
                 (
@@ -65,6 +68,7 @@ class YahooReader(YahooReader):
                     'defaultKeyStatistics',
                     'earnings',	'earningsHistory',
                     'earningsTrend',
+                    "esgScores",
                     'financialData',
                     'fundOwnership',
                     'incomeStatementHistory',
@@ -449,7 +453,7 @@ class YahooReader(YahooReader):
                 "shares": entry["position"]["raw"],
                 "value": entry["value"]["raw"]
             }
-            for data in funds
+            for entry in data
         ]
         
         return data
@@ -488,9 +492,6 @@ class YahooReader(YahooReader):
             raise DatasetError(f"no ownership breakdown data found for ticker {self.ticker}")
         
         data.pop("maxAge")
-        data = {
-            k:v["raw"] for k,v in data.items()
-        }
         return data
     
     def insider_trades(
@@ -708,7 +709,4 @@ class YahooReader(YahooReader):
     
     @property
     def ticker(self):
-        return self._ticker 
-
-if __name__ == "__main__":
-    print(dir(YahooReader))
+        return self._ticker
