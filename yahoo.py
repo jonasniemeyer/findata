@@ -6,8 +6,10 @@ import requests
 class TickerError(ValueError):
     pass
 
-class YahooReader:
-    
+class DatasetError(KeyError):
+    pass
+
+class YahooReader(YahooReader):
     _headers = {
         "Connection": "keep-alive",
         "Expires": "-1",
@@ -17,17 +19,18 @@ class YahooReader:
             "(KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36"
         ),
     }
-    
+
     _crumb_url = "https://query1.finance.yahoo.com/v1/test/getcrumb"
     _currencies_url = "https://query1.finance.yahoo.com/v1/finance/currencies"
     
-    _history_url = "https://query1.finance.yahoo.com/v8/finance/chart/{}"
-    _summary_url = "https://query1.finance.yahoo.com/v10/finance/quoteSummary/{}"
+    _main_url = "https://query1.finance.yahoo.com/v10/finance/quoteSummary/{}"
+    _price_url = "https://query1.finance.yahoo.com/v8/finance/chart/{}"
     _options_url = "https://query1.finance.yahoo.com/v7/finance/options/{}"
     _esg_ts_url = "https://query1.finance.yahoo.com/v1/finance/esgChart"
 
-    def __init__(self, ticker):
-        self._ticker = ticker.upper()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._stored_data = self._get_stored_data()
     
     @classmethod
     def crumb(cls) -> str:
@@ -45,73 +48,63 @@ class YahooReader:
         ).json()
         dct = dct["currencies"]["result"]
         return dct
-
-    @classmethod
-    def possible_datasets(cls) -> str:
-        datasets = """
-        Not every dataset offered by yahoo is implemented as some datasets contain very little information.
-        Possible further datasets are
-        https://query1.finance.yahoo.com/v10/finance/quoteSummary/{ticker}?modules={}
-            calendarEvents
-            defaultKeyStatistics
-            earnings
-            earningsHistory
-            earningsTrend
-            financialData
-            indexTrend
-            industryTrend
-            majorDirectHolders
-            netSharePurchaseActivity
-            price
-            quoteType
-            sectorTrend
-            summaryDetail
-            summaryProfile
-            symbol
-        """
-        return datasets
     
-    def profile(self) -> dict:
-        parameters = {
-            "modules": "assetProfile"
-        }
         
-        dct = requests.get(
-            url = self._summary_url.format(self.ticker),
+    def _get_stored_data(self) -> dict:
+        if hasattr(self, "_stored_data"):
+            return self._stored_data
+        parameters = {
+            "modules": ",".join(
+                (
+                    'assetProfile',
+                    'balanceSheetHistory',
+                    'balanceSheetHistoryQuarterly',
+                    'calendarEvents',
+                    'cashflowStatementHistory',
+                    'cashflowStatementHistoryQuarterly',
+                    'defaultKeyStatistics',
+                    'earnings',	'earningsHistory',
+                    'earningsTrend',
+                    'financialData',
+                    'fundOwnership',
+                    'incomeStatementHistory',
+                    'incomeStatementHistoryQuarterly',
+                    'indexTrend',
+                    'industryTrend',
+                    'insiderHolders',
+                    'insiderTransactions',
+                    'institutionOwnership',
+                    'majorDirectHolders',
+                    'majorHoldersBreakdown',
+                    'netSharePurchaseActivity',
+                    'price',
+                    'quoteType',
+                    'recommendationTrend',
+                    'secFilings',
+                    'sectorTrend',
+                    'summaryDetail',
+                    'summaryProfile', 
+                    'symbol',
+                    'upgradeDowngradeHistory',
+                    'fundProfile',
+                    'topHoldings',
+                    'fundPerformance'
+                )
+            ),
+            "formatted": False
+        }
+        data = requests.get(
+            url = self._main_url.format(self.ticker),
             params = parameters,
             headers = self._headers
         ).json()
+        if data["quoteSummary"]["error"] is not None:
+            raise TickerError(f"no data found for ticker {self.ticker}")
+        data = data["quoteSummary"]["result"][0]
+        self._stored_data = data
         
-        try:
-            dct = dct["quoteSummary"]["result"][0]["assetProfile"]
-        except:
-            raise TickerError(f"no profile found for ticker {self.ticker}")
-        
-        for key in (
-            "address1",
-            "address2",
-            "longBusinessSummary"
-        ):
-            if key in dct.keys():
-                dct[key] = dct[key].encode("latin1").decode().replace("\n ", "\n")
-        
-        dct["description"] = dct.pop("longBusinessSummary")
-        dct["executives"] = [
-            {
-                "name": entry["name"],
-                "age": entry["age"] if "age" in entry else None,
-                "position": entry["title"],
-                "born": entry["yearBorn"] if "yearBorn" in entry else None,
-                "salary": entry["totalPay"]["raw"] if "totalPay" in entry else None,
-                "exersized_options": entry["exercisedValue"]["raw"],
-                "unexcersized_options": entry["unexercisedValue"]["raw"]
-            }
-            for entry in dct["companyOfficers"]
-        ]
-        dct.pop("companyOfficers")
-        
-        return dct
-
+        return self._stored_data
+    
     def historical_data(
         self,
         frequency = '1d',
@@ -303,25 +296,15 @@ class YahooReader:
             }
         }
     
-    def analyst_recommendations(
+    def analyst_ratings(
         self,
         timestamps = False
     ) -> list:
-        parameters = {
-            "modules": "upgradeDowngradeHistory"
-        }
-        
-        dct = requests.get(
-            url = self._summary_url.format(self.ticker),
-            params = parameters,
-            headers = self._headers
-        ).json()
         try:
-            recommendations = dct["quoteSummary"]["result"][0]["upgradeDowngradeHistory"]["history"]
+            data = self._stored_data["upgradeDowngradeHistory"]["history"]
         except:
-            raise TickerError(f"no recommendations found for ticker {self.ticker}")
-        
-        recommendations = [
+            raise DatasetError(f"no analyst ratings found for ticker {self.ticker}")
+        data = [
             {
                 "date": (dct["epochGradeDate"] if timestamps
                          else (dt.date(1970, 1, 1) + dt.timedelta(seconds = dct["epochGradeDate"])).isoformat()),
@@ -330,28 +313,16 @@ class YahooReader:
                 "from": dct["fromGrade"],
                 "change": dct["action"]
             }
-            for dct in recommendations
+            for dct in data
         ]
         
-        return recommendations
+        return data
     
     def recommendation_trend(self) -> dict:
-        parameters = {
-            "modules": "recommendationTrend",
-            "formatted": False
-        }
-        
-        dct = requests.get(
-            url = self._summary_url.format(self.ticker),
-            params = parameters,
-            headers = self._headers
-        ).json()
-        
         try:
-            data = dct["quoteSummary"]["result"][0]["recommendationTrend"]["trend"]
+            data = self._stored_data["recommendationTrend"]["trend"]
         except:
-            raise TickerError(f"no recommendation trend found for ticker {self.ticker}")
-                
+            raise DatasetError(f"no recommendation trend found for ticker {self.ticker}")
         data = {
             entry["period"]: {
                 "recommendations": int(entry["strongBuy"] + entry["buy"] + entry["hold"] + entry["sell"] + entry["strongSell"]),
@@ -423,43 +394,32 @@ class YahooReader:
         except:
             raise TickerError(f"no options found for ticker {self.ticker}")
         
-        dct = {}
+        data = {}
         for item in options_list:
             if straddle:
                 if timestamps:
                     date = (dt.date(1970, 1, 1) + dt.timedelta(seconds = item["expirationDate"])).isoformat()
                 else:
                     date = item["expirationDate"]
-                dct[date] = {"straddles": item["straddles"]}
+                data[date] = {"straddles": item["straddles"]}
             else:
-                dct[date] = {
+                data[date] = {
                     "calls": item["calls"],
                     "puts": item["puts"]
                 }
         
-        return dct
+        return data
     
     def institutional_holders(
         self,
         timestamps = False
-    ) -> list:
-        parameters = {
-            "modules": "institutionOwnership",
-            "formatted": False,
-        }
-        
-        dct = requests.get(
-            url = self._summary_url.format(self.ticker),
-            params = parameters,
-            headers = self._headers
-        ).json()
-        
+    ) -> list:        
         try:
-            owners = dct["quoteSummary"]["result"][0]["institutionOwnership"]["ownershipList"]
+            data = self._stored_data["institutionOwnership"]["ownershipList"]
         except:
-            raise TickerError(f"no institutional data found for ticker {self.ticker}")
+            raise DatasetError(f"no institutional data found for ticker {self.ticker}")
         
-        owners = [
+        data = [
             {
                 "date": (entry["reportDate"]["raw"] if timestamps else entry["reportDate"]["fmt"]),
                 "company": entry["organization"],
@@ -467,32 +427,21 @@ class YahooReader:
                 "shares": entry["position"]["raw"],
                 "value": entry["value"]["raw"]
             }
-            for entry in owners
+            for entry in data
         ]
         
-        return owners
+        return data
     
     def fund_ownership(
         self,
         timestamps = False
-    ) -> list:
-        parameters = {
-            "modules": "fundOwnership",
-            "formatted": False,
-        }
-        
-        dct = requests.get(
-            url = self._summary_url.format(self.ticker),
-            params = parameters,
-            headers = self._headers
-        ).json()
-        
+    ) -> list:        
         try:
-            funds = dct["quoteSummary"]["result"][0]["fundOwnership"]["ownershipList"]
+            data = self._stored_data["fundOwnership"]["ownershipList"]
         except:
-            raise TickerError(f"no fund ownership data found for ticker {self.ticker}")
+            raise DatasetError(f"no fund ownership data found for ticker {self.ticker}")
         
-        funds = [
+        data = [
             {
                 "date": (entry["reportDate"]["raw"] if timestamps else entry["reportDate"]["fmt"]),
                 "fund": entry["organization"],
@@ -500,32 +449,21 @@ class YahooReader:
                 "shares": entry["position"]["raw"],
                 "value": entry["value"]["raw"]
             }
-            for entry in funds
+            for data in funds
         ]
         
-        return funds
+        return data
     
     def insider_ownership(
         self,
         timestamps = False
     ):
-        parameters = {
-            "modules": "insiderHolders",
-            "formatted": False
-        }
-        
-        dct = requests.get(
-            url = self._summary_url.format(self.ticker),
-            params = parameters,
-            headers = self._headers
-        ).json()
-        
         try:
-            owners = dct["quoteSummary"]["result"][0]["insiderHolders"]["holders"]
+            data = self._stored_data["insiderHolders"]["holders"]
         except:
-            raise TickerError(f"no insider holders found for ticker {self.ticker}")
-        #return owners
-        owners = [
+            raise DatasetError(f"no insider holders found for ticker {self.ticker}")
+        
+        data = [
             {
                 "date": ((entry["positionDirectDate"]["raw"] if timestamps else entry["positionDirectDate"]["fmt"])
                         if "positionDirectDate" in entry else None),
@@ -538,26 +476,16 @@ class YahooReader:
                     entry["transactionDescription"]
                 )
             }
-            for entry in owners
+            for entry in data
         ]
         
-        return owners
+        return data
     
-    def ownership_breakdown(self) -> dict:
-        parameters = {
-            "modules": "majorHoldersBreakdown"
-        }
-        
-        dct = requests.get(
-            url = self._summary_url.format(self.ticker),
-            params = parameters,
-            headers = self._headers
-        ).json()
-        
+    def ownership_breakdown(self) -> dict:        
         try:
-            data = dct["quoteSummary"]["result"][0]["majorHoldersBreakdown"]
+            data = self._stored_data["majorHoldersBreakdown"]
         except:
-            raise TickerError(f"no ownership breakdown data found for ticker {self.ticker}")
+            raise DatasetError(f"no ownership breakdown data found for ticker {self.ticker}")
         
         data.pop("maxAge")
         data = {
@@ -568,24 +496,13 @@ class YahooReader:
     def insider_trades(
         self,
         timestamps = False
-    ):
-        parameters = {
-            "modules": "insiderTransactions",
-            "formatted": False
-        }
-        
-        dct = requests.get(
-            url = self._summary_url.format(self.ticker),
-            params = parameters,
-            headers = self._headers
-        ).json()
-        
+    ):        
         try:
-            trades = dct["quoteSummary"]["result"][0]["insiderTransactions"]["transactions"]
+            data  = self._stored_data["insiderTransactions"]["transactions"]
         except:
-            raise TickerError(f"no insider trades found for ticker {self.ticker}")
+            raise DatasetError(f"no insider trades found for ticker {self.ticker}")
             
-        trades = [
+        data = [
             {
                 "date": (entry["startDate"]["raw"] if timestamps else entry["startDate"]["fmt"]),
                 "name": entry["filerName"].lower().title(),
@@ -595,49 +512,27 @@ class YahooReader:
                 "value": entry["value"]["raw"] if ("value" in entry and entry["value"]["raw"] != 0) else None,
                 "text": entry["transactionText"] if len(entry["transactionText"]) != 0 else None
             }
-            for entry in trades
+            for entry in data
         ]
         
-        return trades
+        return data
     
-    def esg_scores(self) -> dict:
-        parameters = {
-            "modules": "esgScores",
-            "formatted": False
-        }
-        
-        dct = requests.get(
-            url = self._summary_url.format(self.ticker),
-            params = parameters,
-            headers = self._headers
-        ).json()
-        
+    def esg_scores(self) -> dict:        
         try:
-            dct = dct["quoteSummary"]["result"][0]["esgScores"]
+            data = self._stored_data["esgScores"]
         except:
-            raise TickerError(f"no esg scores found for ticker {self.ticker}")
+            raise DatasetError(f"no esg scores found for ticker {self.ticker}")
         
-        return dct
+        return data
     
     def sec_filings(
         self,
         timestamps = False
-    ) -> dict:
-        parameters = {
-            "modules": "secFilings",
-            "formatted": False
-        }
-        
-        dct = requests.get(
-            url = self._summary_url.format(self.ticker),
-            params = parameters,
-            headers = self._headers
-        ).json()
-        
+    ) -> dict:        
         try:
-            data = dct["quoteSummary"]["result"][0]["secFilings"]["filings"]
+            data = self._stored_data["secFilings"]["filings"]
         except:
-            raise TickerError(f"no sec filings found for ticker {self.ticker}")
+            raise DatasetError(f"no sec filings found for ticker {self.ticker}")
             
         data = [
             {
@@ -652,23 +547,11 @@ class YahooReader:
             
         return data
     
-    def fund_profile(self) -> dict:
-        
-        parameters = {
-            "modules": "fundProfile",
-            "formatted": False
-        }
-        
-        dct = requests.get(
-            url = self._summary_url.format(self.ticker),
-            params = parameters,
-            headers = self._headers
-        ).json()
-        
+    def fund_profile(self) -> dict:        
         try:
-            data = dct["quoteSummary"]["result"][0]["fundProfile"]
+            data = self._stored_data["fundProfile"]
         except:
-            raise TickerError(f"no fund holdings found for ticker {self.ticker}")
+            raise DatasetError(f"no fund holdings found for ticker {self.ticker}")
         
         data = {
             "company": data["family"],
@@ -686,21 +569,10 @@ class YahooReader:
         return data
     
     def fund_holdings(self) -> dict:
-        parameters = {
-            "modules": "topHoldings",
-            "formatted": False
-        }
-        
-        dct = requests.get(
-            url = self._summary_url.format(self.ticker),
-            params = parameters,
-            headers = self._headers
-        ).json()
-        #return dct
         try:
-            data = dct["quoteSummary"]["result"][0]["topHoldings"]
+            data = self._stored_data["topHoldings"]
         except:
-            raise TickerError(f"no fund holdings found for ticker {self.ticker}")
+            raise DatasetError(f"no fund holdings found for ticker {self.ticker}")
             
         data = {
             "equity_share": data["stockPosition"],
@@ -733,6 +605,7 @@ class YahooReader:
             
         return data
     
+    
     def financial_statement(
         self,
         quarterly = False,
@@ -761,7 +634,7 @@ class YahooReader:
                 "balance_sheet": balance_sheet_data,
                 "cashflow_statement": cashflow_data
             }
-    
+        
     def income_statement(
         self,
         quarterly = False,
@@ -773,7 +646,7 @@ class YahooReader:
             timestamps = timestamps
         )
         return data
-         
+    
     def balance_sheet(
         self,
         quarterly = False,
@@ -803,45 +676,25 @@ class YahooReader:
         statement_type,
         quarterly = False,
         timestamps = False,
-    ):
-        if statement_type == "income_statement":
-            parameters = {
-                "modules": ("incomeStatementHistoryQuarterly" if quarterly else "incomeStatementHistory"),
-            }
-        elif statement_type == "balance_sheet":
-            parameters = {
-                "modules": ("balanceSheetHistoryQuarterly" if quarterly else "balanceSheetHistory"),
-            }
-        elif statement_type == "cashflow_statement":
-            parameters = {
-                "modules": ("cashflowStatementHistoryQuarterly" if quarterly else "cashflowStatementHistory"),
-            }  
-        parameters["formatted"] = False
-        
-        dct = requests.get(
-            url = self._summary_url.format(self.ticker),
-            params = parameters,
-            headers = self._headers
-        ).json()
-        
+    ):       
         try:
             if statement_type == "income_statement":
                 if quarterly:
-                    raw_data = dct["quoteSummary"]["result"][0]["incomeStatementHistoryQuarterly"]["incomeStatementHistory"]
+                    raw_data = self._stored_data["incomeStatementHistoryQuarterly"]["incomeStatementHistory"]
                 else:
-                    raw_data = dct["quoteSummary"]["result"][0]["incomeStatementHistory"]["incomeStatementHistory"]
+                    raw_data = self._stored_data["incomeStatementHistory"]["incomeStatementHistory"]
             elif statement_type == "balance_sheet":
                 if quarterly:
-                    raw_data = dct["quoteSummary"]["result"][0]["balanceSheetHistoryQuarterly"]["balanceSheetStatements"]
+                    raw_data = self._stored_data["balanceSheetHistoryQuarterly"]["balanceSheetStatements"]
                 else:
-                    raw_data = dct["quoteSummary"]["result"][0]["balanceSheetHistory"]["balanceSheetStatements"]
+                    raw_data = self._stored_data["balanceSheetHistory"]["balanceSheetStatements"]
             elif statement_type == "cashflow_statement":
                 if quarterly:
-                    raw_data = dct["quoteSummary"]["result"][0]["cashflowStatementHistoryQuarterly"]["cashflowStatements"]
+                    raw_data = self._stored_data["cashflowStatementHistoryQuarterly"]["cashflowStatements"]
                 else:
-                    raw_data = dct["quoteSummary"]["result"][0]["cashflowStatementHistory"]["cashflowStatements"]
+                    raw_data = self._stored_data["cashflowStatementHistory"]["cashflowStatements"]
         except:
-            raise TickerError(f"no {statement_type} data found for ticker {self.ticker}")
+            raise DatasetErrorError(f"no {statement_type} data found for ticker {self.ticker}")
         
         data = {}
         for entry in raw_data:
@@ -855,7 +708,7 @@ class YahooReader:
     
     @property
     def ticker(self):
-        return self._ticker
+        return self._ticker 
 
 if __name__ == "__main__":
     print(dir(YahooReader))
