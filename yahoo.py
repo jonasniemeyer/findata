@@ -28,7 +28,7 @@ class YahooReader:
     _options_url = "https://query1.finance.yahoo.com/v7/finance/options/{}"
     _esg_ts_url = "https://query1.finance.yahoo.com/v1/finance/esgChart"
 
-    def __init__(self, ticker):
+    def __init__(self, ticker) -> None:
         self._ticker = ticker.upper()
         self._stored_data = self._get_stored_data()
         
@@ -136,7 +136,7 @@ class YahooReader:
         }
 
         response = requests.get(
-            url = self._history_url.format(self.ticker),
+            url = self._price_url.format(self.ticker),
             params = parameters,
             headers = self._headers
         )
@@ -418,7 +418,7 @@ class YahooReader:
     def insider_ownership(
         self,
         timestamps = False
-    ):
+    ) -> list:
         try:
             data = self._stored_data["insiderHolders"]["holders"]
         except:
@@ -454,7 +454,7 @@ class YahooReader:
     def insider_trades(
         self,
         timestamps = False
-    ):        
+    ) -> list:        
         try:
             data  = self._stored_data["insiderTransactions"]["transactions"]
         except:
@@ -633,7 +633,7 @@ class YahooReader:
         statement_type,
         quarterly = False,
         timestamps = False,
-    ):       
+    ) -> dict:       
         try:
             if statement_type == "income_statement":
                 if quarterly:
