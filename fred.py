@@ -12,8 +12,11 @@ class FREDReader:
     _dataset_url = "https://fred.stlouisfed.org/graph/fredgraph.csv"
     def __init__(self, dataset) -> None:
         self._dataset = dataset
-
-    def historical_data(self) -> pd.DataFrame:
+    
+    def historical_data(
+            self,
+            timestamps = False
+        ) -> pd.DataFrame:
 
         parameters = {
             "id": self.dataset
@@ -27,36 +30,48 @@ class FREDReader:
 
         df = pd.read_csv(StringIO(response.decode()), index_col=0)
         df.index = pd.to_datetime(df.index)
+        if timestamps:
+            df.index = [
+                int((item - dt.datetime(1970,1,1)).total_seconds())
+                for item in df.index
+            ]
         df = df.replace(".", np.NaN)
         df = df.apply(pd.to_numeric)
 
         return df
 
     def name(self) -> str:
+        if not hasattr(self, "_description_data"):
+            self._get_description_data()
         return self._description_data["name"]
 
-    def category(self) -> str:
-        return self._description_data["category"]
+    def categories(self) -> str:
+        if not hasattr(self, "_description_data"):
+            self._get_description_data()
+        return self._description_data["categories"]
 
     def description(self) -> str:
+        if not hasattr(self, "_description_data"):
+            self._get_description_data()
         return self._description_data["description"]
 
     def unit(self) -> str:
+        if not hasattr(self, "_description_data"):
+            self._get_description_data()
         return self._description_data["unit"]
 
-    def _get_description_data(self) -> dict:
-        if hasattr(self, "_descritpion_data"):
-            return self._description_data
-        
+    def _get_description_data(self) -> dict:        
         html = requests.get(
             url = self._description_url.format(self.dataset), 
             headers = _headers
         ).text
 
         soup = BeautifulSoup(html, "lxml")
-
+        
         name = soup.find_all("span", {"id": "series-title-text-container"})[0].text.strip()
-        category = soup.find_all("p", {"class": "col-xs-12 col-md-6 pull-left"})[0].text.strip("Release:").strip()
+        category_tags = soup.find_all("a", {"class": "breadcrumb_link"})
+        categories = [tag.text for tag in category_tags]
+        categories.remove("Categories")
         try:
             description = soup.find_all("p", {"class": "series-notes"})[0].text.strip()
         except:
@@ -65,7 +80,7 @@ class FREDReader:
 
         data = {
             "name": name,
-            "category": category,
+            "categories": categories,
             "description": description,
             "unit": unit
         }
