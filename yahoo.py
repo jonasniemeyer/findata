@@ -9,7 +9,7 @@ class TickerError(ValueError):
 class DatasetError(KeyError):
     pass
 
-class YahooReader(YahooReader):
+class YahooReader:
     _headers = {
         "Connection": "keep-alive",
         "Expires": "-1",
@@ -28,86 +28,43 @@ class YahooReader(YahooReader):
     _options_url = "https://query1.finance.yahoo.com/v7/finance/options/{}"
     _esg_ts_url = "https://query1.finance.yahoo.com/v1/finance/esgChart"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, ticker):
+        self._ticker = ticker.upper()
         self._stored_data = self._get_stored_data()
-    
-    @classmethod
-    def crumb(cls) -> str:
-        data = requests.get(
-            url = __class__._crumb_url,
-            headers = __class__._headers
-        ).text
+        
+        self._security_type = self._stored_data["quoteType"]["quoteType"]
+        self._name = self._stored_data["quoteType"]["shortName"]
+        
+    def profile(self) -> dict:        
+        try:
+            data = self._stored_data["assetProfile"]
+        except:
+            raise DatasetError(f"no profile found for ticker {self.ticker}")
+        
+        for key in (
+            "address1",
+            "address2",
+            "longBusinessSummary"
+        ):
+            if key in data.keys():
+                data[key] = data[key].encode("latin1").decode().replace("\n ", "\n")
+        
+        data["description"] = data.pop("longBusinessSummary")
+        data["executives"] = [
+            {
+                "name": entry["name"],
+                "age": entry["age"] if "age" in entry else None,
+                "position": entry["title"],
+                "born": entry["yearBorn"] if "yearBorn" in entry else None,
+                "salary": entry["totalPay"]["raw"] if "totalPay" in entry else None,
+                "exersized_options": entry["exercisedValue"]["raw"],
+                "unexcersized_options": entry["unexercisedValue"]["raw"]
+            }
+            for entry in data["companyOfficers"]
+        ]
+        data.pop("companyOfficers")
         
         return data
-    
-    @classmethod
-    def currencies(cls) -> dict:
-        data = requests.get(
-            url = cls._currencies_url,
-            headers = cls._headers
-        ).json()
-        data = data["currencies"]["result"]
-        
-        return data
-    
-        
-    def _get_stored_data(self) -> dict:
-        if hasattr(self, "_stored_data"):
-            return self._stored_data
-        
-        parameters = {
-            "modules": ",".join(
-                (
-                    'assetProfile',
-                    'balanceSheetHistory',
-                    'balanceSheetHistoryQuarterly',
-                    'calendarEvents',
-                    'cashflowStatementHistory',
-                    'cashflowStatementHistoryQuarterly',
-                    'defaultKeyStatistics',
-                    'earnings',	'earningsHistory',
-                    'earningsTrend',
-                    "esgScores",
-                    'financialData',
-                    'fundOwnership',
-                    'incomeStatementHistory',
-                    'incomeStatementHistoryQuarterly',
-                    'indexTrend',
-                    'industryTrend',
-                    'insiderHolders',
-                    'insiderTransactions',
-                    'institutionOwnership',
-                    'majorDirectHolders',
-                    'majorHoldersBreakdown',
-                    'netSharePurchaseActivity',
-                    'price',
-                    'quoteType',
-                    'recommendationTrend',
-                    'secFilings',
-                    'sectorTrend',
-                    'summaryDetail',
-                    'summaryProfile', 
-                    'symbol',
-                    'upgradeDowngradeHistory',
-                    'fundProfile',
-                    'topHoldings',
-                    'fundPerformance'
-                )
-            ),
-            "formatted": False
-        }
-        data = requests.get(
-            url = self._main_url.format(self.ticker),
-            params = parameters,
-            headers = self._headers
-        ).json()
-        if data["quoteSummary"]["error"] is not None:
-            raise TickerError(f"no data found for ticker {self.ticker}")
-        data = data["quoteSummary"]["result"][0]
-        self._stored_data = data
-        
-        return self._stored_data
     
     def historical_data(
         self,
@@ -300,7 +257,7 @@ class YahooReader(YahooReader):
             }
         }
     
-    def analyst_ratings(
+    def analyst_recommendations(
         self,
         timestamps = False
     ) -> list:
@@ -414,7 +371,7 @@ class YahooReader(YahooReader):
         
         return data
     
-    def institutional_holders(
+    def institutional_ownership(
         self,
         timestamps = False
     ) -> list:        
@@ -548,7 +505,7 @@ class YahooReader(YahooReader):
             
         return data
     
-    def fund_profile(self) -> dict:        
+    def fund_statistics(self) -> dict:        
         try:
             data = self._stored_data["fundProfile"]
         except:
@@ -569,7 +526,7 @@ class YahooReader(YahooReader):
             
         return data
     
-    def fund_holdings(self) -> dict:
+    def holdings(self) -> dict:
         try:
             data = self._stored_data["topHoldings"]
         except:
@@ -605,8 +562,7 @@ class YahooReader(YahooReader):
         }
             
         return data
-    
-    
+     
     def financial_statement(
         self,
         quarterly = False,
@@ -695,7 +651,7 @@ class YahooReader(YahooReader):
                 else:
                     raw_data = self._stored_data["cashflowStatementHistory"]["cashflowStatements"]
         except:
-            raise DatasetErrorError(f"no {statement_type} data found for ticker {self.ticker}")
+            raise DatasetError(f"no {statement_type} data found for ticker {self.ticker}")
         
         data = {}
         for entry in raw_data:
@@ -707,6 +663,90 @@ class YahooReader(YahooReader):
         
         return data
     
+    def _get_stored_data(self) -> dict:
+        if hasattr(self, "_stored_data"):
+            return self._stored_data
+        
+        parameters = {
+            "modules": ",".join(
+                (
+                    'assetProfile',
+                    'balanceSheetHistory',
+                    'balanceSheetHistoryQuarterly',
+                    'calendarEvents',
+                    'cashflowStatementHistory',
+                    'cashflowStatementHistoryQuarterly',
+                    'defaultKeyStatistics',
+                    'earnings',	'earningsHistory',
+                    'earningsTrend',
+                    "esgScores",
+                    'financialData',
+                    'fundOwnership',
+                    'incomeStatementHistory',
+                    'incomeStatementHistoryQuarterly',
+                    'indexTrend',
+                    'industryTrend',
+                    'insiderHolders',
+                    'insiderTransactions',
+                    'institutionOwnership',
+                    'majorDirectHolders',
+                    'majorHoldersBreakdown',
+                    'netSharePurchaseActivity',
+                    'price',
+                    'quoteType',
+                    'recommendationTrend',
+                    'secFilings',
+                    'sectorTrend',
+                    'summaryDetail',
+                    'summaryProfile', 
+                    'symbol',
+                    'upgradeDowngradeHistory',
+                    'fundProfile',
+                    'topHoldings',
+                    'fundPerformance'
+                )
+            ),
+            "formatted": False
+        }
+        data = requests.get(
+            url = self._main_url.format(self.ticker),
+            params = parameters,
+            headers = self._headers
+        ).json()
+        if data["quoteSummary"]["error"] is not None:
+            raise TickerError(f"no data found for ticker {self.ticker}")
+        data = data["quoteSummary"]["result"][0]
+        self._stored_data = data
+        
+        return self._stored_data
+
+    @classmethod
+    def crumb(cls) -> str:
+        data = requests.get(
+            url = __class__._crumb_url,
+            headers = __class__._headers
+        ).text
+        
+        return data
+    
+    @classmethod
+    def currencies(cls) -> dict:
+        data = requests.get(
+            url = cls._currencies_url,
+            headers = cls._headers
+        ).json()
+        data = data["currencies"]["result"]
+        
+        return data
+    
     @property
     def ticker(self):
         return self._ticker
+    
+    @property
+    def name(self):
+        return self._name
+    
+    @property
+    def security_type(self):
+        return self._security_type
