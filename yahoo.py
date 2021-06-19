@@ -2,6 +2,11 @@ import datetime as dt
 import pandas as pd
 import numpy as np
 import requests
+from utils import (
+    TickerError,
+    DatasetError,
+    _headers
+)
 
 class TickerError(ValueError):
     pass
@@ -10,16 +15,6 @@ class DatasetError(KeyError):
     pass
 
 class YahooReader:
-    _headers = {
-        "Connection": "keep-alive",
-        "Expires": "-1",
-        "Upgrade-Insecure-Requests": "-1",
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 "
-            "(KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36"
-        ),
-    }
-
     _crumb_url = "https://query1.finance.yahoo.com/v1/test/getcrumb"
     _currencies_url = "https://query1.finance.yahoo.com/v1/finance/currencies"
     
@@ -138,7 +133,7 @@ class YahooReader:
         response = requests.get(
             url = self._price_url.format(self.ticker),
             params = parameters,
-            headers = self._headers
+            headers = _headers
         )
         url = response.url
         data = response.json()
@@ -346,7 +341,7 @@ class YahooReader:
         }
         options_list = requests.get(
             url = self._options_url.format(self.ticker),
-            headers = self._headers,
+            headers = _headers,
             params = parameters
         ).json()  
         
@@ -711,7 +706,7 @@ class YahooReader:
         data = requests.get(
             url = self._main_url.format(self.ticker),
             params = parameters,
-            headers = self._headers
+            headers = _headers
         ).json()
         if data["quoteSummary"]["error"] is not None:
             raise TickerError(f"no data found for ticker {self.ticker}")
@@ -723,8 +718,8 @@ class YahooReader:
     @classmethod
     def crumb(cls) -> str:
         data = requests.get(
-            url = __class__._crumb_url,
-            headers = __class__._headers
+            url = cls._crumb_url,
+            headers = _headers
         ).text
         
         return data
@@ -733,7 +728,7 @@ class YahooReader:
     def currencies(cls) -> dict:
         data = requests.get(
             url = cls._currencies_url,
-            headers = cls._headers
+            headers = _headers
         ).json()
         data = data["currencies"]["result"]
         

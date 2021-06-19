@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import datetime as dt
 import pandas as pd
+from utils import _headers
 
 def margin_debt():
     url = "https://www.finra.org/investors/learn-to-invest/advanced-investing/margin-statistics"
@@ -12,7 +13,7 @@ def margin_debt():
         "combined old": []
     }
     
-    html = requests.get(url).text
+    html = requests.get(url = url, headers = _headers).text
     
     finra = html.index("FINRA Statistics (shown in $ millions)")
     nyse = html.index("NYSE Statistics (shown in $ millions)")
@@ -32,7 +33,7 @@ def margin_debt():
         ),
         data
     ):
-        soup = BeautifulSoup(data_slice)
+        soup = BeautifulSoup(data_slice, "lxml")
         rows = soup.find_all("tr")
         rows = [row.find_all("td") for row in rows if len(row.find_all("td")) > 1]
         rows = [

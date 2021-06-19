@@ -7,31 +7,20 @@ import pandas as pd
 import numpy as np
 import datetime as dt
 import re
+from utils import _headers
 
 class FrenchReader:
-    base_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
-    dataset_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/{}_CSV.zip"
+    _base_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
+    _dataset_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/{}_CSV.zip"
     def __init__(
         self,
         dataset
     ):
         self._dataset = dataset
-    
-    @classmethod
-    def datasets(cls) -> list:
-        response = requests.get(__class__.base_url).content
-        soup = BeautifulSoup(response)
-        datasets = [a_tag.get("href") for a_tag in soup.find_all("a")]
-        datasets = [
-            dataset.replace("ftp/", "").replace("_CSV.zip", "") for dataset in datasets
-            if dataset is not None
-            and dataset.endswith("_CSV.zip")
-        ]
-        return datasets
-        
+          
     def read(self) -> dict:
         time_series = {}
-        response = requests.get(self.dataset_url.format(self._dataset)).content
+        response = requests.get(url = self._dataset_url.format(self.dataset), headers = _headers).content
         data = self._read_zip(response)
         data = data.split("\r\n\r\n")
         for chunk in data:
@@ -56,7 +45,7 @@ class FrenchReader:
                     chunk = "Count,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100\r\n" + chunk
                 elif self._dataset == "Prior_2-12_Breakpoints":
                     chunk = "no_stocks,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100\r\n" + chunk
-                elif dataset in ("OP_Breakpoints", "INV_Breakpoints"):
+                elif self._dataset in ("OP_Breakpoints", "INV_Breakpoints"):
                     chunk = "Count,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100\r\n" + chunk.strip(",Count")
                 else:
                     chunk = re.sub("<=0,>0\r\n", "<=0,>0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100\r\n", chunk)
@@ -94,11 +83,18 @@ class FrenchReader:
                 raw_data = zip_file.open(zip_file.namelist()[0]).read().decode(encoding = "cp1252")
                 return raw_data
     
+    @classmethod
+    def datasets(cls) -> list:
+        response = requests.get(cls._base_url).content
+        soup = BeautifulSoup(response, "lxml")
+        datasets = [a_tag.get("href") for a_tag in soup.find_all("a")]
+        datasets = [
+            dataset.replace("ftp/", "").replace("_CSV.zip", "") for dataset in datasets
+            if dataset is not None
+            and dataset.endswith("_CSV.zip")
+        ]
+        return datasets
+    
     @property
     def dataset(self):
         return self._dataset
-
-if __name__ == "__main__":
-    data = FrenchReader("F-F_Research_Data_5_Factors_2x3").read()
-    print(data.keys())
-    print(data["Main"])
