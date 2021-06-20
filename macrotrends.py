@@ -1,5 +1,4 @@
 import re
-from time import sleep
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
@@ -26,7 +25,7 @@ class MacroTrendsReader:
             raise ValueError('Statement type has to be "income-statement", "balance-sheet", "cash-flow-statement" or "financial-statement"')
         elif frequency not in ("Q", "Y"):
             raise ValueError('Reporting Frequency has to be yearly ("Y") or quarterly ("Q")')
-        self.ticker = ticker
+        self._ticker = ticker.upper()
         if "-" in self.ticker:
             self.ticker = self.ticker.replace("-", ".")
         self.statement = statement
@@ -231,3 +230,7 @@ class MacroTrendsReader:
             frequency = frequency,
             name = name
         )
+
+    @property
+    def ticker(self):
+        return self._ticker

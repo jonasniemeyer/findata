@@ -4,7 +4,7 @@ import numpy as np
 import datetime as dt
 from bs4 import BeautifulSoup
 from io import StringIO
-from utils import _headers
+from finance_data.utils import _headers
 
 
 class FREDReader:

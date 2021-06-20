@@ -2,7 +2,7 @@ import datetime as dt
 import pandas as pd
 import numpy as np
 import requests
-from utils import (
+from finance_data.utils import (
     TickerError,
     DatasetError,
     _headers

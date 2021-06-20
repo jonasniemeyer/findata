@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 import datetime as dt
 import re
-from utils import _headers
+from finance_data.utils import _headers
 
 class FrenchReader:
     _base_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"

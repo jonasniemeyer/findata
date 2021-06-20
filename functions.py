@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import datetime as dt
 import pandas as pd
-from utils import _headers
+from finance_data.utils import _headers
 
 def margin_debt():
     url = "https://www.finra.org/investors/learn-to-invest/advanced-investing/margin-statistics"

@@ -19,5 +19,7 @@ Data sources include
 - FRED
 - World Bank
 - OECD
-
+- Finra
+- Nasdaq
+- CME
 
