@@ -26,7 +26,7 @@ class FREDReader:
             url = self._dataset_url, 
             headers = _headers,
             params = parameters
-        ).content
+        ).text
 
         df = pd.read_csv(StringIO(response.decode()), index_col=0)
         df.index = pd.to_datetime(df.index)

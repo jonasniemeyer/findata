@@ -130,13 +130,14 @@ class YahooReader:
             "includeAdjustedClose": True
         }
 
-        response = requests.get(
+        data = requests.get(
             url = self._price_url.format(self.ticker),
             params = parameters,
             headers = _headers
         )
-        url = response.url
-        data = response.json()
+
+        url = data.url
+        data = data.json()
         
         meta_data = data["chart"]["result"][0]["meta"]
         currency = meta_data["currency"]
@@ -332,6 +333,7 @@ class YahooReader:
             If True, dict keys are isoformatted date strings. If False, dict keys are unix timestamps
             default: False
         """
+
         parameters = {
             "getAllData": True,
             "date": date,
@@ -339,6 +341,7 @@ class YahooReader:
             "strikeMax": strike_max,
             "straddle": straddle
         }
+
         options_list = requests.get(
             url = self._options_url.format(self.ticker),
             headers = _headers,
@@ -708,6 +711,7 @@ class YahooReader:
             params = parameters,
             headers = _headers
         ).json()
+
         if data["quoteSummary"]["error"] is not None:
             raise TickerError(f"no data found for ticker {self.ticker}")
         data = data["quoteSummary"]["result"][0]
@@ -730,6 +734,7 @@ class YahooReader:
             url = cls._currencies_url,
             headers = _headers
         ).json()
+        
         data = data["currencies"]["result"]
         
         return data
