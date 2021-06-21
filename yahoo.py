@@ -5,14 +5,9 @@ import requests
 from finance_data.utils import (
     TickerError,
     DatasetError,
-    _headers
+    _headers,
+    yahoo_conversion
 )
-
-class TickerError(ValueError):
-    pass
-
-class DatasetError(KeyError):
-    pass
 
 class YahooReader:
     _crumb_url = "https://query1.finance.yahoo.com/v1/test/getcrumb"
@@ -654,7 +649,7 @@ class YahooReader:
         data = {}
         for entry in raw_data:
             date = (entry["endDate"]["raw"] if timestamps else entry["endDate"]["fmt"])
-            points = {key:(value["raw"] if "raw" in value else np.NaN) 
+            points = {yahoo_conversion[key]:(value["raw"] if "raw" in value else np.NaN) 
                       for key,value in entry.items() 
                       if key not in ("maxAge", "endDate")}
             data[date] = points

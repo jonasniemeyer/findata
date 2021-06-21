@@ -5,8 +5,12 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from finance_data.utils import (
+    TickerError,
+    macrotrends_conversion
+)
 
-class MacroTrendsReader:
+class MacrotrendsReader:
     
     url_long = "https://www.macrotrends.net/stocks/charts/{}/{}/{}?freq={}"
     url_short = "https://www.macrotrends.net/stocks/charts/{}"
@@ -61,7 +65,7 @@ class MacroTrendsReader:
             self.name = self.driver.current_url.split("/")[-2]
             if self.name == "charts" or "?" in self.name:
                 self.driver.quit()
-                raise ValueError(f"cannot find the website with ticker {self.ticker}")
+                raise TickerError(f"cannot find the website with ticker {self.ticker}")
             self.url = self.url_long.format(
                 self.ticker,
                 self.name,
@@ -96,6 +100,7 @@ class MacroTrendsReader:
         else:
             data = self._parse()
         self.driver.quit()
+
         return data
 
     def _parse(self) -> dict:
@@ -131,7 +136,7 @@ class MacroTrendsReader:
                 var_name = cell.find("a").text
             except:
                 var_name = cell.find("span").text
-            data[var_name] = {}
+            data[macrotrends_conversion[var_name]] = {}
             variables.append(var_name)
         loop_control = 0
         while self._scrollbar_width > 0:
@@ -153,18 +158,18 @@ class MacroTrendsReader:
                 date = col.find("span", {"style": "text-overflow: ellipsis; cursor: default;"}).text
                 for row_index, row in enumerate(rows):
                     cells = row.find_all("div", {"role": "gridcell"})
-                    cell = row.find_all("div", {"role": "gridcell"})[col_index]
+                    cell = cells[col_index]
                     value = cell.find("div").text
                     var_name = variables[row_index]
                     if value == "-":
                         value = None
-                        data[var_name][date] = value
+                        data[macrotrends_conversion[var_name]][date] = value
                         continue
                     if var_name not in ("Basic EPS", "EPS - Earnings Per Share"):
                         value = int(float(value.strip("$").replace(".", "").replace(",", ".")) * 1_000_000)
                     else:
                         value = float(value.strip("$"))
-                    data[var_name][date] = value
+                    data[macrotrends_conversion[var_name]][date] = value
             if self._slider_sensitivity is None:
                 break
         return data
@@ -224,7 +229,7 @@ class MacroTrendsReader:
         ticker = url_split[5]
         name = url_split[6]
         statement = url_split[7].rstrip(f"?freq={frequency}")
-        return MacroTrendsReader(
+        return MacrotrendsReader(
             ticker = ticker,
             statement = statement,
             frequency = frequency,
