@@ -153,7 +153,6 @@ yahoo_conversion = {
     "issuanceOfStock": "total stock issued"
 }
 
-
 class TickerError(ValueError):
     pass
 

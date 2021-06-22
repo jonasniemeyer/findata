@@ -6,7 +6,6 @@ from bs4 import BeautifulSoup
 from io import StringIO
 from finance_data.utils import _headers
 
-
 class FREDReader:
     _description_url = "https://fred.stlouisfed.org/series/{}"
     _dataset_url = "https://fred.stlouisfed.org/graph/fredgraph.csv"

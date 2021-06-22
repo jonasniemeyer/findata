@@ -65,7 +65,7 @@ class YahooReader:
         returns = True,
         timestamps = False,
         rounded = False,
-        tz_aware = True
+        tz_aware = False
     ) -> dict:
 
         """
@@ -176,7 +176,7 @@ class YahooReader:
                 )
             else:
                 df_splits = pd.DataFrame(columns = ["Splits"])
-        
+            
         else:
             df_div = pd.DataFrame(columns = ["dividends"])
             df_splits = pd.DataFrame(columns = ["splits"])
@@ -206,36 +206,57 @@ class YahooReader:
         )
         if rounded:
             prices[["open", "high", "low", "close", "adj close"]] = prices[["open", "high", "low", "close", "adj close"]].round(2)
+        
+        if not timestamps:
+            if frequency in ("1d", "1wk", "1mo", "3mo"):
+                prices.index = [dt.date(1970,1,1) + dt.timedelta(seconds=ts + tz_offset) for ts in prices.index]
+                df_div.index = [dt.date(1970,1,1) + dt.timedelta(seconds=ts + tz_offset) for ts in df_div.index]
+                df_splits.index = [dt.date(1970,1,1) + dt.timedelta(seconds=ts + tz_offset) for ts in df_splits.index]
+            else:
+                prices.index = [dt.datetime(1970,1,1) + dt.timedelta(seconds=ts) for ts in prices.index]
+                df_div.index = [dt.datetime(1970,1,1) + dt.timedelta(seconds=ts) for ts in df_div.index]
+                df_splits.index = [dt.datetime(1970,1,1) + dt.timedelta(seconds=ts) for ts in df_splits.index]
+                if tz_aware:
+                    prices.index = prices.index.tz_localize(timezone)
+                    df_div.index = df_div.index.tz_localize(timezone)
+                    df_splits.index = df_splits.index.tz_localize(timezone)
 
         if prices.index[-1] == prices.index[-2]:
             prices = prices[:-1]
         
-        df = pd.concat([prices, df_div, df_splits], axis=1)
-
-        if timestamps:
-            df.index.name = "timestamps"
-        else:
-            if frequency in ("1d", "1wk", "1mo", "3mo"):
-                df.index = [dt.datetime(1970,1,1) + dt.timedelta(seconds=ts + tz_offset) for ts in df.index]
-                df.index = df.index.date
-                df.index.name = "date"
-            else:
-                df.index = [dt.datetime(1970,1,1) + dt.timedelta(seconds=ts) for ts in df.index]
-                if tz_aware:
-                    df.index = df.index.tz_localize(timezone)
-                df.index.name = "datetime"
+        # merge prices with dividends
+        df = pd.concat([prices, df_div], axis=1)
+        df = df.sort_index()
         
         if frequency in ("1wk", "1mo", "3mo"):
             dividends = df["dividends"].copy()
             for i in range(len(dividends)-1):
-                if not np.isnan(dividends[i]) and np.isnan(dividends[i+1]) and np.isnan(df.loc[df.index[i], "close"]):
+                if not np.isnan(dividends.iloc[i]) and np.isnan(dividends.iloc[i+1]) and np.isnan(df.loc[df.index[i], "close"]):
                     df.loc[df.index[i+1], "dividends"] = df.loc[df.index[i], "dividends"]
             df = df[df["close"].notna()]
         
+        # merge prices, dividends with splits
+        df = pd.concat([df, df_splits], axis=1)
+        df = df.sort_index()
+        
+        if frequency in ("1wk", "1mo", "3mo"):
+            splits = df["splits"].copy()
+            for i in range(len(splits)-1):
+                if not np.isnan(splits.iloc[i]) and np.isnan(splits.iloc[i+1]) and np.isnan(df.loc[df.index[i], "close"]):
+                    df.loc[df.index[i+1], "splits"] = df.loc[df.index[i], "splits"]
+            df = df[df["close"].notna()]
+
         if returns:
             df['simple returns'] = (df['close'] + df['dividends'].fillna(0)) / df['close'].shift(1) - 1
             df['log returns'] = np.log((df['close'] + df['dividends'].fillna(0)) / df['close'].shift(1))
 
+        if timestamps:
+            df.index.name = "timestamps"
+        elif frequency in ("1d", "1wk", "1mo", "3mo"):
+            df.index.name = "date"
+        else:
+            df.index.name = "datetime"
+        
         return {
             "data": df,
             "information": {

@@ -13,13 +13,12 @@ Tools to scrape and parse online-available financial data such as
 
 Data sources include
 - SEC
-- Yahoo
+- Yahoo Finance
 - Macrotrends
 - Kenneth French Data Library
 - FRED
 - World Bank
 - OECD
 - Finra
-- Nasdaq
 - CME
 
