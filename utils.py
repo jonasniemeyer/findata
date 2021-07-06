@@ -1,3 +1,5 @@
+import re
+
 macrotrends_conversion = {
     # Income Statement
     "Revenue": "revenue",
@@ -49,7 +51,7 @@ macrotrends_conversion = {
     "Total Liabilities And Share Holders Equity": "total liabilities and shareholders equity",
 
     # Cashflow Statement
-    "Net Income/Loss": "net income cashflow statement",
+    "Net Income/Loss": "net income",
     "Total Depreciation And Amortization - Cash Flow": "depreciation and amortization",
     "Other Non-Cash Items": "other non-cash items",
     "Total Non-Cash Items": "total non-cash items",
@@ -80,6 +82,7 @@ macrotrends_conversion = {
     "Common Stock Dividends Paid": "dividends paid"
 }
 
+camel_to_space = re.compile(r"(?<!^)(?=[A-Z])")
 
 yahoo_conversion = {
     # Income Statement
@@ -115,12 +118,16 @@ yahoo_conversion = {
     "totalCurrentAssets": "total current assets",
     "longTermInvestments": "non-current investments",
     "propertyPlantEquipment": "property, plant and equipment",
+    "goodWill": "goodwill",
+    "intangibleAssets": "intagible assets",
     "otherAssets": "other non-current assets",
     "totalAssets": "total assets",
     "accountsPayable": "accounts payable",
     "shortLongTermDebt": "current debt",
     "otherCurrentLiab": "other current liabilities",
     "longTermDebt": "non-current debt",
+    "deferredLongTermAssetCharges": "deferred long-term asset charges",
+    "deferredLongTermLiab": "deferred long-term liabilities",
     "otherLiab": "other liabilities",
     "totalCurrentLiabilities": "total current liabilities",
     "totalLiab": "total liabities",
@@ -139,6 +146,7 @@ yahoo_conversion = {
     "changeToLiabilities": "change in liabilities",
     "changeToInventory": "change in inventories",
     "changeToOperatingActivities": "other operating activities",
+    "effectOfExchangeRate": "gains/losses on currency changes",
     "totalCashFromOperatingActivities": "cashflow from operating activities",
     "capitalExpenditures": "capital expenditures",
     "investments": "change in total investments",
