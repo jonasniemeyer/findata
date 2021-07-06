@@ -61,10 +61,10 @@ def margin_debt():
     new_aggregated["credit"] = data["combined new"]["credit cash accounts"] + data["combined new"]["credit margin accounts"]
     data["combined full"] = pd.concat([new_aggregated, data["combined old"]]).sort_index()
     data = {
-        "combined full": data["combined full"],
-        "combined new": data["combined new"],
-        "combined old": data["combined old"],
-        "finra old": data["finra old"],
-        "nyse old": data["nyse old"]
+        "combined full": data["combined full"] * 1_000_000,
+        "combined new": data["combined new"] * 1_000_000,
+        "combined old": data["combined old"] * 1_000_000,
+        "finra old": data["finra old"] * 1_000_000,
+        "nyse old": data["nyse old"] * 1_000_000
     }
     return data
