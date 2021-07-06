@@ -15,6 +15,12 @@ class MacrotrendsReader:
     url_long = "https://www.macrotrends.net/stocks/charts/{}/{}/{}?freq={}"
     url_short = "https://www.macrotrends.net/stocks/charts/{}"
 
+    conversion = {
+        "income-statement": "income_statement",
+        "balance-sheet": "balance_sheet",
+        "cash-flow-statement": "cashflow_statement"
+    }
+
     def __init__(
         self,
         ticker = None,
@@ -30,8 +36,8 @@ class MacrotrendsReader:
         elif frequency not in ("Q", "Y"):
             raise ValueError('Reporting Frequency has to be yearly ("Y") or quarterly ("Q")')
         self._ticker = ticker.upper()
-        if "-" in self.ticker:
-            self.ticker = self.ticker.replace("-", ".")
+        if "-" in self._ticker:
+            self._ticker = self._ticker.replace("-", ".")
         self.statement = statement
         self.frequency = frequency
         if name is None:
@@ -96,7 +102,7 @@ class MacrotrendsReader:
             for statement in ("income-statement", "balance-sheet", "cash-flow-statement"):
                 href_url = self.url.replace("financial-statement", statement)
                 self.open_website(url = href_url)
-                data = data | self._parse()
+                data = data | {self.conversion[statement]: self._parse()}
         else:
             data = self._parse()
         self.driver.quit()
