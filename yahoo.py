@@ -6,6 +6,7 @@ from finance_data.utils import (
     TickerError,
     DatasetError,
     _headers,
+    camel_to_space,
     yahoo_conversion
 )
 
@@ -175,7 +176,7 @@ class YahooReader:
                     index = splits[0]
                 )
             else:
-                df_splits = pd.DataFrame(columns = ["Splits"])
+                df_splits = pd.DataFrame(columns = ["splits"])
             
         else:
             df_div = pd.DataFrame(columns = ["dividends"])
@@ -282,8 +283,8 @@ class YahooReader:
                 "date": (dct["epochGradeDate"] if timestamps
                          else (dt.date(1970, 1, 1) + dt.timedelta(seconds = dct["epochGradeDate"])).isoformat()),
                 "firm": dct["firm"],
-                "to": dct["toGrade"],
-                "from": dct["fromGrade"],
+                "new": dct["toGrade"],
+                "old": dct["fromGrade"],
                 "change": dct["action"]
             }
             for dct in data
@@ -670,7 +671,7 @@ class YahooReader:
         data = {}
         for entry in raw_data:
             date = (entry["endDate"]["raw"] if timestamps else entry["endDate"]["fmt"])
-            points = {yahoo_conversion[key]:(value["raw"] if "raw" in value else np.NaN) 
+            points = {camel_to_space.sub(" ", key).lower():(value["raw"] if "raw" in value else np.NaN) 
                       for key,value in entry.items() 
                       if key not in ("maxAge", "endDate")}
             data[date] = points
