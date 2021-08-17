@@ -6,8 +6,7 @@ from finance_data.utils import (
     TickerError,
     DatasetError,
     _headers,
-    camel_to_space,
-    yahoo_conversion
+    camel_to_space
 )
 
 class YahooReader:
@@ -60,7 +59,6 @@ class YahooReader:
     def historical_data(
         self,
         frequency = '1d',
-        period = None,
         start = dt.datetime(1900, 1, 1),
         end = dt.datetime.today(),
         returns = True,
