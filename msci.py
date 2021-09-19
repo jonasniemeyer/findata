@@ -1,6 +1,8 @@
 import requests
 import datetime as dt
+import numpy as np
 import pandas as pd
+from bs4 import BeautifulSoup
 from finance_data.utils import _headers
 
 class MSCIReader:
@@ -97,3 +99,23 @@ class MSCIReader:
                 "url": url
             }
         }
+
+    @classmethod
+    def indices_list(cls) -> pd.DataFrame:
+        html = requests.get(
+            url = "https://www.msci.com/ticker-codes",
+            headers = _headers
+        ).content
+
+        soup = BeautifulSoup(html, "lxml")
+
+        paragraph = [paragraph for paragraph in soup.find_all("p") if "Tickers for MSCI Indexes as of " in paragraph][0]
+        href = "https://www.msci.com/" + paragraph.find("a").get("href")
+
+        data = pd.read_excel(href, engine = "openpyxl")
+
+        data = data[data["MSCI index code"].notna()]
+        data = data[["MSCI index code", "msci_index_name", "index_variant", "index_currency", "ticker_vendor", "ticker_type", "ticker_code"]]
+        data.columns = ["code", "name", "variant", "currency", "vendor", "type", "ticker_code"]
+
+        return data

@@ -51,7 +51,7 @@ macrotrends_conversion = {
     "Total Liabilities And Share Holders Equity": "total liabilities and shareholders equity",
 
     # Cashflow Statement
-    "Net Income/Loss": "net income",
+    "Net Income/Loss": "net income cashflow statement",
     "Total Depreciation And Amortization - Cash Flow": "depreciation and amortization",
     "Other Non-Cash Items": "other non-cash items",
     "Total Non-Cash Items": "total non-cash items",

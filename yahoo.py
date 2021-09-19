@@ -40,6 +40,8 @@ class YahooReader:
                 data[key] = data[key].encode("latin1").decode().replace("\n ", "\n")
         
         data["description"] = data.pop("longBusinessSummary")
+        if "website" in data.keys():
+            data["website"] = data["website"].replace("http", "https")
         data["executives"] = [
             {
                 "name": entry["name"],
