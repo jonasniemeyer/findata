@@ -9,6 +9,8 @@ import requests
 class SECFiling:
     def __init__(self, file: str) -> None:
         self._file = file
+        self._header = self._file[:self._file.find("</SEC-HEADER>")]
+        self._document = self._file[self._file.find("<DOCUMENT>"):]
         self._subject_information, self._filer_information = self._split_header()
         
         self._filer = []
@@ -39,24 +41,24 @@ class SECFiling:
             
         self._form_type = self._parse_form_type()
         self._filing_date = self._parse_filing_date()
+        
+        self._is_html = True if "html" in self._file else False
     
     def _split_header(self):
         
-        header = self._file[:self._file.find("</SEC-HEADER>")]
-        
-        filer_section_start = header.find("FILER:")
+        filer_section_start = self.header.find("FILER:")
         if filer_section_start == -1:
-            filer_section_start = header.find("FILED BY:")   
-        subject_section_start = header.find("SUBJECT COMPANY:")
+            filer_section_start = self.header.find("FILED BY:")   
+        subject_section_start = self.header.find("SUBJECT COMPANY:")
         
         if subject_section_start > filer_section_start:
             raise ValueError("subject section comes after filer section")
         
-        subject_section = header[subject_section_start:filer_section_start]   
+        subject_section = self.header[subject_section_start:filer_section_start]   
         subject_section = subject_section.split("SUBJECT COMPANY:")
         
-        filer_section = header[filer_section_start:]
-        if header.find("FILER:") == -1:
+        filer_section = self.header[filer_section_start:]
+        if self.header.find("FILER:") == -1:
             filer_section = filer_section.split("FILED BY:")[1:]
         else:
             filer_section = filer_section.split("FILER:")[1:]
@@ -107,12 +109,20 @@ class SECFiling:
         return cls(txt)
     
     @property
-    def header_information(self):
-        return self._header_information()
-
-    @property
     def file(self) -> str:
         return self._file
+    
+    @property
+    def header(self) -> str:
+        return self._header
+    
+    @property
+    def document(self) -> str:
+        return self._document
+    
+    @property
+    def header_information(self):
+        return self._header_information()
 
     @property
     def filer(self) -> dict:
@@ -129,6 +139,10 @@ class SECFiling:
     @property
     def filing_date(self) -> str:
         return self._filing_date
+    
+    @property
+    def is_html(self):
+        return self._is_html
 
     def __str__(self) -> str:
         filer_names = [item["name"] for item in self.filer]
@@ -163,4 +177,3 @@ class SECFiling:
                 f"Filer: {'/'.join(filer_names)}; "
                 f"Subject: {'/'.join(subject_names)})"
             )
-
