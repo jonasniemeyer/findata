@@ -177,3 +177,76 @@ class SECFiling:
                 f"Filer: {'/'.join(filer_names)}; "
                 f"Subject: {'/'.join(subject_names)})"
             )
+
+
+class Filing13D(SECFiling):
+    def __init__(self, file: str) -> None:
+        super().__init__(file)
+        self._subject_cusip = self._parse_cusip()
+        self._percentage_acquired = self._parse_percentage_acquired()
+        self._shares_acquired = self._parse_shares_acquired()
+    
+    def _parse_cusip(self) -> str:
+        try:
+            cusip = re.findall("(?i)CUSIP NO\..+([a-z0-9]{9})", self.file)[0]
+        except:
+            cusip = re.findall(
+                "[\( >]*[0-9A-Z]{1}[0-9]{3}[0-9A-Za-z]{2}[- ]*[0-9]{0,2}[- ]*[0-9]{0,1}[\) \n<]",
+                file
+            )[0].strip().replace(" ", "")
+        
+        return cusip
+
+    def _parse_percentage_acquired(self) -> float:
+        found = False
+        for row in self.document.split("\n"):
+            if found is True:
+                percentage = re.findall("([0-9]{1,3}.[0-9]{,2})%", row)[0]
+                percentage = float(percentage) / 100
+                break
+            if re.findall("(?i)PERCENT OF CLASS REPRESENTED BY AMOUNT IN ROW", row):
+                found = True
+                try:
+                    percentage = re.findall("(?i)PERCENT OF CLASS REPRESENTED BY AMOUNT IN ROW.+?([0-9]{1,3}.[0-9]{2})%", row)[0]
+                    percentage = float(percentage) / 100
+                    break
+                except:
+                    pass
+        
+        return percentage
+
+    def _parse_shares_acquired(self) -> int:
+        found = False
+        for row in self.document.split("\n"):
+            if found is True:
+                shares = re.findall("([0-9,]+).+", row)[0]
+                shares = int(shares.replace(",", ""))
+                break
+            if re.findall("(?i)AGGREGATE AMOUNT BENEFICIALLY OWNED BY EACH REPORTING PERSON", row):
+                found = True
+                try:
+                    shares = re.findall("(?i)AGGREGATE AMOUNT BENEFICIALLY OWNED BY EACH REPORTING PERSON.+?([0-9,]+).+", row)[0]
+                    shares = int(shares.replace(",", ""))
+                    break
+                except:
+                    pass
+        
+        return shares
+    
+    @property
+    def subject_cusip(self) -> str:
+        return self._subject_cusip
+    
+    @property
+    def percentage_acquired(self) -> float:
+        return self._percentage_acquired
+    
+    @property
+    def shares_acquired(self) -> int:
+        return self._shares_acquired
+
+class Filing13G(Filing13D):
+    def __init__(self, file: str) -> None:
+        super().__init__(file)
+
+
