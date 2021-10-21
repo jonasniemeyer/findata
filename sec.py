@@ -166,3 +166,91 @@ class SECFiling:
                 f"Subject: {self.subject['name']})"
             )
 
+
+class Filing13D(SECFiling):
+    def __init__(self, file: str) -> None:
+        super().__init__(file)
+        self._subject["name"] = self._parse_name(self._subject_information)
+        self._subject["cik"] = self._parse_cik(self._subject_information)
+        self._subject["cusip"] = self._parse_cusip()
+        try:
+            self._subject["sic_name"], self._subject["sic_code"] = self._parse_sic(self._subject_information)
+        except:
+            self._subject["sic_name"], self._subject["sic_code"] = None, None
+    
+    def _parse_cusip(self) -> str:
+        cusips = re.findall(
+            "[\( >]*([0-9A-Z]{1}[0-9]{3}[0-9A-Za-z]{2}[- ]*[0-9]{0,2}[- ]*[0-9]{0,1})[\) \n<]", self.document
+        )
+        
+        cusips = [item.strip().replace(" ", "").replace("-", "") for item in cusips]
+        
+        return max(cusips, key=len)
+
+    def _parse_percent_acquired(self) -> float:
+        if self.is_html:
+            percentage = re.findall("(?i)PERCENT\s+OF\s+CLASS\s+REPRESENTED\s+BY\s+AMOUNT\s+IN\s+ROW.+?>[^<>]*?([0-9.,]+)(?:</FONT>|</B><B>)?%", self.document.replace("\n", " "))[0]
+        else:
+            percentage = re.findall("(?i)PERCENT\s+OF\s+CLASS\s+REPRESENTED\s+BY\s+AMOUNT\s+IN\s+ROW.+[^<>]*?([0-9.,]+)(?:</FONT>|</B><B>)?%", self.document.replace("\n", " "))[0]
+        percentage = round(float(percentage) / 100, 8)
+        """
+        found = False
+        for row in self.document.split("\n"):
+            if found is True:
+                try:
+                    percentage = re.findall("([0-9]{1,3}.[0-9]{0,2})%", row)[0]
+                    percentage = float(percentage) / 100
+                    break
+                except:
+                    pass
+            if re.findall("(?i)PERCENT OF CLASS REPRESENTED BY AMOUNT IN ROW", row):
+                found = True
+                try:
+                    percentage = re.findall("(?i)PERCENT\n|\sOF\n|\sCLASS\n|\sREPRESENTED\n|\sBY\n|\sAMOUNT\n|\sIN\n|\sROW.+?([0-9]{1,3}.[0-9]{2})%", row)[0]
+                    percentage = float(percentage) / 100
+                    break
+                except:
+                    pass
+        """
+        return percentage
+
+    def _parse_shares_acquired(self) -> int:
+        if self.is_html:
+            shares = re.findall("(?i)AGGREGATE\s+AMOUNT\s+BENEFICIALLY\s+OWNED\s+BY\s+EACH\s+REPORTING\s+PERSON.+?>[^<>]*?([0-9]+,[0-9.,]+)\s*", self.document.replace("\n", " "))[0]
+        else:
+            shares = re.findall("(?i)AGGREGATE\s+AMOUNT\s+BENEFICIALLY\s+OWNED\s+BY\s+EACH\s+REPORTING\s+PERSON.+[^<>]*?([0-9]+,[0-9.,]+)\s*", self.document.replace("\n", " "))[0]
+        shares = int(shares.replace(",", ""))
+        """
+        found = False
+        for row in self.document.split("\n"):
+            if re.findall("(?i)AGGREGATE AMOUNT BENEFICIALLY OWNED BY EACH REPORTING PERSON", row):
+                found = True
+            if found is True:
+                try:
+                    shares = re.findall(">?([0-9,],[0-9,]+)<?", row)[0]
+                    shares = int(shares.replace(",", ""))
+                    break
+                except:
+                    pass
+        """
+        return shares
+    
+    @property
+    def subject_cusip(self) -> str:
+        return self._subject_cusip
+    
+    @property
+    def percent_acquired(self) -> float:
+        if not hasattr(self, "_percent_acquired"):
+            self._percent_acquired = self._parse_percent_acquired()
+        return self._percent_acquired
+    
+    @property
+    def shares_acquired(self) -> int:
+        if not hasattr(self, "_shares_acquired"):
+            self._shares_acquired = self._parse_shares_acquired()
+        return self._shares_acquired
+
+class Filing13G(Filing13D):
+    def __init__(self, file: str) -> None:
+        super().__init__(file)
