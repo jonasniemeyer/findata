@@ -2,6 +2,7 @@ Classes to scrape and access publicly available financial data such as
 - stock prices and fundamentals
 - key data from SEC filings
 - macroeconomic time series
+- futures data
   
 Data sources and series include (*: not yet implemented)
 - *CME (https://www.cmegroup.com/)

@@ -41,7 +41,7 @@ class YahooReader:
         
         data["description"] = data.pop("longBusinessSummary")
         if "website" in data.keys():
-            data["website"] = data["website"].replace("http", "https")
+            data["website"] = data["website"].replace("http:", "https:")
         data["executives"] = [
             {
                 "name": entry["name"],
