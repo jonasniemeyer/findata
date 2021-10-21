@@ -3,18 +3,6 @@ Classes to scrape and access publicly available financial data such as
 - key data from SEC filings
 - macroeconomic time series
 
-- US tickers
-- stock prices, dividends, splits and volume data
-- US fundamental data back to 2005
-- SEC filings, including
-	- 13F Hedge Funds holdings
-	- 13D and 13G acquisition filings
-	- 10K/10Q financial reports back to 2009
-- Kenneth French data sets
-- CBOE VIX futures data
-- CME commodity futures data
-- macroeconomic data
-
 Data sources and series include (*: not yet implemented)
 - SEC (https://www.sec.gov/)
 	- *13F filing data
@@ -31,9 +19,8 @@ Data sources and series include (*: not yet implemented)
 	- Any macroeconomic and financial time series that is available
 - Finra (https://www.finra.org/)
 	- Historical Finra/NYSE margin debt
-- CME (https://www.cmegroup.com/)
-	- Prior day commodity futures data
-	- Historical VIX futures data
+- *CME (https://www.cmegroup.com/)
+	- *Prior day commodity futures data
 - MSCI
 	- Index data of most MSCI indices
 - *World Bank
