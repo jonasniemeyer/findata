@@ -179,8 +179,10 @@ class Filing13D(SECFiling):
             self._subject["sic_name"], self._subject["sic_code"] = None, None
     
     def _parse_cusip(self) -> str:
+        soup = BeautifulSoup(self.document)
+        document_flat = " ".join(soup.get_text().replace("\xa0", " ").split())
         cusips = re.findall(
-            "[\( >]*([0-9A-Z]{1}[0-9]{3}[0-9A-Za-z]{2}[- ]*[0-9]{0,2}[- ]*[0-9]{0,1})[\) \n<]", self.document
+            "([0-9A-Z]{4}[0-9A-Za-z]{2}[- ]*[0-9]{2}[- ]*[0-9])", document_flat
         )
         
         cusips = [item.strip().replace(" ", "").replace("-", "") for item in cusips]
@@ -188,51 +190,17 @@ class Filing13D(SECFiling):
         return max(cusips, key=len)
 
     def _parse_percent_acquired(self) -> float:
-        if self.is_html:
-            percentage = re.findall("(?i)PERCENT\s+OF\s+CLASS\s+REPRESENTED\s+BY\s+AMOUNT\s+IN\s+ROW.+?>[^<>]*?([0-9.,]+)(?:</FONT>|</B><B>)?%", self.document.replace("\n", " "))[0]
-        else:
-            percentage = re.findall("(?i)PERCENT\s+OF\s+CLASS\s+REPRESENTED\s+BY\s+AMOUNT\s+IN\s+ROW.+[^<>]*?([0-9.,]+)(?:</FONT>|</B><B>)?%", self.document.replace("\n", " "))[0]
+        soup = BeautifulSoup(self.document)
+        document_flat = " ".join(soup.get_text().replace("\xa0", " ").split())
+        percentage = re.findall("(?i)PERCENT(?:AGE|)\s*OF\s*CLASS\s*REPRESENTED\s*BY\s+AMOUNT\s*IN\s*ROW.*?\s*([0-9.,]+)\s?%", document_flat)[0]
         percentage = round(float(percentage) / 100, 8)
-        """
-        found = False
-        for row in self.document.split("\n"):
-            if found is True:
-                try:
-                    percentage = re.findall("([0-9]{1,3}.[0-9]{0,2})%", row)[0]
-                    percentage = float(percentage) / 100
-                    break
-                except:
-                    pass
-            if re.findall("(?i)PERCENT OF CLASS REPRESENTED BY AMOUNT IN ROW", row):
-                found = True
-                try:
-                    percentage = re.findall("(?i)PERCENT\n|\sOF\n|\sCLASS\n|\sREPRESENTED\n|\sBY\n|\sAMOUNT\n|\sIN\n|\sROW.+?([0-9]{1,3}.[0-9]{2})%", row)[0]
-                    percentage = float(percentage) / 100
-                    break
-                except:
-                    pass
-        """
         return percentage
 
     def _parse_shares_acquired(self) -> int:
-        if self.is_html:
-            shares = re.findall("(?i)AGGREGATE\s+AMOUNT\s+BENEFICIALLY\s+OWNED\s+BY\s+EACH\s+REPORTING\s+PERSON.+?>[^<>]*?([0-9]+,[0-9.,]+)\s*", self.document.replace("\n", " "))[0]
-        else:
-            shares = re.findall("(?i)AGGREGATE\s+AMOUNT\s+BENEFICIALLY\s+OWNED\s+BY\s+EACH\s+REPORTING\s+PERSON.+[^<>]*?([0-9]+,[0-9.,]+)\s*", self.document.replace("\n", " "))[0]
+        soup = BeautifulSoup(self.document)
+        document_flat = " ".join(soup.get_text().replace("\xa0", " ").split())
+        shares = re.findall("(?i)AGGREGATE\s*AMOUNT\s+BENEFICIALLY\s*OWNED\s*BY\s*(?:EACH|)\s*(?:REPORTING|)\s*PERSON.*?\s*([0-9]+,[0-9,]+)", document_flat)[0]
         shares = int(shares.replace(",", ""))
-        """
-        found = False
-        for row in self.document.split("\n"):
-            if re.findall("(?i)AGGREGATE AMOUNT BENEFICIALLY OWNED BY EACH REPORTING PERSON", row):
-                found = True
-            if found is True:
-                try:
-                    shares = re.findall(">?([0-9,],[0-9,]+)<?", row)[0]
-                    shares = int(shares.replace(",", ""))
-                    break
-                except:
-                    pass
-        """
         return shares
     
     @property
