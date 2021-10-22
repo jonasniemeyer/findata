@@ -19,9 +19,9 @@ Data sources and series include (*: not yet implemented)
 	- Index data of most MSCI indices
 - *OECD
 - *SEC (https://www.sec.gov/)
+	- 13D/G filing data
 	- *13F filing data
-	- *13D/G filing data
-	- *10K/Q filing/fundamental data
+	- *10K/Q filing fundamental data
 - *World Bank
 - Yahoo Finance (https://finance.yahoo.com/)
 	- Stock prices/splits/dividends of most tradable assets

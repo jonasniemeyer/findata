@@ -186,8 +186,8 @@ class Filing13D(SECFiling):
         )
         
         cusips = [item.strip().replace(" ", "").replace("-", "") for item in cusips]
-        
-        return max(cusips, key=len)
+        cusip = max(cusips, key=len)
+        return cusip
 
     def _parse_percent_acquired(self) -> float:
         soup = BeautifulSoup(self.document)
@@ -219,6 +219,81 @@ class Filing13D(SECFiling):
             self._shares_acquired = self._parse_shares_acquired()
         return self._shares_acquired
 
+
 class Filing13G(Filing13D):
     def __init__(self, file: str) -> None:
         super().__init__(file)
+
+
+class Filing13F(SECFiling):
+    def __init__(self, file):
+        super().__init__(file)
+
+    @property
+    def holdings(self) -> float:
+        if not hasattr(self, "_holdings"):
+            self._holdings = self._parse_holdings()
+        return self._holdings
+
+    def _parse_holdings(self, ordered="percentage") -> dict:
+        if self.is_xml:
+            securities = self._get_holdings_xml()
+        else:
+            securities = self._get_holdings_text()
+        
+        holdings = {'holdings': []}
+        for (name, title, cusip, option), (market_value, no_shares) in securities.items():
+            security = {}
+            security['name'] = name
+            security['title'] = title
+            security["cusip"] = cusip
+            security["percentage"] = None
+            security['market_value'] = market_value * 1000
+            security['no_shares'] = int(no_shares)
+            security['option'] = option
+            holdings["holdings"].append(security)
+        
+        holdings['no_holdings'] = len(holdings['holdings'])
+        holdings['portfolio_value'] = sum([value['market_value'] for value in holdings['holdings']])
+
+        for item in holdings['holdings']:
+            item["percentage"] = item["market_value"] / holdings['portfolio_value']
+
+        if ordered not in (None, "name", "title", "cusip", "market_value", "no_shares", "percentage"):
+            raise ValueError('ordered argument must be in (None, "name", "title", "cusip", "market_value", "no_shares", "percentage")')
+
+        if ordered is not None:
+            if ordered in ("name", "title", "cusip"):
+                holdings['holdings'] = sorted(holdings['holdings'], key = lambda item: item[ordered])
+            else:
+                holdings['holdings'] = sorted(holdings['holdings'], key = lambda item: item[ordered], reverse = True)
+        return holdings
+
+    def _get_holdings_xml(self) -> dict:
+        holdings = {}
+        soup = BeautifulSoup(self._document, "lxml")
+        if "ns1:infoTable" in self._document:
+            prefix = "ns1:"
+        else:
+            prefix = ""
+        entries = soup.find_all(f"{prefix}infotable")
+        for entry in entries:
+            name = entry.find(f"{prefix}nameofissuer").text
+            title = entry.find(f"{prefix}titleofclass").text
+            cusip = entry.find(f"{prefix}cusip").text
+            no_shares = entry.find(f"{prefix}sshprnamt").text
+            market_value = entry.find(f"{prefix}value").text
+            type_ = entry.find(f"{prefix}sshprnamttype").text
+            try:
+                option = entry.find(f"{prefix}putcall").text
+            except:
+                option = None
+            if any(item in ("0", "") for item in (no_shares, market_value, cusip)) or len(cusip) != 9:
+                    pass
+            no_shares = float(no_shares.replace(",",""))
+            market_value = float(market_value.replace(",",""))
+            holdings[(name, title, cusip, option)] = holdings.get((name, title, cusip, option), np.array([0, 0])) + np.array([market_value, no_shares])
+        return holdings
+
+    def _get_holdings_text(self) -> dict:
+        raise NotImplementedError
