@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import requests
 
-class SECFiling:
+class _SECFiling:
     def __init__(self, file: str) -> None:
         self._file = file.replace("&nbsp;", " ")
         self._header = self._file[:self._file.find("</SEC-HEADER>")]
@@ -32,6 +32,7 @@ class SECFiling:
         self._filing_date = self._parse_filing_date()
         self._header_information = self._get_header_information()
         self._is_html = True if ("<html>" in self._document or "<HTML>" in self._document) else False
+        self._is_xml = True if ("<xml>" in self._document or "<XML>" in self._document) else False
     
     def _split_header(self):
         
@@ -134,6 +135,10 @@ class SECFiling:
     def is_html(self):
         return self._is_html
 
+    @property
+    def is_xml(self):
+        return self._is_xml
+
     def __str__(self) -> str:
         filer_names = [item["name"] for item in self.filer]
         if not self.subject:
@@ -167,7 +172,7 @@ class SECFiling:
             )
 
 
-class Filing13D(SECFiling):
+class Filing13D(_SECFiling):
     def __init__(self, file: str) -> None:
         super().__init__(file)
         self._subject["name"] = self._parse_name(self._subject_information)
@@ -225,7 +230,7 @@ class Filing13G(Filing13D):
         super().__init__(file)
 
 
-class Filing13F(SECFiling):
+class Filing13F(_SECFiling):
     def __init__(self, file):
         super().__init__(file)
 
@@ -267,6 +272,7 @@ class Filing13F(SECFiling):
                 holdings['holdings'] = sorted(holdings['holdings'], key = lambda item: item[ordered])
             else:
                 holdings['holdings'] = sorted(holdings['holdings'], key = lambda item: item[ordered], reverse = True)
+        
         return holdings
 
     def _get_holdings_xml(self) -> dict:
@@ -283,11 +289,10 @@ class Filing13F(SECFiling):
             cusip = entry.find(f"{prefix}cusip").text
             no_shares = entry.find(f"{prefix}sshprnamt").text
             market_value = entry.find(f"{prefix}value").text
-            type_ = entry.find(f"{prefix}sshprnamttype").text
             try:
                 option = entry.find(f"{prefix}putcall").text
             except:
-                option = None
+                option = ""
             if any(item in ("0", "") for item in (no_shares, market_value, cusip)) or len(cusip) != 9:
                     pass
             no_shares = float(no_shares.replace(",",""))
@@ -296,4 +301,46 @@ class Filing13F(SECFiling):
         return holdings
 
     def _get_holdings_text(self) -> dict:
-        raise NotImplementedError
+        holdings = {}
+        table = "".join([table for table in self._file.split("<TABLE>")[1:]])
+        table = table.replace("\n", "   ")
+        #return table
+        items = re.findall(
+            "(\S+(?:[ ]\S+)*)"
+            "(?:\t+|\s{2,}?)"
+            "(\S+(?:[ ]\S+)*)"
+            "(?:\t+|\s{2,}?)"
+            "([0-9A-Z]{4}[0-9A-Z]{2}[- ]*[0-9]{2}[- ]*[0-9]?)"
+            "(?:\t+|[ ]+)"
+            "(?:\$[ ]?|)([0-9]{1,3}(?:,*[0-9]{3})*)"
+            "(?:\t*|[ ]*)"
+            "([0-9]{1,3}(?:,*[0-9]{3})*)"
+            "(?:\t*|[ ]*)"
+            "(SH|PRN|X)"
+            "(?:\t+|\s+(CALL|PUT|)|)",
+            table
+        )
+        for item in items:
+            name, title, cusip, market_value, no_shares, _type, option = item
+            name = name.replace("\n", "").strip()
+            cusip = cusip.replace(" ", "")
+            no_shares = self._convert_number(no_shares)
+            market_value = self._convert_number(market_value)
+            if any(item in ("0", "") for item in (no_shares, market_value, cusip)) or len(cusip) not in (8,9):
+                continue
+            option = option.strip()
+            if "CALL" in _type:
+                option = "CALL"
+            elif "PUT" in _type:
+                option ="PUT"
+            else:
+                option = ""
+            holdings[(name, title, cusip, option)] = holdings.get((name, title, cusip, option), np.array([0, 0])) + np.array([market_value, no_shares])
+        return holdings
+
+    def _convert_number(self, value: str) -> float:
+        if "(" in value and ")" in value:
+            value = float(value.replace(",","").replace("(", "").replace(")", "")) * (-1)
+        else:
+            value = float(value.replace(",",""))
+        return value
