@@ -134,7 +134,7 @@ class _SECFiling:
     @property
     def is_html(self):
         return self._is_html
-
+    
     @property
     def is_xml(self):
         return self._is_xml
@@ -302,22 +302,20 @@ class Filing13F(_SECFiling):
 
     def _get_holdings_text(self) -> dict:
         holdings = {}
-        table = "".join([table for table in self._file.split("<TABLE>")[1:]])
-        table = table.replace("\n", "   ")
-        #return table
+        table = self.document.replace("\n", "   ")
         items = re.findall(
-            "(\S+(?:[ ]\S+)*)"
-            "(?:\t+|\s{2,}?)"
-            "(\S+(?:[ ]\S+)*)"
-            "(?:\t+|\s{2,}?)"
-            "([0-9A-Z]{4}[0-9A-Z]{2}[- ]*[0-9]{2}[- ]*[0-9]?)"
-            "(?:\t+|[ ]+)"
-            "(?:\$[ ]?|)([0-9]{1,3}(?:,*[0-9]{3})*)"
-            "(?:\t*|[ ]*)"
-            "([0-9]{1,3}(?:,*[0-9]{3})*)"
-            "(?:\t*|[ ]*)"
-            "(SH|PRN|X)"
-            "(?:\t+|\s+(CALL|PUT|)|)",
+        "(?i)([A-Z]\S+(?:[ ]\S+)*)"
+        "(?:[\s\"]+?)"
+        "(\S+?(?:[ ]\S+)*)"
+        "(?:[\s\"]*?)"
+        "([0-9A-Z]{4}[0-9A-Z]{2}[- ]*[0-9]{2}[- ]*?[0-9]?)\.?"
+        "(?:[\s\"]+?)"
+        "(?:\$[ ]*|)([0-9]+(?:[0-9]|,[0-9]{3}|\.[0-9]{1,3})*)\.?"
+        "(?:[\s\"]+?)"
+        "([0-9]{1,3}(?:[0-9]|,[0-9]{3}|\.[0-9]{1,3})*)[x\.]?"
+        "(?:[\s\"]*)"
+        "(SH|PRN|X|)"
+        "\s*?(CALL|PUT|)",
             table
         )
         for item in items:
