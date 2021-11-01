@@ -258,6 +258,12 @@ class Filing13F(_SECFiling):
             security['option'] = option
             holdings["holdings"].append(security)
         
+        #some filers report market value not in thousands
+        prices = [item["market_value"] / item["no_shares"] for item in holdings["holdings"]]
+        if [item > 1000 for item in prices].count(True) / len(prices) > 0.5:
+            for holding in holdings["holdings"]:
+                holding["market_value"] /= 1000
+        
         holdings['no_holdings'] = len(holdings['holdings'])
         holdings['portfolio_value'] = sum([value['market_value'] for value in holdings['holdings']])
 
