@@ -305,7 +305,7 @@ class Filing13F(_SECFiling):
         table = self.document.replace("\n", "   ")
         #return table
         items = re.findall(
-            "(?i)([A-Z]\S+(?:[ ]\S+)*)"
+            "(?i)([A-Z]\S+(?:[ ][A-Z]\S+)*)"
             "(?:[\s\"]+?)"
             "(\S*?(?:[ ]\S+)*?)?"
             "(?:[\s\"]*?)"
