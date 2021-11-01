@@ -309,12 +309,11 @@ class Filing13F(_SECFiling):
     def _get_holdings_text(self) -> dict:
         holdings = {}
         table = self.document.replace("\n", "   ")
-        #return table
         items = re.findall(
-            "(?i)([A-Z]\S+(?:[ ][A-Z]\S+)*)"
+            "(?i)([A-Z]\S+(?:[ ]\S+?[A-Z]\S+)*)"
             "(?:[\s\"]+?)"
             "(\S*?(?:[ ]\S+)*?)?"
-            "(?:[\s\"]*?)"
+            "(?:[\s\"]*)"
             "([0-9A-Z]{4}[0-9A-Z]{2}[- ]*[0-9]{2}[- ]*?[0-9]?)\.?"
             "(?:[\s\"]+?)"
             "(?:\$[ ]*|)([0-9]+(?:[0-9]|,[0-9]{3}|\.[0-9]{1,3})*)\.?"
@@ -322,13 +321,14 @@ class Filing13F(_SECFiling):
             "([0-9]{1,3}(?:[0-9]|,[0-9]{3}|\.[0-9]{1,3})*)[x\.]?"
             "(?:[\s\"]*)"
             "(SH|PRN|X|SHRS|)"
-            "\s*?(CALL|PUT|)",
+            "\s*?"
+            "(CALL|PUT|)",
             table
         )
         for item in items:
             name, title, cusip, market_value, no_shares, _type, option = item
             name = name.replace("\n", "").strip()
-            cusip = cusip.replace(" ", "")
+            cusip = cusip.replace(" ", "").replace("-", "")
             no_shares = self._convert_number(no_shares)
             market_value = self._convert_number(market_value)
             if any(item in ("0", "") for item in (no_shares, market_value, cusip)) or len(cusip) not in (8,9):
