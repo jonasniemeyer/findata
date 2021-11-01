@@ -15,6 +15,7 @@ class YahooReader:
     
     _main_url = "https://query1.finance.yahoo.com/v10/finance/quoteSummary/{}"
     _price_url = "https://query1.finance.yahoo.com/v8/finance/chart/{}"
+    _estimates_url = "https://finance.yahoo.com/quote{}/analysis"
     _options_url = "https://query1.finance.yahoo.com/v7/finance/options/{}"
     _esg_ts_url = "https://query1.finance.yahoo.com/v1/finance/esgChart"
 
@@ -55,8 +56,13 @@ class YahooReader:
             for entry in data["companyOfficers"]
         ]
         data.pop("companyOfficers")
-        
         return data
+
+    def logo(self) -> bytes:
+        base_url = "https://logo.clearbit.com/"
+        url = base_url + self.profile()["website"]
+        response = requests.get(url=url, headers=_headers).content
+        return response
     
     def historical_data(
         self,
