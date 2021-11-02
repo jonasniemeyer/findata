@@ -30,6 +30,10 @@ class _SECFiling:
             
         self._form_type = self._parse_form_type()
         self._filing_date = self._parse_filing_date()
+        try:
+            self._period_date = self._parse_period_date()
+        except:
+            self._period_date = self._filing_date
         self._header_information = self._get_header_information()
         self._is_html = True if ("<html>" in self._document or "<HTML>" in self._document) else False
         self._is_xml = True if ("<xml>" in self._document or "<XML>" in self._document) else False
@@ -91,6 +95,14 @@ class _SECFiling:
         date = dt.date(year, month, day).isoformat()
         return date
 
+    def _parse_period_date(self) -> str:
+        date = re.findall("CONFORMED PERIOD OF REPORT:\t([0-9]+)", self._file)[0]
+        year = int(date[:4])
+        month = int(date[4:6])
+        day = int(date[6:])
+        date = dt.date(year, month, day).isoformat()
+        return date
+
     @classmethod
     def from_url(cls, url: str):
         txt = requests.get(
@@ -130,6 +142,10 @@ class _SECFiling:
     @property
     def filing_date(self) -> str:
         return self._filing_date
+
+    @property
+    def period_date(self) -> str:
+        return self._period_date
     
     @property
     def is_html(self):
@@ -184,7 +200,7 @@ class Filing13D(_SECFiling):
             self._subject["sic_name"], self._subject["sic_code"] = None, None
     
     def _parse_cusip(self) -> str:
-        soup = BeautifulSoup(self.document)
+        soup = BeautifulSoup(self.document, "lxml")
         document_flat = " ".join(soup.get_text().replace("\xa0", " ").split())
         cusips = re.findall(
             "([0-9A-Z]{4}[0-9A-Za-z]{2}[- ]*[0-9]{2}[- ]*[0-9])", document_flat
@@ -195,14 +211,14 @@ class Filing13D(_SECFiling):
         return cusip
 
     def _parse_percent_acquired(self) -> float:
-        soup = BeautifulSoup(self.document)
+        soup = BeautifulSoup(self.document, "lxml")
         document_flat = " ".join(soup.get_text().replace("\xa0", " ").split())
         percentage = re.findall("(?i)PERCENT(?:AGE|)\s*OF\s*CLASS\s*REPRESENTED\s*BY\s+AMOUNT\s*IN\s*ROW.*?\s*([0-9.,]+)\s?%", document_flat)[0]
         percentage = round(float(percentage) / 100, 8)
         return percentage
 
     def _parse_shares_acquired(self) -> int:
-        soup = BeautifulSoup(self.document)
+        soup = BeautifulSoup(self.document, "lxml")
         document_flat = " ".join(soup.get_text().replace("\xa0", " ").split())
         shares = re.findall("(?i)AGGREGATE\s*AMOUNT\s+BENEFICIALLY\s*OWNED\s*BY\s*(?:EACH|)\s*(?:REPORTING|)\s*PERSON.*?\s*([0-9]+,[0-9,]+)", document_flat)[0]
         shares = int(shares.replace(",", ""))
