@@ -9,6 +9,7 @@ from finance_data.utils import (
     camel_to_space
 )
 
+
 class YahooReader:
     _crumb_url = "https://query1.finance.yahoo.com/v1/test/getcrumb"
     _currencies_url = "https://query1.finance.yahoo.com/v1/finance/currencies"
@@ -28,7 +29,7 @@ class YahooReader:
         
     def profile(self) -> dict:        
         try:
-            data = self._stored_data["assetProfile"]
+            data = self._stored_data["assetProfile"].copy()
         except:
             raise DatasetError(f"no profile found for ticker {self.ticker}")
         
