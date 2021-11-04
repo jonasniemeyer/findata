@@ -3,6 +3,7 @@ import numpy as np
 import datetime as dt
 from finance_data.utils import _headers
 from bs4 import BeautifulSoup
+from collections import Counter
 import pandas as pd
 import requests
 
@@ -205,10 +206,9 @@ class Filing13D(_SECFiling):
         cusips = re.findall(
             "([0-9A-Z]{4}[0-9A-Za-z]{2}[- ]*[0-9]{2}[- ]*[0-9])", document_flat
         )
-        
         cusips = [item.strip().replace(" ", "").replace("-", "") for item in cusips]
-        cusip = max(cusips, key=len)
-        return cusip
+        counter = Counter(cusips)
+        return counter.most_common(1)[0][0]
 
     def _parse_percent_acquired(self) -> float:
         soup = BeautifulSoup(self.document, "lxml")
@@ -226,7 +226,7 @@ class Filing13D(_SECFiling):
     
     @property
     def subject_cusip(self) -> str:
-        return self._subject_cusip
+        return self.subject["cusip"]
     
     @property
     def percent_acquired(self) -> float:
