@@ -2,13 +2,13 @@ import datetime as dt
 import pandas as pd
 import numpy as np
 import requests
+import re
 from finance_data.utils import (
     TickerError,
     DatasetError,
     _headers,
     camel_to_space
 )
-
 
 class YahooReader:
     _crumb_url = "https://query1.finance.yahoo.com/v1/test/getcrumb"
@@ -20,8 +20,24 @@ class YahooReader:
     _options_url = "https://query1.finance.yahoo.com/v7/finance/options/{}"
     _esg_ts_url = "https://query1.finance.yahoo.com/v1/finance/esgChart"
 
-    def __init__(self, ticker) -> None:
-        self._ticker = ticker.upper()
+    def __init__(
+        self,
+        ticker: str = None,
+        isin: str = None
+    ) -> None:
+        if ticker:
+            self._ticker = ticker.upper()
+        elif isin:
+            response = requests.get(
+                url = f"https://markets.businessinsider.com/ajax/SearchController_Suggest?max_results=1&query={isin}",
+                headers = _headers
+            ).text
+            try:
+                self._ticker = re.findall(f"\|{isin}\|([A-Z0-9]+)\|", response)[0]
+            except IndexError as e:
+                raise ValueError("Cannot find a ticker that belongs to the given isin")
+        else:
+            raise ValueError("Either ticker or isin has to be specified")
         self._stored_data = self._get_stored_data()
         
         self._security_type = self._stored_data["quoteType"]["quoteType"]
@@ -784,7 +800,7 @@ class YahooReader:
                 headers = _headers
             ).text
             try:
-                self._isin = re.findall(f"{ticker_dot}\|([A-Za-z0-9]+)\|{ticker_dot}", response)[0]
+                self._isin = re.findall(f"{ticker_dot}\|([A-Z0-9]+)\|{ticker_dot}", response)[0]
             except IndexError:
                 self._isin = None
         return self._isin
