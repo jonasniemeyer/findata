@@ -774,3 +774,17 @@ class YahooReader:
     @property
     def security_type(self):
         return self._security_type
+
+    @property
+    def isin(self):
+        if not hasattr(self, "_isin"):
+            ticker_dot = self.ticker.replace('-', '.')
+            response = requests.get(
+                url = f"https://markets.businessinsider.com/ajax/SearchController_Suggest?max_results=1&query={ticker_dot}",
+                headers = _headers
+            ).text
+            try:
+                self._isin = re.findall(f"{ticker_dot}\|([A-Za-z0-9]+)\|{ticker_dot}", response)[0]
+            except IndexError:
+                self._isin = None
+        return self._isin
