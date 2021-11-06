@@ -68,3 +68,26 @@ def margin_debt():
         "nyse old": data["nyse old"] * 1_000_000
     }
     return data
+
+
+def get_aqr_factors(frequency) -> dict:
+    if frequency not in ("daily", "monthly"):
+        raise ValueError("frequency must be daily or monthly")
+    dfs = {}
+    for name, factor in {
+        "QMJ Factors": "QMJ",
+        "MKT": "MKT",
+        "SMB": "SMB",
+        "HML FF": "HML",
+        "HML Devil": "HML Devil",
+        "UMD": "UMD",
+        "RF": "RF"
+    }.items():
+        df = pd.read_excel(
+            f"https://images.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Quality-Minus-Junk-Factors-{frequency}.xlsx",
+            skiprows=range(18),
+            index_col=0,
+            sheet_name = name
+        )
+        dfs[factor] = df
+    return dfs
