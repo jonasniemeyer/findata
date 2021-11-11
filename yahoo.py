@@ -7,7 +7,8 @@ from finance_data.utils import (
     TickerError,
     DatasetError,
     _headers,
-    camel_to_space
+    camel_to_space,
+    placeholder_logo
 )
 
 class YahooReader:
@@ -76,9 +77,15 @@ class YahooReader:
         return data
 
     def logo(self) -> bytes:
-        base_url = "https://logo.clearbit.com/"
-        url = base_url + self.profile()["website"]
-        response = requests.get(url=url, headers=_headers).content
+        response = requests.get(
+            url = f"https://storage.googleapis.com/iexcloud-hl37opg/api/logos/{self.ticker.replace('-', '.')}.png",
+            headers = _headers
+        ).content
+        if response == placeholder_logo:
+            response = requests.get(
+                url = f"https://logo.clearbit.com/{self.profile()['website']}",
+                headers = _headers
+            ).content
         return response
     
     def historical_data(
