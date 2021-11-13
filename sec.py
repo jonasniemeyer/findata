@@ -204,8 +204,12 @@ class Filing13D(_SECFiling):
         soup = BeautifulSoup(self.document, "lxml")
         document_flat = " ".join(soup.get_text().replace("\xa0", " ").split())
         cusips = re.findall(
-            "([0-9A-Z]{4}[0-9A-Za-z]{2}[- ]*[0-9]{2}[- ]*[0-9])", document_flat
+            "(?i)([0-9A-Z]{1}[0-9]{2}[- ]*[0-9][0-9A-Za-z][- ]*[0-9A-Za-z][- ]*[0-9]{0,2}[- ]*[0-9]{0,1})[\s\-_]*\(CUSIP Number\)", document_flat
         )
+        if len(cusips) == 0:
+            cusips = re.findall(
+                "(?i)Cusip (?:No|Number)\s{0,1}(?:\:|\.)\s*([0-9A-Z]{1}[0-9]{2}[- ]*[0-9][0-9A-Za-z][- ]*[0-9A-Za-z][- ]*[0-9]{0,2}[- ]*[0-9]{0,1})", document_flat
+            )
         cusips = [item.strip().replace(" ", "").replace("-", "") for item in cusips]
         counter = Counter(cusips)
         return counter.most_common(1)[0][0]
@@ -220,7 +224,7 @@ class Filing13D(_SECFiling):
     def _parse_shares_acquired(self) -> int:
         soup = BeautifulSoup(self.document, "lxml")
         document_flat = " ".join(soup.get_text().replace("\xa0", " ").split())
-        shares = re.findall("(?i)AGGREGATE\s*AMOUNT\s+BENEFICIALLY\s*OWNED\s*BY\s*(?:EACH|)\s*(?:REPORTING|)\s*PERSON.*?\s*([0-9]+,[0-9,]+)", document_flat)[0]
+        shares = re.findall("(?i)(?:AGGREGATE|)\s*AMOUNT\s+(?:BENEFICIALLY|)\s*OWNED\s*BY\s*(?:EACH|)\s*(?:REPORTING|)\s*PERSON.*?\s*([0-9]+?,?[0-9,]+)", document_flat)[0]
         shares = int(shares.replace(",", ""))
         return shares
     
