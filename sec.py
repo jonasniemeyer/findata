@@ -40,7 +40,6 @@ class _SECFiling:
         self._is_xml = True if ("<xml>" in self._document or "<XML>" in self._document) else False
     
     def _split_header(self):
-        
         filer_section_start = self.header.find("FILER:")
         if filer_section_start == -1:
             filer_section_start = self.header.find("FILED BY:")
@@ -61,13 +60,13 @@ class _SECFiling:
         return subject_section, filer_section
 
     def _get_header_information(self) -> dict:
-        self.company_information = {}
-        self.company_information["filer"] = self.filer
-        self.company_information["subject"] = self.subject
-        self.company_information["form_type"], self.company_information["amendment"] = self.form_type
-        self.company_information["filing_date"] = self.filing_date
-        self.company_information["period_date"] = self.period_date
-        return self.company_information
+        information = {}
+        information["filer"] = self.filer
+        information["subject"] = self.subject
+        information["form_type"], information["amendment"] = self.form_type
+        information["filing_date"] = self.filing_date
+        information["period_date"] = self.period_date
+        return information
 
     def _parse_name(self, section) -> str:
         name = re.findall("COMPANY CONFORMED NAME:\t{3}(.+)", section)[0]
