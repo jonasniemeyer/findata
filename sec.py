@@ -66,6 +66,7 @@ class _SECFiling:
         self.company_information["subject"] = self.subject
         self.company_information["form_type"], self.company_information["amendment"] = self.form_type
         self.company_information["filing_date"] = self.filing_date
+        self.company_information["period_date"] = self.period_date
         return self.company_information
 
     def _parse_name(self, section) -> str:
