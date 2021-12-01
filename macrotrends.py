@@ -51,7 +51,7 @@ class MacrotrendsReader:
                 self.frequency
             )
 
-    def open_website(self, browser="Chrome", url=None):
+    def open_website(self, browser="chrome", url=None):
         """
         Opens the website and the url with the according webdriver and extracts the necessary items:
         1. slider object
@@ -61,7 +61,7 @@ class MacrotrendsReader:
         The driver waits for a cookie button to appear, clicks it, and then moves to the slider of the table
         """
         if not hasattr(self, "driver"):
-            if browser == "Chrome":
+            if browser == "chrome":
                 self.driver = webdriver.Chrome()
             else:
                 raise NotImplementedError
@@ -102,14 +102,14 @@ class MacrotrendsReader:
             for statement in ("income-statement", "balance-sheet", "cash-flow-statement"):
                 href_url = self.url.replace("financial-statement", statement)
                 self.open_website(url = href_url)
-                data = data | {self.conversion[statement]: self._parse()}
+                data = data | {self.conversion[statement]: self._parse_table()}
         else:
-            data = self._parse()
+            data = self._parse_table()
         self.driver.quit()
 
         return data
 
-    def _parse(self) -> dict:
+    def _parse_table(self) -> dict:
         """
         Parses the table and returns a dictionary of dates as keys and dictionaries as values,
         each having the variables as keys and the data of the variable at the respective date as values

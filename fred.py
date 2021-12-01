@@ -27,7 +27,7 @@ class FREDReader:
             params = parameters
         ).text
 
-        df = pd.read_csv(StringIO(response.decode()), index_col=0)
+        df = pd.read_csv(StringIO(response), index_col=0)
         df.index = pd.to_datetime(df.index)
         if timestamps:
             df.index = [

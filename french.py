@@ -90,8 +90,7 @@ class FrenchReader:
         datasets = [a_tag.get("href") for a_tag in soup.find_all("a")]
         datasets = [
             dataset.replace("ftp/", "").replace("_CSV.zip", "") for dataset in datasets
-            if dataset is not None
-            and dataset.endswith("_CSV.zip")
+            if dataset is not None and dataset.endswith("_CSV.zip")
         ]
         return datasets
     

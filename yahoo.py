@@ -393,7 +393,7 @@ class YahooReader:
             url = self._options_url.format(self.ticker),
             headers = _headers,
             params = parameters
-        ).json()  
+        ).json()
         
         try:
             options_list = options_list["optionChain"]["result"][0]["options"]
