@@ -1,7 +1,7 @@
 import re
 import numpy as np
 import datetime as dt
-from finance_data.utils import _headers
+from finance_data.utils import HEADERS
 from bs4 import BeautifulSoup
 from collections import Counter
 import pandas as pd
@@ -108,7 +108,7 @@ class _SECFiling:
     def from_url(cls, url: str):
         txt = requests.get(
             url = url,
-            headers = _headers
+            headers = HEADERS
         ).text
         return cls(txt)
     

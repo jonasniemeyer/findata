@@ -2,10 +2,10 @@ import requests
 from bs4 import BeautifulSoup
 import datetime as dt
 import pandas as pd
-from finance_data.utils import _headers
+from finance_data.utils import HEADERS
 
 def margin_debt():
-    url = "https://www.finra.org/investors/learn-to-invest/advanced-investing/margin-statistics"
+    dataset_url = "https://www.finra.org/investors/learn-to-invest/advanced-investing/margin-statistics"
     data = {
         "combined new": [],
         "finra old": [],
@@ -13,7 +13,7 @@ def margin_debt():
         "combined old": []
     }
     
-    html = requests.get(url = url, headers = _headers).text
+    html = requests.get(url = dataset_url, headers = HEADERS).text
     
     finra = html.index("FINRA Statistics (shown in $ millions)")
     nyse = html.index("NYSE Statistics (shown in $ millions)")

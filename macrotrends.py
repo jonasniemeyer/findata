@@ -7,7 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from finance_data.utils import (
     TickerError,
-    macrotrends_conversion
+    MACROTRENDS_CONVERSION
 )
 
 class MacrotrendsReader:
@@ -142,7 +142,7 @@ class MacrotrendsReader:
                 var_name = cell.find("a").text
             except:
                 var_name = cell.find("span").text
-            data[macrotrends_conversion[var_name]] = {}
+            data[MACROTRENDS_CONVERSION[var_name]] = {}
             variables.append(var_name)
         loop_control = 0
         while self._scrollbar_width > 0:
@@ -169,13 +169,13 @@ class MacrotrendsReader:
                     var_name = variables[row_index]
                     if value == "-":
                         value = None
-                        data[macrotrends_conversion[var_name]][date] = value
+                        data[MACROTRENDS_CONVERSION[var_name]][date] = value
                         continue
                     if var_name not in ("Basic EPS", "EPS - Earnings Per Share"):
                         value = int(float(value.strip("$").replace(".", "").replace(",", ".")) * 1_000_000)
                     else:
                         value = float(value.strip("$"))
-                    data[macrotrends_conversion[var_name]][date] = value
+                    data[MACROTRENDS_CONVERSION[var_name]][date] = value
             if self._slider_sensitivity is None:
                 break
         return data

@@ -3,7 +3,7 @@ import datetime as dt
 import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
-from finance_data.utils import _headers
+from finance_data.utils import HEADERS
 
 class MSCIReader:
 
@@ -74,7 +74,7 @@ class MSCIReader:
         response = requests.get(
             url = self._base_url,
             params = parameters,
-            headers = _headers
+            headers = HEADERS
         )
 
         url = response.url
@@ -104,7 +104,7 @@ class MSCIReader:
     def indices_list(cls) -> pd.DataFrame:
         html = requests.get(
             url = "https://www.msci.com/ticker-codes",
-            headers = _headers
+            headers = HEADERS
         ).content
 
         soup = BeautifulSoup(html, "lxml")

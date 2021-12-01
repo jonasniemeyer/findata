@@ -6,9 +6,9 @@ import re
 from finance_data.utils import (
     TickerError,
     DatasetError,
-    _headers,
-    camel_to_space,
-    placeholder_logo
+    HEADERS,
+    CAMEL_TO_SPACE,
+    PLACEHOLDER_LOGO
 )
 
 class YahooReader:
@@ -31,7 +31,7 @@ class YahooReader:
         elif isin:
             response = requests.get(
                 url = f"https://markets.businessinsider.com/ajax/SearchController_Suggest?max_results=1&query={isin}",
-                headers = _headers
+                headers = HEADERS
             ).text
             try:
                 self._ticker = re.findall(f"\|{isin}\|([A-Z0-9]+)\|", response)[0]
@@ -79,12 +79,12 @@ class YahooReader:
     def logo(self) -> bytes:
         response = requests.get(
             url = f"https://storage.googleapis.com/iexcloud-hl37opg/api/logos/{self.ticker.replace('-', '.')}.png",
-            headers = _headers
+            headers = HEADERS
         ).content
-        if response == placeholder_logo:
+        if response == PLACEHOLDER_LOGO:
             response = requests.get(
                 url = f"https://logo.clearbit.com/{self.profile()['website']}",
-                headers = _headers
+                headers = HEADERS
             ).content
         return response
     
@@ -159,7 +159,7 @@ class YahooReader:
         data = requests.get(
             url = self._price_url.format(self.ticker),
             params = parameters,
-            headers = _headers
+            headers = HEADERS
         )
 
         url = data.url
@@ -391,7 +391,7 @@ class YahooReader:
 
         options_list = requests.get(
             url = self._options_url.format(self.ticker),
-            headers = _headers,
+            headers = HEADERS,
             params = parameters
         ).json()
         
@@ -701,7 +701,7 @@ class YahooReader:
         data = {}
         for entry in raw_data:
             date = (entry["endDate"]["raw"] if timestamps else entry["endDate"]["fmt"])
-            points = {camel_to_space.sub(" ", key).lower():(value["raw"] if "raw" in value else np.NaN) 
+            points = {CAMEL_TO_SPACE.sub(" ", key).lower():(value["raw"] if "raw" in value else np.NaN) 
                       for key,value in entry.items() 
                       if key not in ("maxAge", "endDate")}
             data[date] = points
@@ -756,7 +756,7 @@ class YahooReader:
         data = requests.get(
             url = self._main_url.format(self.ticker),
             params = parameters,
-            headers = _headers
+            headers = HEADERS
         ).json()
 
         if data["quoteSummary"]["error"] is not None:
@@ -770,7 +770,7 @@ class YahooReader:
     def crumb(cls) -> str:
         data = requests.get(
             url = cls._crumb_url,
-            headers = _headers
+            headers = HEADERS
         ).text
         
         return data
@@ -779,7 +779,7 @@ class YahooReader:
     def currencies(cls) -> dict:
         data = requests.get(
             url = cls._currencies_url,
-            headers = _headers
+            headers = HEADERS
         ).json()
         
         data = data["currencies"]["result"]
@@ -804,7 +804,7 @@ class YahooReader:
             ticker_dot = self.ticker.replace('-', '.')
             response = requests.get(
                 url = f"https://markets.businessinsider.com/ajax/SearchController_Suggest?max_results=1&query={ticker_dot}",
-                headers = _headers
+                headers = HEADERS
             ).text
             try:
                 self._isin = re.findall(f"{ticker_dot}\|([A-Z0-9]+)\|{ticker_dot}", response)[0]

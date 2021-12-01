@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 import datetime as dt
 import re
-from finance_data.utils import _headers
+from finance_data.utils import HEADERS
 
 class FrenchReader:
     _base_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
@@ -20,7 +20,7 @@ class FrenchReader:
           
     def read(self) -> dict:
         time_series = {}
-        response = requests.get(url = self._dataset_url.format(self.dataset), headers = _headers).content
+        response = requests.get(url = self._dataset_url.format(self.dataset), headers = HEADERS).content
         data = self._read_zip(response)
         data = data.split("\r\n\r\n")
         for chunk in data:
