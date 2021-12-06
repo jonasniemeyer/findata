@@ -4,7 +4,7 @@ import numpy as np
 import datetime as dt
 from bs4 import BeautifulSoup
 from io import StringIO
-from finance_data.utils import _headers
+from finance_data.utils import HEADERS
 
 class FREDReader:
     _description_url = "https://fred.stlouisfed.org/series/{}"
@@ -23,7 +23,7 @@ class FREDReader:
 
         response = requests.get(
             url = self._dataset_url, 
-            headers = _headers,
+            headers = HEADERS,
             params = parameters
         ).text
 
@@ -62,7 +62,7 @@ class FREDReader:
     def _get_description_data(self) -> dict:        
         html = requests.get(
             url = self._description_url.format(self.dataset), 
-            headers = _headers
+            headers = HEADERS
         ).text
 
         soup = BeautifulSoup(html, "lxml")
