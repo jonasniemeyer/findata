@@ -8,7 +8,8 @@ from finance_data.utils import (
     DatasetError,
     HEADERS,
     CAMEL_TO_SPACE,
-    PLACEHOLDER_LOGO
+    PLACEHOLDER_LOGO,
+    SERVER_ERROR_MESSAGE
 )
 
 class YahooReader:
@@ -81,11 +82,14 @@ class YahooReader:
             url = f"https://storage.googleapis.com/iexcloud-hl37opg/api/logos/{self.ticker.replace('-', '.')}.png",
             headers = HEADERS
         ).content
-        if response == PLACEHOLDER_LOGO:
-            response = requests.get(
-                url = f"https://logo.clearbit.com/{self.profile()['website']}",
-                headers = HEADERS
-            ).content
+        if response == PLACEHOLDER_LOGO or response == SERVER_ERROR_MESSAGE:
+            if "website" in self.profile().keys():
+                response = requests.get(
+                    url = f"https://logo.clearbit.com/{self.profile()['website']}",
+                    headers = HEADERS
+                ).content
+            else:
+                response = b"\n"
         return response
     
     def historical_data(
