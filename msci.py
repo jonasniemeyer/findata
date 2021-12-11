@@ -78,7 +78,6 @@ class MSCIReader:
         )
 
         url = response.url
-
         dct = response.json()
 
         if "error_code" in dct.keys():
@@ -114,8 +113,9 @@ class MSCIReader:
 
         data = pd.read_excel(href, engine = "openpyxl")
 
-        data = data[data["MSCI index code"].notna()]
-        data = data[["MSCI index code", "msci_index_name", "index_variant", "index_currency", "ticker_vendor", "ticker_type", "ticker_code"]]
+        data = data[data["Index Code"].notna()]
+        data = data[["Index Code", "Index Name", "Variant", "Currency", "Vendor", "Ticker Type", "Ticker Code"]]
         data.columns = ["code", "name", "variant", "currency", "vendor", "type", "ticker_code"]
+        data["code"] = data["code"].astype("int32")
 
         return data
