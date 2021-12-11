@@ -11,9 +11,12 @@ class MSCIReader:
 
     def __init__(
         self,
-        index_code,
-        index_variant,
-        index_currency
+        index_codes,
+        index_variant = "STRD",
+        index_currency = "USD",
+        start = dt.date(1969, 1, 1),
+        end = dt.date.today(),
+        frequency = "END_OF_MONTH"
     ):
         """
         index_code : int, str or an array-like object of strings or integers
@@ -26,49 +29,60 @@ class MSCIReader:
         
         index_currency : str
             sets the currency of the time-series
-            Note: only USD is working at the moment        
-        """
-        self.code = index_code
-        self.variant = index_variant
-        self.currency = index_currency
+            Note: only USD is working at the moment    
 
-    def historical_data(
-        self,
-        start = None,
-        end = None,
-        frequency = None
-    ) -> dict:
-        """
-        start : int, str, datetime.date or datetime.datetime
+        start : int, str, datetime.date
             If the start argument is passed as an integer or string, the format has to be YYYYmmdd.
             Example: "20121120" or 20121120 corresponds to the date 2012-11-20 in ISO-format
         
-        end : int, str, datetime.date or datetime.datetime
+        end : int, str, datetime.date
             If the end argument is passed as an integer or string, the format has to be YYYYmmdd.
             Example: "20121120" or 20121120 corresponds to the date 2012-11-20 in ISO-format
         
         frequency : str
             determines the sampling frequency of the data, e.g. monthly
-            Note: only daily is working at the moment
+            Note: only daily is working at the moment    
         """
+        self.codes = index_codes
+        self.variant = index_variant 
+        self.currency = index_currency
 
-        if isinstance(start, (dt.date, dt.datetime)):
-            start = int(f"{start.year}{start.month:02}{start.day:02}")
-    
+        if isinstance(start, dt.date):
+            self.start = start
+        elif isinstance(start, str):
+            self.start = dt.date.fromisoformat(start)
+        elif isinstance(start, int):
+            start = str(start)
+            self.start = dt.date(int(start[:4]), int(start[4:6]), int(start[6:]))
+        
+        if isinstance(end, dt.date):
+            self.end = end
+        elif isinstance(end, str):
+            self.end = dt.date.fromisoformat(end)
+        elif isinstance(end, int):
+            end = str(end)
+            self.end = dt.date(int(end[:4]), int(end[4:6]), int(end[6:]))
+        
+        self.frequency = frequency
+
+    def historical_data(
+        self,
+    ) -> dict:
+
+        start = int(f"{self.start.year}{self.start.month:02}{self.start.day:02}")
         if start < 19690101:
             print("Warning: start value cannot be earlier than 1969-01-01, hence it is set to 1969-01-01")
             start = 19690101
 
-        if isinstance(end, (dt.date, dt.datetime)):
-            end = int(f"{end.year}{end.month:02}{end.day:02}")
+        end = int(f"{self.end.year}{self.end.month:02}{self.end.day:02}")
 
         parameters = {
             "currency_symbol": self.currency,
             "index_variant": self.variant,
             "start_date": start,
             "end_date": end,
-            "data_frequency": frequency,
-            "index_codes": self.code
+            "data_frequency": self.frequency,
+            "index_codes": self.codes
         }
 
         response = requests.get(
@@ -78,6 +92,7 @@ class MSCIReader:
         )
 
         url = response.url
+        print(url)
         dct = response.json()
 
         if "error_code" in dct.keys():
@@ -87,7 +102,7 @@ class MSCIReader:
         df.set_index("calc_date", drop=True, inplace=True)
         df.index = pd.to_datetime(df.index, format=("%Y%m%d")).date
         df.index.name = "date"
-        df.columns = [self.code]
+        df.columns = [self.codes]
 
         return {
             "data": df,
