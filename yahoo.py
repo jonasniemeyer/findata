@@ -70,7 +70,7 @@ class YahooReader:
                 "born": entry["yearBorn"] if "yearBorn" in entry else None,
                 "salary": entry["totalPay"]["raw"] if "totalPay" in entry else None,
                 "exersized_options": entry["exercisedValue"]["raw"],
-                "unexcersized_options": entry["unexercisedValue"]["raw"]
+                "unexersized_options": entry["unexercisedValue"]["raw"]
             }
             for entry in data["companyOfficers"]
         ]
@@ -79,7 +79,7 @@ class YahooReader:
 
     def logo(self) -> bytes:
         response = requests.get(
-            url = f"https://storage.googleapis.com/iexcloud-hl37opg/api/logos/{self.ticker.replace('-', '.')}.png",
+            url = f"https://storage.googleapis.com/iex/api/logos/{self.ticker.replace('-', '.')}.png",
             headers = HEADERS
         ).content
         if response == PLACEHOLDER_LOGO or response == SERVER_ERROR_MESSAGE:
@@ -360,7 +360,6 @@ class YahooReader:
         date = None,
         strike_min = None,
         strike_max = None,
-        straddle = False,
         timestamps = False
     ) -> dict:
         """
@@ -376,10 +375,6 @@ class YahooReader:
             Sets the maximum strike price so that only option data with strike prices below the maximum strike are returned
             default : None
         
-        straddle: bool
-            If True, call and put data with the same strike price and maturity date is merged together to form a straddle
-            default : False
-        
         timestamps : bool
             If True, dict keys are isoformatted date strings. If False, dict keys are unix timestamps
             default: False
@@ -389,8 +384,7 @@ class YahooReader:
             "getAllData": True,
             "date": date,
             "strikeMin": strike_min,
-            "strikeMax": strike_max,
-            "straddle": straddle
+            "strikeMax": strike_max
         }
 
         options_list = requests.get(
@@ -404,21 +398,48 @@ class YahooReader:
         except:
             raise TickerError(f"no options found for ticker {self.ticker}")
         
-        data = {}
-        for item in options_list:
-            if straddle:
-                if timestamps:
-                    date = (dt.date(1970, 1, 1) + dt.timedelta(seconds = item["expirationDate"])).isoformat()
-                else:
-                    date = item["expirationDate"]
-                data[date] = {"straddles": item["straddles"]}
+        options = {"calls": [], "puts": []}
+        for dct in options_list:
+            if timestamps:
+                date = dct["expirationDate"]
             else:
-                data[date] = {
-                    "calls": item["calls"],
-                    "puts": item["puts"]
-                }
+                date = (dt.date(1970, 1, 1) + dt.timedelta(seconds = dct["expirationDate"])).isoformat()
+
+            for call in dct["calls"]:
+                data = {}
+                data["maturity"] = date
+                data["strike"] = call["strike"]
+                data["symbol"] = call["contractSymbol"]
+                data["last_price"] = call["lastPrice"]
+                data["bid"] = call["bid"]
+                data["ask"] = call["ask"]
+                if "volume" in call.keys():
+                    data["volume"] = call["volume"]
+                else:
+                    data["volume"] = 0
+                data["implied_volatility"] = call["impliedVolatility"]
+                data["itm"] = call["inTheMoney"]
+            
+                options["calls"].append(data)
+            
+            for put in dct["puts"]:
+                data = {}
+                data["maturity"] = date
+                data["strike"] = put["strike"]
+                data["symbol"] = put["contractSymbol"]
+                data["last_price"] = put["lastPrice"]
+                data["bid"] = put["bid"]
+                data["ask"] = put["ask"]
+                if "volume" in put.keys():
+                    data["volume"] = put["volume"]
+                else:
+                    data["volume"] = 0
+                data["implied_volatility"] = put["impliedVolatility"]
+                data["itm"] = put["inTheMoney"]
+            
+                options["puts"].append(data)
         
-        return data
+        return options
     
     def institutional_ownership(
         self,
