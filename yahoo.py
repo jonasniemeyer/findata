@@ -113,6 +113,7 @@ class YahooReader:
             if key in data.keys():
                 data[key] = data[key].encode("latin1").decode().replace("\n ", "\n")
         
+        data["employees"] = data.pop("fullTimeEmployees")
         data["description"] = data.pop("longBusinessSummary")
         if "website" in data.keys():
             data["website"] = data["website"].replace("http:", "https:")
@@ -128,7 +129,18 @@ class YahooReader:
             }
             for entry in data["companyOfficers"]
         ]
-        data.pop("companyOfficers")
+        for key in (
+            "companyOfficers",
+            "auditRisk",
+            "boardRisk",
+            "compensationRisk",
+            "shareHolderRightsRisk",
+            "overallRisk",
+            "governanceEpochDate",
+            "compensationAsOfEpochDate",
+            "maxAge"
+        ):
+            data.pop(key)
         return data
 
     def logo(self) -> bytes:
@@ -387,7 +399,7 @@ class YahooReader:
             raise DatasetError(f"no recommendation trend found for ticker {self.ticker}")
         data = {
             entry["period"]: {
-                "recommendations": int(entry["strongBuy"] + entry["buy"] + entry["hold"] + entry["sell"] + entry["strongSell"]),
+                "count": int(entry["strongBuy"] + entry["buy"] + entry["hold"] + entry["sell"] + entry["strongSell"]),
                 "average": (
                     (entry["strongBuy"] * 5 + entry["buy"] * 4 + entry["hold"] * 3 + entry["sell"] * 2 + entry["strongSell"] * 1)
                     / (entry["strongBuy"] + entry["buy"] + entry["hold"] + entry["sell"] + entry["strongSell"])
