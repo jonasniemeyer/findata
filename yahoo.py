@@ -263,7 +263,7 @@ class YahooReader:
                     index = dividends[0]
                 )
             else:
-                df_div = pd.DataFrame(columns = ["dividends"])
+                df_div = pd.DataFrame(columns = ["dividends"], dtype="float64")
             
             # splits
             if "splits" in events:
@@ -277,11 +277,11 @@ class YahooReader:
                     index = splits[0]
                 )
             else:
-                df_splits = pd.DataFrame(columns = ["splits"])
+                df_splits = pd.DataFrame(columns = ["splits"], dtype="float64")
             
         else:
-            df_div = pd.DataFrame(columns = ["dividends"])
-            df_splits = pd.DataFrame(columns = ["splits"])
+            df_div = pd.DataFrame(columns = ["dividends"], dtype="float64")
+            df_splits = pd.DataFrame(columns = ["splits"], dtype="float64")
 
         # price and volume data
         open_ = history["open"]
@@ -301,13 +301,13 @@ class YahooReader:
                 "high": high,
                 "low": low,
                 "close": close,
-                "adj close": adj_close,
+                "adj_close": adj_close,
                 "volume": volume
             },
             index = ts
         )
         if rounded:
-            prices[["open", "high", "low", "close", "adj close"]] = prices[["open", "high", "low", "close", "adj close"]].round(2)
+            prices[["open", "high", "low", "close", "adj_close"]] = prices[["open", "high", "low", "close", "adj_close"]].round(2)
         
         if not timestamps:
             if frequency in ("1d", "1wk", "1mo", "3mo"):
@@ -349,8 +349,8 @@ class YahooReader:
             df = df[df["close"].notna()]
 
         if returns:
-            df['simple returns'] = (df['close'] + df['dividends'].fillna(0)) / df['close'].shift(1) - 1
-            df['log returns'] = np.log((df['close'] + df['dividends'].fillna(0)) / df['close'].shift(1))
+            df['simple_returns'] = (df['close'] + df['dividends'].fillna(0)) / df['close'].shift(1) - 1
+            df['log_returns'] = np.log((df['close'] + df['dividends'].fillna(0)) / df['close'].shift(1))
 
         if timestamps:
             df.index.name = "timestamps"
