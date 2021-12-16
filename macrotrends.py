@@ -21,6 +21,20 @@ class MacrotrendsReader:
         "cash-flow-statement": "cashflow_statement"
     }
 
+    @classmethod
+    def from_url(cls, url):
+        frequency = url[-1]
+        url_split = url.split("/")
+        ticker = url_split[5]
+        name = url_split[6]
+        statement = url_split[7].rstrip(f"?freq={frequency}")
+        return MacrotrendsReader(
+            ticker = ticker,
+            statement = statement,
+            frequency = frequency,
+            name = name
+        )
+
     def __init__(
         self,
         ticker = None,
@@ -50,8 +64,13 @@ class MacrotrendsReader:
                 self.statement,
                 self.frequency
             )
+    
+    def read(self):
+        self._open_website()
+        data = self._parse()
+        return data
 
-    def open_website(self, browser="chrome", url=None):
+    def _open_website(self, browser="chrome", url=None):
         """
         Opens the website and the url with the according webdriver and extracts the necessary items:
         1. slider object
@@ -96,12 +115,12 @@ class MacrotrendsReader:
             except:
                 pass
 
-    def parse(self):
+    def _parse(self):
         data = {}
         if self.statement == "financial-statement":
             for statement in ("income-statement", "balance-sheet", "cash-flow-statement"):
                 href_url = self.url.replace("financial-statement", statement)
-                self.open_website(url = href_url)
+                self._open_website(url = href_url)
                 data = data | {self.conversion[statement]: self._parse_table()}
         else:
             data = self._parse_table()
@@ -228,19 +247,6 @@ class MacrotrendsReader:
         width = BeautifulSoup(html, "lxml").find("div", {"id": "jqxScrollAreaDownhorizontalScrollBarjqxgrid"}).get("style")
         width = int(re.findall("width: ([0-9]+)px", width)[0])
         return width
-
-    def from_url(cls, url):
-        frequency = url[-1]
-        url_split = url.split("/")
-        ticker = url_split[5]
-        name = url_split[6]
-        statement = url_split[7].rstrip(f"?freq={frequency}")
-        return MacrotrendsReader(
-            ticker = ticker,
-            statement = statement,
-            frequency = frequency,
-            name = name
-        )
 
     @property
     def ticker(self):
