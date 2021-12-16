@@ -32,13 +32,21 @@ class YahooReader:
         return data
     
     @classmethod
-    def currencies(cls) -> dict:
+    def currencies(cls) -> list:
         data = requests.get(
             url = cls._currencies_url,
             headers = HEADERS
         ).json()
         
         data = data["currencies"]["result"]
+        data = [
+            {
+                "short_name": item["shortName"],
+                "long_name": item["longName"],
+                "symbol": item["symbol"]
+            }
+            for item in data
+        ]
         
         return data
 
