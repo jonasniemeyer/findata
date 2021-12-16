@@ -22,6 +22,26 @@ class YahooReader:
     _options_url = "https://query1.finance.yahoo.com/v7/finance/options/{}"
     _esg_ts_url = "https://query1.finance.yahoo.com/v1/finance/esgChart"
 
+    @classmethod
+    def crumb(cls) -> str:
+        data = requests.get(
+            url = cls._crumb_url,
+            headers = HEADERS
+        ).text
+        
+        return data
+    
+    @classmethod
+    def currencies(cls) -> dict:
+        data = requests.get(
+            url = cls._currencies_url,
+            headers = HEADERS
+        ).json()
+        
+        data = data["currencies"]["result"]
+        
+        return data
+
     def __init__(
         self,
         ticker: str = None,
@@ -44,6 +64,32 @@ class YahooReader:
         
         self._security_type = self._stored_data["quoteType"]["quoteType"]
         self._name = self._stored_data["quoteType"]["shortName"]
+
+    @property
+    def ticker(self):
+        return self._ticker
+    
+    @property
+    def name(self):
+        return self._name
+    
+    @property
+    def security_type(self):
+        return self._security_type
+
+    @property
+    def isin(self):
+        if not hasattr(self, "_isin"):
+            ticker_dot = self.ticker.replace('-', '.')
+            response = requests.get(
+                url = f"https://markets.businessinsider.com/ajax/SearchController_Suggest?max_results=1&query={ticker_dot}",
+                headers = HEADERS
+            ).text
+            try:
+                self._isin = re.findall(f"{ticker_dot}\|([A-Z0-9]+)\|{ticker_dot}", response)[0]
+            except IndexError:
+                self._isin = None
+        return self._isin
         
     def profile(self) -> dict:        
         try:
@@ -411,12 +457,18 @@ class YahooReader:
                 data["strike"] = call["strike"]
                 data["symbol"] = call["contractSymbol"]
                 data["last_price"] = call["lastPrice"]
-                data["bid"] = call["bid"]
-                data["ask"] = call["ask"]
+                if "bid" in call.keys():
+                    data["bid"] = call["bid"]
+                else:
+                    data["bid"] = None
+                if "ask" in call.keys():
+                    data["ask"] = call["ask"]
+                else:
+                    data["ask"] = None
                 if "volume" in call.keys():
                     data["volume"] = call["volume"]
                 else:
-                    data["volume"] = 0
+                    data["volume"] = None
                 data["implied_volatility"] = call["impliedVolatility"]
                 data["itm"] = call["inTheMoney"]
             
@@ -428,12 +480,14 @@ class YahooReader:
                 data["strike"] = put["strike"]
                 data["symbol"] = put["contractSymbol"]
                 data["last_price"] = put["lastPrice"]
-                data["bid"] = put["bid"]
-                data["ask"] = put["ask"]
-                if "volume" in put.keys():
-                    data["volume"] = put["volume"]
+                if "bid" in put.keys():
+                    data["bid"] = put["bid"]
                 else:
-                    data["volume"] = 0
+                    data["bid"] = None
+                if "ask" in put.keys():
+                    data["ask"] = put["ask"]
+                else:
+                    data["ask"] = None
                 data["implied_volatility"] = put["impliedVolatility"]
                 data["itm"] = put["inTheMoney"]
             
@@ -452,7 +506,7 @@ class YahooReader:
         
         data = [
             {
-                "date": (entry["reportDate"]["raw"] if timestamps else entry["reportDate"]["fmt"]),
+                "date": (entry["reportDate"]["raw"] if timestamps else dt.date.fromtimestamp(entry["reportDate"]["raw"]).isoformat()),
                 "company": entry["organization"],
                 "percentage": entry["pctHeld"]["raw"],
                 "shares": entry["position"]["raw"],
@@ -550,6 +604,32 @@ class YahooReader:
             data = self._stored_data["esgScores"]
         except:
             raise DatasetError(f"no esg scores found for ticker {self.ticker}")
+        
+        data = {
+            "month": (data["ratingYear"], data["ratingMonth"]),
+            "scores" : {
+                "environment": data["environmentScore"],
+                "social": data["socialScore"],
+                "governance": data["governanceScore"],
+            },
+            "involvements": {
+                "adult": data["adult"],
+                "alcoholic": data["alcoholic"],
+                "animal_testing": data["animalTesting"],
+                "catholic": data["catholic"],
+                "controversial_weapons": data["controversialWeapons"],
+                "small_arms": data["smallArms"],
+                "fur_and_leather": data["furLeather"],
+                "gambling": data["gambling"],
+                "gmo": data["gmo"],
+                "military_contract": data["militaryContract"],
+                "nuclear": data["nuclear"],
+                "pesticides": data["pesticides"],
+                "palm_oil": data["palmOil"],
+                "coal": data["coal"],
+                "tobacco": data["tobacco"],
+            }
+        }
         
         return data
     
@@ -747,7 +827,8 @@ class YahooReader:
                     'cashflowStatementHistory',
                     'cashflowStatementHistoryQuarterly',
                     'defaultKeyStatistics',
-                    'earnings',	'earningsHistory',
+                    'earnings',
+                    'earningsHistory',
                     'earningsTrend',
                     "esgScores",
                     'financialData',
@@ -790,49 +871,3 @@ class YahooReader:
         self._stored_data = data
         
         return self._stored_data
-
-    @classmethod
-    def crumb(cls) -> str:
-        data = requests.get(
-            url = cls._crumb_url,
-            headers = HEADERS
-        ).text
-        
-        return data
-    
-    @classmethod
-    def currencies(cls) -> dict:
-        data = requests.get(
-            url = cls._currencies_url,
-            headers = HEADERS
-        ).json()
-        
-        data = data["currencies"]["result"]
-        
-        return data
-    
-    @property
-    def ticker(self):
-        return self._ticker
-    
-    @property
-    def name(self):
-        return self._name
-    
-    @property
-    def security_type(self):
-        return self._security_type
-
-    @property
-    def isin(self):
-        if not hasattr(self, "_isin"):
-            ticker_dot = self.ticker.replace('-', '.')
-            response = requests.get(
-                url = f"https://markets.businessinsider.com/ajax/SearchController_Suggest?max_results=1&query={ticker_dot}",
-                headers = HEADERS
-            ).text
-            try:
-                self._isin = re.findall(f"{ticker_dot}\|([A-Z0-9]+)\|{ticker_dot}", response)[0]
-            except IndexError:
-                self._isin = None
-        return self._isin
