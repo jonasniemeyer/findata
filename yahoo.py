@@ -593,6 +593,11 @@ class YahooReader:
         except:
             raise DatasetError(f"no ownership breakdown data found for ticker {self.ticker}")
         
+        data["insider_ownership"] = data.pop("insidersPercentHeld")
+        data["institutions_ownership"] = data.pop("institutionsPercentHeld")
+        data["institutions_ownership_float"] = data.pop("institutionsFloatPercentHeld")
+        data["count_institutions"] = data.pop("institutionsCount")
+        
         data.pop("maxAge")
         return data
     
@@ -666,9 +671,9 @@ class YahooReader:
         data = [
             {
                 "date_filed": int((dt.date.fromisoformat(entry["date"]) - dt.date(1970,1,1)).total_seconds()) if timestamps else entry["date"],
-                "datetime_files": entry["epochDate"] if timestamps else (dt.datetime(1970,1,1) + dt.timedelta(seconds=entry["epochDate"])).isoformat(),
-                "type": entry["type"],
-                "title": entry["title"],
+                "datetime_filed": entry["epochDate"] if timestamps else (dt.datetime(1970,1,1) + dt.timedelta(seconds=entry["epochDate"])).isoformat(),
+                "form_type": entry["type"],
+                "description": entry["title"],
                 "url": entry["edgarUrl"]
             }
             for entry in data
