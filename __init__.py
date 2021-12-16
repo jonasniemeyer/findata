@@ -10,6 +10,7 @@ from .sec import (
     Filing13F
 )
 from .functions import margin_debt
+from .utils import DatasetError, TickerError
 
 __all__ = [
     "YahooReader",
@@ -21,5 +22,7 @@ __all__ = [
     "Filing13D",
     "Filing13G",
     "Filing13F",
-    "margin_debt"
+    "margin_debt",
+    "DatasetError",
+    "TickerError"
 ]
