@@ -140,7 +140,8 @@ class YahooReader:
             "compensationAsOfEpochDate",
             "maxAge"
         ):
-            data.pop(key)
+            if key in data.keys():
+                data.pop(key)
         return data
 
     def logo(self) -> bytes:
