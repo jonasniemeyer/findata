@@ -322,14 +322,10 @@ def test_logo_missing():
 
 class TestHistoricalData:
 
-    @classmethod
-    def setup_class(cls):
-        cls.data_default = YahooReader("SPY").historical_data()
-
-    def test_information(self):
-        information = self.data_default["information"]
+    def test_default(self):
+        data = YahooReader("SPY").historical_data()
         assert all(
-            key in information.keys()
+            key in data["information"].keys()
             for key in (
                 "type",
                 "currency",
@@ -339,9 +335,7 @@ class TestHistoricalData:
                 "url"
             )
         )
-
-    def test_data_default(self):
-        df = self.data_default["data"]
+        df = data["data"]
         assert isinstance(df, pd.DataFrame)
         assert list(df.columns) == [
             "open",
@@ -356,32 +350,66 @@ class TestHistoricalData:
             "log_returns"
         ]
         assert all(
-            isinstance(date, dt.date)
+            isinstance(date, pd.Timestamp)
             for date in df.index
         )
-        print(df.dtypes)
         assert all(
             df[col].dtype == "float64"
             for col in df.columns
             if col != "volume"
         )
         assert df["volume"].dtype == "int64"
+        isinstance(df.resample("M").last(), pd.DataFrame)
     
-    def test_data_daily_default(self):
-        df = YahooReader("SPY").historical_data(frequency="1d")["data"]
+    def test_timestamps(self):
+        df = YahooReader("SPY").historical_data(timestamps=True)["data"]
         assert all(
-            isinstance(date, dt.date)
+            isinstance(date, int)
             for date in df.index
         )
+        with pytest.raises(TypeError):
+            df.resample("M").last()
 
-    def test_data_minute_default(self):
+    def test_rounded(self):
+        df = YahooReader("SPY").historical_data(frequency="1mo", rounded=True)["data"]
+        assert all(
+            all(
+                len(str(entry).split(".")[1]) <= 2
+                for entry in df[col]
+                if not np.isnan(entry)
+            )
+            for col in ("open", "high", "low", "close", "adj_close")
+        )
+
+    def test_returns_off(self):
+        df = YahooReader("SPY").historical_data(frequency="1mo", returns=False)["data"]
+        assert ("simple_returns" not in df.columns) and ("log_returns" not in df.columns)
+    
+    def test_monthly_frequency(self):
+        df = YahooReader("SPY").historical_data(frequency="1mo")["data"]
+        assert all(
+            isinstance(date, pd.Timestamp)
+            for date in df.index
+        )
+        isinstance(df.resample("Y").last(), pd.DataFrame)
+
+    def test_hourly_frequency(self):
+        df = YahooReader("SPY").historical_data(frequency="60m")["data"]
+        assert all(
+            isinstance(date, pd.Timestamp)
+            for date in df.index
+        )
+        assert isinstance(df.resample("d").last(), pd.DataFrame)
+
+    def test_minute_frequency(self):
         df = YahooReader("SPY").historical_data(frequency="1m")["data"]
         assert all(
-            isinstance(date, dt.datetime)
+            isinstance(date, pd.Timestamp)
             for date in df.index
         )
+        assert isinstance(df.resample("h").last(), pd.DataFrame)
 
-
+    
 
 
 
