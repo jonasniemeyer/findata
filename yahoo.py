@@ -252,7 +252,6 @@ class YahooReader:
 
         url = data.url
         data = data.json()
-        print(url)
         
         meta_data = data["chart"]["result"][0]["meta"]
         currency = meta_data["currency"]
@@ -373,7 +372,8 @@ class YahooReader:
         else:
             df.index.name = "datetime"
 
-        df.index = pd.to_datetime(df.index)
+        if not timestamps:
+            df.index = pd.to_datetime(df.index)
         
         return {
             "data": df,
