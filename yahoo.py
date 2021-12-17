@@ -162,8 +162,8 @@ class YahooReader:
     def historical_data(
         self,
         frequency = '1d',
-        start = dt.datetime(1900, 1, 1),
-        end = dt.datetime.today(),
+        start = dt.date(1900, 1, 1),
+        end = dt.date.today(),
         returns = True,
         timestamps = False,
         rounded = False,
@@ -196,13 +196,24 @@ class YahooReader:
             default: False
         
         rounded : bool
-            If True, prices are rounded to two decimal points
+            If True, prices are rounded to two decimal points and returns are based on rounded prices
             default : False
         
         tz_aware : bool
             If True and frequency is set to less than a day, datetimes are timezone-aware
             default : True        
         """
+
+        if frequency not in ("1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"):
+            raise ValueError('frequency has to be one of ("1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo")')
+
+        if (start == dt.date(1900, 1, 1)) and (end == dt.date.today()):
+            if frequency == "1m":
+                start = dt.date.today() - dt.timedelta(days=6)
+            elif frequency in ("2m", "5m", "15m", "30m", "90m"):
+                start = dt.date.today() - dt.timedelta(days=59)
+            elif frequency in ("60m", "1h"):
+                start = dt.date.today() - dt.timedelta(days=729)
 
         if isinstance(start, str):
             start = int((dt.date.fromisoformat(start) - dt.date(1970, 1, 1)).total_seconds())
@@ -218,6 +229,17 @@ class YahooReader:
         elif isinstance(end, dt.date):
             end = int((end - dt.date(1970, 1, 1)).total_seconds())
         
+        if frequency == "1m":
+            if ((dt.date.today() - dt.date(1970, 1, 1)).total_seconds() - start) > 60*60*24*30:
+                raise ValueError("1-minute data is only available for the last 30 days")
+            elif (end - start) > 60*60*24*7:
+                raise ValueError("1-minute data can only be fetched for 7 days per request")
+        elif frequency in ("2m", "5m", "15m", "30m", "90m"):
+            if ((dt.date.today() - dt.date(1970, 1, 1)).total_seconds() - start) > 60*60*24*60:
+                raise ValueError("2-, 5-, 15-, 30- and 90-minute data is only available for the last 60 days")
+        elif frequency in ("60m", "1h"):
+            if ((dt.date.today() - dt.date(1970, 1, 1)).total_seconds() - start) > 60*60*24*730:
+                raise ValueError("60-minute data is only available for the last 730 days")
 
         parameters = {
             "period1": start,
@@ -235,6 +257,7 @@ class YahooReader:
 
         url = data.url
         data = data.json()
+        print(url)
         
         meta_data = data["chart"]["result"][0]["meta"]
         currency = meta_data["currency"]
@@ -318,10 +341,6 @@ class YahooReader:
                 prices.index = [dt.datetime(1970,1,1) + dt.timedelta(seconds=ts) for ts in prices.index]
                 df_div.index = [dt.datetime(1970,1,1) + dt.timedelta(seconds=ts) for ts in df_div.index]
                 df_splits.index = [dt.datetime(1970,1,1) + dt.timedelta(seconds=ts) for ts in df_splits.index]
-                if tz_aware:
-                    prices.index = prices.index.tz_localize(timezone)
-                    df_div.index = df_div.index.tz_localize(timezone)
-                    df_splits.index = df_splits.index.tz_localize(timezone)
 
         if prices.index[-1] == prices.index[-2]:
             prices = prices[:-1]
@@ -358,6 +377,10 @@ class YahooReader:
             df.index.name = "date"
         else:
             df.index.name = "datetime"
+
+        df.index = pd.to_datetime(df.index)
+        if tz_aware:
+            df.index = df.index.tz_localize(timezone)
         
         return {
             "data": df,
@@ -897,3 +920,7 @@ class YahooReader:
         self._stored_data = data
         
         return self._stored_data
+
+if __name__ == "__main__":
+    data = YahooReader("ESCA").historical_data(frequency="1d", tz_aware=True)["data"]
+    print(data)
