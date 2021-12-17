@@ -705,15 +705,12 @@ class YahooReader:
         
         data = {
             "company": data["family"],
-            "style": data["categoryName"],
             "type": data["legalType"],
-            "charateristics": {
-                "expense_ratio" : data["feesExpensesInvestment"]["annualReportExpenseRatio"],
-                "turnover": data["feesExpensesInvestment"]["annualHoldingsTurnover"],
-                "aum": data["feesExpensesInvestment"]["totalNetAssets"] * 10_000
-            },
+            "expense_ratio" : data["feesExpensesInvestment"]["annualReportExpenseRatio"],
+            "turnover": data["feesExpensesInvestment"]["annualHoldingsTurnover"],
+            "aum": data["feesExpensesInvestment"]["totalNetAssets"] * 10_000,
+            "style": data["categoryName"],
             "style_url": data["styleBoxUrl"],
-            "brokerages": data["brokerages"]
         }
             
         return data
