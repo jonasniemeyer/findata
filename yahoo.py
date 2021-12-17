@@ -169,7 +169,7 @@ class YahooReader:
     def historical_data(
         self,
         frequency = '1d',
-        start = dt.date(1900, 1, 1),
+        start = dt.date(1930, 1, 1),
         end = dt.date.today(),
         returns = True,
         timestamps = False,
@@ -205,11 +205,15 @@ class YahooReader:
             If True, prices are rounded to two decimal points and returns are based on rounded prices
             default : False      
         """
+        
+        if self.security_type == "OPTION":
+            print("Warning: option price data is bugged and hence is not implemented!")
+            return
 
         if frequency not in ("1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"):
             raise ValueError('frequency has to be one of ("1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo")')
 
-        if (start == dt.date(1900, 1, 1)) and (end == dt.date.today()):
+        if (start == dt.date(1930, 1, 1)) and (end == dt.date.today()):
             if frequency == "1m":
                 start = dt.date.today() - dt.timedelta(days=6)
             elif frequency in ("2m", "5m", "15m", "30m", "90m"):
@@ -242,6 +246,9 @@ class YahooReader:
         elif frequency in ("60m", "1h"):
             if ((dt.date.today() - dt.date(1970, 1, 1)).total_seconds() - start) > 60*60*24*730:
                 raise ValueError("60-minute data is only available for the last 730 days")
+        elif (end - start) > 60*60*24*365*100:
+            raise ValueError("daily and monthly data can only be fetched for 100 years per request")
+            
 
         parameters = {
             "period1": start,
@@ -334,14 +341,9 @@ class YahooReader:
             prices[["open", "high", "low", "close", "adj_close"]] = prices[["open", "high", "low", "close", "adj_close"]].round(2)
         
         if not timestamps:
-            if frequency in ("1d", "1wk", "1mo", "3mo"):
-                prices.index = [dt.date(1970,1,1) + dt.timedelta(seconds=ts + tz_offset) for ts in prices.index]
-                df_div.index = [dt.date(1970,1,1) + dt.timedelta(seconds=ts + tz_offset) for ts in df_div.index]
-                df_splits.index = [dt.date(1970,1,1) + dt.timedelta(seconds=ts + tz_offset) for ts in df_splits.index]
-            else:
-                prices.index = [dt.datetime(1970,1,1) + dt.timedelta(seconds=ts) for ts in prices.index]
-                df_div.index = [dt.datetime(1970,1,1) + dt.timedelta(seconds=ts) for ts in df_div.index]
-                df_splits.index = [dt.datetime(1970,1,1) + dt.timedelta(seconds=ts) for ts in df_splits.index]
+            prices.index = [pd.to_datetime(ts + tz_offset, unit="s") for ts in prices.index]
+            df_div.index = [pd.to_datetime(ts + tz_offset, unit="s") for ts in df_div.index]
+            df_splits.index = [pd.to_datetime(ts + tz_offset, unit="s") for ts in df_splits.index]
 
         if prices.index[-1] == prices.index[-2]:
             prices = prices[:-1]
@@ -378,10 +380,7 @@ class YahooReader:
             df.index.name = "date"
         else:
             df.index.name = "datetime"
-
-        if not timestamps:
-            df.index = pd.to_datetime(df.index)
-        
+       
         return {
             "data": df,
             "information": {
