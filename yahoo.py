@@ -166,8 +166,7 @@ class YahooReader:
         end = dt.date.today(),
         returns = True,
         timestamps = False,
-        rounded = False,
-        tz_aware = False
+        rounded = False
     ) -> dict:
 
         """
@@ -197,11 +196,7 @@ class YahooReader:
         
         rounded : bool
             If True, prices are rounded to two decimal points and returns are based on rounded prices
-            default : False
-        
-        tz_aware : bool
-            If True and frequency is set to less than a day, datetimes are timezone-aware
-            default : True        
+            default : False      
         """
 
         if frequency not in ("1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"):
@@ -379,8 +374,6 @@ class YahooReader:
             df.index.name = "datetime"
 
         df.index = pd.to_datetime(df.index)
-        if tz_aware:
-            df.index = df.index.tz_localize(timezone)
         
         return {
             "data": df,
@@ -920,7 +913,3 @@ class YahooReader:
         self._stored_data = data
         
         return self._stored_data
-
-if __name__ == "__main__":
-    data = YahooReader("ESCA").historical_data(frequency="1d", tz_aware=True)["data"]
-    print(data)
