@@ -103,18 +103,22 @@ class YahooReader:
         try:
             data = self._stored_data["assetProfile"].copy()
         except:
-            raise DatasetError(f"no profile found for ticker {self.ticker}")
+            data = {}
+            return data
         
         for key in (
             "address1",
             "address2",
+            "address3",
             "longBusinessSummary"
         ):
             if key in data.keys():
                 data[key] = data[key].encode("latin1").decode().replace("\n ", "\n")
         
-        data["employees"] = data.pop("fullTimeEmployees")
-        data["description"] = data.pop("longBusinessSummary")
+        if "fullTimeEmployees" in data.keys():
+            data["employees"] = data.pop("fullTimeEmployees")
+        if "longBusinessSummary" in data.keys(): 
+            data["description"] = data.pop("longBusinessSummary")
         if "website" in data.keys():
             data["website"] = data["website"].replace("http:", "https:")
         data["executives"] = [
@@ -129,6 +133,8 @@ class YahooReader:
             }
             for entry in data["companyOfficers"]
         ]
+        if data["executives"] == []:
+            data.pop("executives")
         for key in (
             "companyOfficers",
             "auditRisk",
@@ -138,7 +144,8 @@ class YahooReader:
             "overallRisk",
             "governanceEpochDate",
             "compensationAsOfEpochDate",
-            "maxAge"
+            "maxAge",
+            "startDate"
         ):
             if key in data.keys():
                 data.pop(key)
@@ -647,33 +654,37 @@ class YahooReader:
         except:
             raise DatasetError(f"no esg scores found for ticker {self.ticker}")
         
-        data = {
+        scores = {
             "month": (data["ratingYear"], data["ratingMonth"]),
             "scores" : {
                 "environment": data["environmentScore"],
                 "social": data["socialScore"],
                 "governance": data["governanceScore"],
             },
-            "involvements": {
-                "adult": data["adult"],
-                "alcoholic": data["alcoholic"],
-                "animal_testing": data["animalTesting"],
-                "catholic": data["catholic"],
-                "controversial_weapons": data["controversialWeapons"],
-                "small_arms": data["smallArms"],
-                "fur_and_leather": data["furLeather"],
-                "gambling": data["gambling"],
-                "gmo": data["gmo"],
-                "military_contract": data["militaryContract"],
-                "nuclear": data["nuclear"],
-                "pesticides": data["pesticides"],
-                "palm_oil": data["palmOil"],
-                "coal": data["coal"],
-                "tobacco": data["tobacco"],
-            }
+            "involvements": {}
         }
+
+        for new_key, old_key in {
+            "adult": "adult",
+            "alcoholic": "alcoholic",
+            "animal_testing": "animalTesting",
+            "catholic": "catholic",
+            "controversial_weapons": "controversialWeapons",
+            "small_arms": "smallArms",
+            "fur_and_leather": "furLeather",
+            "gambling": "gambling",
+            "gmo": "gmo",
+            "military_contract": "militaryContract",
+            "nuclear": "nuclear",
+            "pesticides": "pesticides",
+            "palm_oil": "palmOil",
+            "coal": "coal",
+            "tobacco": "tobacco",
+        }.items():
+            if old_key in data.keys():
+                scores["involvements"][new_key] = data[old_key]
         
-        return data
+        return scores
     
     def sec_filings(
         self,
@@ -703,17 +714,26 @@ class YahooReader:
         except:
             raise DatasetError(f"no fund holdings found for ticker {self.ticker}")
         
-        data = {
+        scores = {
             "company": data["family"],
             "type": data["legalType"],
-            "expense_ratio" : data["feesExpensesInvestment"]["annualReportExpenseRatio"],
-            "turnover": data["feesExpensesInvestment"]["annualHoldingsTurnover"],
-            "aum": data["feesExpensesInvestment"]["totalNetAssets"] * 10_000,
             "style": data["categoryName"],
-            "style_url": data["styleBoxUrl"],
+            "style_url": data["styleBoxUrl"]
         }
+        try:
+            scores["expense_ratio"] = data["feesExpensesInvestment"]["annualReportExpenseRatio"]
+        except KeyError:
+            pass
+        try:
+            scores["turnover"] = data["feesExpensesInvestment"]["annualHoldingsTurnover"]
+        except KeyError:
+            pass
+        try:
+            scores["aum"] = data["feesExpensesInvestment"]["totalNetAssets"] * 10_000
+        except KeyError:
+            pass
             
-        return data
+        return scores
     
     def holdings(self) -> dict:
         try:
@@ -728,7 +748,7 @@ class YahooReader:
                 {
                     "ticker": entry["symbol"],
                     "name": entry["holdingName"],
-                    "percent": entry["holdingPercent"]
+                    "percentage": entry["holdingPercent"]
                 }
                 for entry in data["holdings"]
             ],
@@ -749,7 +769,8 @@ class YahooReader:
                 key: entry[key] for entry in data["sectorWeightings"] for key in entry
             }
         }
-            
+        data["sector_weights"]["real_estate"] = data["sector_weights"].pop("realestate")
+
         return data
      
     def financial_statement(
