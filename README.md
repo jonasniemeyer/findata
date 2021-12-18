@@ -2,7 +2,7 @@
 
 ## Description
 **finance_data** is a Python library that allows to retrieve finance-related datasets from the web including
-historical stock prices, fundamental data, condensed sec filing data (e.g. hedgefund portfolios) and more.
+historical stock prices, fundamental data, condensed sec filing data and more.
 <br>
 ## Dependencies
 - [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/)

@@ -12,8 +12,7 @@ from finance_data.utils import (
 
 class MacrotrendsReader:
     
-    url_long = "https://www.macrotrends.net/stocks/charts/{}/{}/{}?freq={}"
-    url_short = "https://www.macrotrends.net/stocks/charts/{}"
+    base_url = "https://www.macrotrends.net/stocks/charts/{}/placeholder/{}?freq={}"
 
     conversion = {
         "income-statement": "income_statement",
@@ -21,49 +20,36 @@ class MacrotrendsReader:
         "cash-flow-statement": "cashflow_statement"
     }
 
-    @classmethod
-    def from_url(cls, url):
-        frequency = url[-1]
-        url_split = url.split("/")
-        ticker = url_split[5]
-        name = url_split[6]
-        statement = url_split[7].rstrip(f"?freq={frequency}")
-        return MacrotrendsReader(
-            ticker = ticker,
-            statement = statement,
-            frequency = frequency,
-            name = name
-        )
-
     def __init__(
         self,
         ticker = None,
         statement = "financial-statement",
-        frequency = "Y",
-        name = None
+        frequency = "yearly",
     ):
-
-        if ticker is None or statement is None or frequency is None:
-            raise ValueError("Arguments have to be either a url or a combination of a ticker, a statement-type and a frequency, plus an optional name")
-        elif statement not in ("income-statement", "balance-sheet", "cash-flow-statement", "financial-statement"):
+        if statement not in ("income-statement", "balance-sheet", "cash-flow-statement", "financial-statement"):
             raise ValueError('Statement type has to be "income-statement", "balance-sheet", "cash-flow-statement" or "financial-statement"')
-        elif frequency not in ("Q", "Y"):
-            raise ValueError('Reporting Frequency has to be yearly ("Y") or quarterly ("Q")')
+        
         self._ticker = ticker.upper()
         if "-" in self._ticker:
             self._ticker = self._ticker.replace("-", ".")
-        self.statement = statement
-        self.frequency = frequency
-        if name is None:
-            self.url = self.url_short.format(self.ticker)
+        
+        if statement == "financial-statements":
+            self.statement = "financial-statement"
         else:
-            self.name = name
-            self.url = self.url_long.format(
-                self.ticker,
-                self.name,
-                self.statement,
-                self.frequency
-            )
+            self.statement = statement
+
+        if frequency in ("Y", "yearly", "A", "annual"):
+            self.frequency = "Y"
+        elif frequency in ("Q", "quarterly"):
+            self.frequency = "Q"
+        else:
+            raise ValueError('Reporting Frequency has to be "yearly", "Y", "annual", "A", "quarterly" or "Q"')
+        
+        self.url = self.base_url.format(
+            self.ticker,
+            self.statement,
+            self.frequency
+        )
     
     def read(self):
         self._open_website()
@@ -85,19 +71,6 @@ class MacrotrendsReader:
             else:
                 raise NotImplementedError
         
-        if not hasattr(self, "name"):
-            self.driver.get(self.url)
-            self.name = self.driver.current_url.split("/")[-2]
-            if self.name == "charts" or "?" in self.name:
-                self.driver.quit()
-                raise TickerError(f"cannot find the website with ticker {self.ticker}")
-            self.url = self.url_long.format(
-                self.ticker,
-                self.name,
-                self.statement,
-                self.frequency
-            )
-        
         if url is None:
             if self.statement == "financial-statement":
                 self.driver.get(self.url.replace("financial-statement", "income-statement"))
@@ -105,6 +78,11 @@ class MacrotrendsReader:
                 self.driver.get(self.url)
         else:
             self.driver.get(url)
+
+        name = self.driver.current_url.split("/")[-2]
+        if name == "":
+            self.driver.quit()
+            raise TickerError(f"cannot find data with ticker {self.ticker}")
 
         if url is None:
             try:
