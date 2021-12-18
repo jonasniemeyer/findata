@@ -1,4 +1,6 @@
 import re
+import configparser
+import os
 
 class TickerError(ValueError):
     pass
@@ -15,6 +17,11 @@ HEADERS = {
             "(KHTML, like Gecko) Chrome/81.0.4044.141 Safari/537.36"
         ),
     }
+
+if "keys.cfg" in os.listdir():
+    cfg = configparser.ConfigParser()
+    cfg.read("keys.cfg")
+    FRED_API_KEY = cfg.get("KEYS", "fred_api_key")
 
 MACROTRENDS_CONVERSION = {
     # Income Statement
