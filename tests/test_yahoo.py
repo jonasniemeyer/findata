@@ -344,8 +344,7 @@ class TestHistoricalData:
             "log_returns"
         ]
         assert all(
-            isinstance(date, pd.Timestamp)
-            for date in df.index
+            isinstance(date, pd.Timestamp) for date in df.index
         )
         assert all(
             df[col].dtype == "float64"
@@ -370,24 +369,21 @@ class TestHistoricalData:
     def test_monthly_frequency(self):
         df = YahooReader("SPY").historical_data(frequency="1mo")["data"]
         assert all(
-            isinstance(date, pd.Timestamp)
-            for date in df.index
+            isinstance(date, pd.Timestamp) for date in df.index
         )
         isinstance(df.resample("Y").last(), pd.DataFrame)
 
     def test_hourly_frequency(self):
         df = YahooReader("SPY").historical_data(frequency="60m")["data"]
         assert all(
-            isinstance(date, pd.Timestamp)
-            for date in df.index
+            isinstance(date, pd.Timestamp) for date in df.index
         )
         assert isinstance(df.resample("d").last(), pd.DataFrame)
 
     def test_minute_frequency(self):
         df = YahooReader("SPY").historical_data(frequency="1m")["data"]
         assert all(
-            isinstance(date, pd.Timestamp)
-            for date in df.index
+            isinstance(date, pd.Timestamp) for date in df.index
         )
         assert isinstance(df.resample("h").last(), pd.DataFrame)
   
