@@ -1,10 +1,7 @@
 from finance_data import YahooReader, DatasetError
 import numpy as np
 import pandas as pd
-import datetime as dt
-from pandas.core.frame import DataFrame
 import pytest
-from requests import sessions
 
 class TestClassMethods:
     @classmethod
@@ -365,17 +362,6 @@ class TestHistoricalData:
         )
         with pytest.raises(TypeError) as exception:
             df.resample("M").last()
-
-    def test_rounded(self):
-        df = YahooReader("SPY").historical_data(frequency="1mo", rounded=True)["data"]
-        assert all(
-            all(
-                len(str(entry).split(".")[1]) <= 2
-                for entry in df[col]
-                if not np.isnan(entry)
-            )
-            for col in ("open", "high", "low", "close", "adj_close")
-        )
 
     def test_returns_off(self):
         df = YahooReader("SPY").historical_data(frequency="1mo", returns=False)["data"]

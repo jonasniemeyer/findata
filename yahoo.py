@@ -172,8 +172,7 @@ class YahooReader:
         start = dt.date(1930, 1, 1),
         end = dt.date.today(),
         returns = True,
-        timestamps = False,
-        rounded = False
+        timestamps = False
     ) -> dict:
 
         """
@@ -199,11 +198,7 @@ class YahooReader:
 
         timestamps : bool
             If True, df.index has timestamps. If False, df.index has tz-aware datetime objects
-            default: False
-        
-        rounded : bool
-            If True, prices are rounded to two decimal points and returns are based on rounded prices
-            default : False      
+            default: False    
         """
         
         if self.security_type == "OPTION":
@@ -337,8 +332,6 @@ class YahooReader:
             },
             index = ts
         )
-        if rounded:
-            prices[["open", "high", "low", "close", "adj_close"]] = prices[["open", "high", "low", "close", "adj_close"]].round(2)
         
         if not timestamps:
             prices.index = [pd.to_datetime(ts + tz_offset, unit="s") for ts in prices.index]
