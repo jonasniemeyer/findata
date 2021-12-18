@@ -11,46 +11,68 @@ class MSCIReader:
 
     def __init__(
         self,
-        index_codes,
+        index_code,
         index_variant = "STRD",
         index_currency = "USD",
         start = dt.date(1969, 1, 1),
         end = dt.date.today(),
-        frequency = "END_OF_MONTH"
+        frequency = "DAILY",
+        normalize = False,
+        returns = True
     ):
         """
-        index_code : int, str or an array-like object of strings or integers
-            sets the index code of the msci index to request data of
-            Example: (214156, "353567", "463743")
+        index_code : int or str
+            specifies the MSCI index code that should be fetched
+            Examples: 139245, "139249"
         
         index_variant : str
-            sets the index variant
-            Note: only STRD is working at the moment
+            specifies the variant of the index
+            possible values: "GRTR" (accumulated), "NETR" (accumulated with taxes incorporated), "STRD" (raw index, not considering dividends)
+            default : "STRD"
         
         index_currency : str
             sets the currency of the time-series
-            Note: only USD is working at the moment    
+            Examples: "USD", "EUR", "LOCAL"
+            default : "USD"
+            Note: possible currency values depend on the index since index data is not available for all currencies
 
         start : int, str, datetime.date
-            If the start argument is passed as an integer or string, the format has to be YYYYmmdd.
-            Example: "20121120" or 20121120 corresponds to the date 2012-11-20 in ISO-format
+            If the start argument is passed as an integer, the format has to be YYYYmmdd. 
+            For strings, the format has to be "YYYYmmdd" or "YYYY-mm-dd" (ISO format)
+            Examples: "20121120", "2012-11-20", 20121120, dt.date(2012, 11, 20)
+            default : dt.date(1969, 1, 1)
         
         end : int, str, datetime.date
-            If the end argument is passed as an integer or string, the format has to be YYYYmmdd.
-            Example: "20121120" or 20121120 corresponds to the date 2012-11-20 in ISO-format
+            If the end argument is passed as an integer, the format has to be YYYYmmdd.
+            For strings, the format has to be "YYYYmmdd" or "YYYY-mm-dd" (ISO format)
+            Examples: "20121120", "2012-11-20", 20121120, dt.date(2012, 11, 20)
+            default : dt.date.today()
         
         frequency : str
-            determines the sampling frequency of the data, e.g. monthly
-            Note: only daily is working at the moment    
+            determines the sampling frequency of the data
+            possible values: "daily", "monthly", "DAILY", "END_OF_MONTH
+            default : "DAILY"
+        
+        normalize : bool
+            If True, index prices are normalized to a starting price of 100
+            default: False
+
+        returns : bool
+            If True, the returned dataframe contains simple and log returns
+            default: True
         """
-        self.codes = index_codes
+        
+        self.code = index_code
         self.variant = index_variant 
         self.currency = index_currency
 
         if isinstance(start, dt.date):
             self.start = start
         elif isinstance(start, str):
-            self.start = dt.date.fromisoformat(start)
+            if start.count("-") == 2:
+                self.start = dt.date.fromisoformat(start)
+            else:
+                self.start = dt.date(int(start[:4]), int(start[4:6]), int(start[6:]))
         elif isinstance(start, int):
             start = str(start)
             self.start = dt.date(int(start[:4]), int(start[4:6]), int(start[6:]))
@@ -58,12 +80,23 @@ class MSCIReader:
         if isinstance(end, dt.date):
             self.end = end
         elif isinstance(end, str):
-            self.end = dt.date.fromisoformat(end)
+            if end.count("-") == 2:
+                self.end = dt.date.fromisoformat(end)
+            else:
+                self.end = dt.date(int(end[:4]), int(end[4:6]), int(end[6:]))
         elif isinstance(end, int):
             end = str(end)
             self.end = dt.date(int(end[:4]), int(end[4:6]), int(end[6:]))
         
-        self.frequency = frequency
+        if frequency in ("monthly", "MONTHLY", "END_OF_MONTH"):
+            self.frequency = "END_OF_MONTH"
+        elif frequency in ("daily", "DAILY"):
+            self.frequency = "DAILY"
+        else:
+            raise ValueError('frequency parameter has to be one of ("monthly", "MONTHLY", "END_OF_MONTH", "daily", "DAILY")')
+        
+        self.normalize = normalize
+        self.returns = returns
 
     def historical_data(
         self,
@@ -71,7 +104,7 @@ class MSCIReader:
 
         start = int(f"{self.start.year}{self.start.month:02}{self.start.day:02}")
         if start < 19690101:
-            print("Warning: start value cannot be earlier than 1969-01-01, hence it is set to 1969-01-01")
+            print("Warning: start value cannot be earlier than 1969-01-01, thus it is set to 1969-01-01")
             start = 19690101
 
         end = int(f"{self.end.year}{self.end.month:02}{self.end.day:02}")
@@ -82,7 +115,8 @@ class MSCIReader:
             "start_date": start,
             "end_date": end,
             "data_frequency": self.frequency,
-            "index_codes": self.codes
+            "index_codes": self.code,
+            "normalize": self.normalize
         }
 
         response = requests.get(
@@ -92,22 +126,28 @@ class MSCIReader:
         )
 
         url = response.url
-        print(url)
         dct = response.json()
 
         if "error_code" in dct.keys():
-            raise ValueError(f"""No data found, error message: "{dct["error_message"]}" """)
+            raise ValueError(f"""Could not retrieve data, error message: "{dct["error_message"]}"!""")
 
         df = pd.DataFrame(dct["indexes"]["INDEX_LEVELS"])
         df.set_index("calc_date", drop=True, inplace=True)
-        df.index = pd.to_datetime(df.index, format=("%Y%m%d")).date
+        df.index = pd.to_datetime(df.index, format=("%Y%m%d"))
         df.index.name = "date"
-        df.columns = [self.codes]
+        df.columns = ["prices"]
+
+        if self.normalize:
+            df = df / 10
+        
+        if self.returns:
+            df["simple_returns"] = df["prices"].pct_change()
+            df["log_returns"] = np.log(df["prices"] / df["prices"].shift(1))
 
         return {
             "data": df,
             "information": {
-                "index_code": dct["msci_index_code"],
+                "index_code": int(dct["msci_index_code"]),
                 "index_variant": dct["index_variant_type"],
                 "currency": dct["ISO_currency_symbol"],
                 "url": url
@@ -115,7 +155,7 @@ class MSCIReader:
         }
 
     @classmethod
-    def indices_list(cls) -> pd.DataFrame:
+    def indices(cls) -> pd.DataFrame:
         html = requests.get(
             url = "https://www.msci.com/ticker-codes",
             headers = HEADERS
@@ -124,13 +164,13 @@ class MSCIReader:
         soup = BeautifulSoup(html, "lxml")
 
         paragraph = [paragraph for paragraph in soup.find_all("p") if "Tickers for MSCI Indexes as of " in paragraph][0]
-        href = "https://www.msci.com/" + paragraph.find("a").get("href")
+        href = f"https://www.msci.com/{paragraph.find('a').get('href')}"
 
         data = pd.read_excel(href, engine = "openpyxl")
 
         data = data[data["Index Code"].notna()]
         data = data[["Index Code", "Index Name", "Variant", "Currency", "Vendor", "Ticker Type", "Ticker Code"]]
         data.columns = ["code", "name", "variant", "currency", "vendor", "type", "ticker_code"]
-        data["code"] = data["code"].astype("int32")
+        data["code"] = data["code"].astype("int64")
 
         return data
