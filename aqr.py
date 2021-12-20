@@ -1,8 +1,15 @@
 import pandas as pd
+from datetime import datetime, timedelta
 from finance_data.utils import HEADERS
 
 class AQRReader:
 
+    @classmethod
+    def _from_excel_ordinal(cls, ordinal, epoch=datetime(1899, 12, 31)):
+        if ordinal >= 60:
+            ordinal -= 1
+        return epoch + timedelta(days=ordinal)
+    
     @classmethod
     def esg_efficient_frontier_portfolios(cls) -> dict:
         file = pd.ExcelFile("https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/ESG_efficient_frontier_portfolios_vF.xlsx")
@@ -23,9 +30,9 @@ class AQRReader:
             df = pd.concat([df1, df2, df3, df4], axis=1)
             dfs[name] = df
         return dfs
-
+    
     @classmethod
-    def bab_factors(cls, frequency = "daily") -> dict:
+    def bab_factors(cls, frequency="daily") -> dict:
         if frequency not in ("daily", "monthly"):
             raise ValueError("frequency must be daily or monthly")
         file = pd.ExcelFile(f"https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Betting-Against-Beta-Equity-Factors-{frequency}.xlsx")
@@ -36,49 +43,51 @@ class AQRReader:
                 skiprows=range(18),
                 index_col=0
             )
+            df.index = [cls._from_excel_ordinal(item) if bool_ else item for (item, bool_) in zip(df.index, df.index.astype(str).str.isdigit())]
             dfs[name] = df
         return dfs
     
     @classmethod
-    def factor_premia_century(cls) -> dict:
-        file = pd.ExcelFile("https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Century-of-Factor-Premia-Monthly.xlsx")
-        dfs = {}
-        for name in ("Century of Factor Premia",):
-            df = file.parse(
-                sheet_name=name,
-                skiprows=range(18),
-                index_col=0
-            )
-            df.index = pd.to_datetime(df.index)
-            dfs[name] = df
-        return dfs
+    def factor_premia_century(cls) -> pd.DataFrame:
+        df = pd.read_excel(
+            io="https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Century-of-Factor-Premia-Monthly.xlsx",
+            sheet_name="Century of Factor Premia",
+            skiprows=range(18),
+            index_col=0
+        )
+        df.index = [cls._from_excel_ordinal(item) if bool_ else item for (item, bool_) in zip(df.index, df.index.astype(str).str.isdigit())]
+        df.index = pd.to_datetime(df.index)
+        return df
     
     @classmethod
-    def commodites_long_run(cls) -> dict:
-        file = pd.ExcelFile("https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Commodities-for-the-Long-Run-Index-Level-Data-Monthly.xlsx")
-        dfs = {}
-        for name in ("Commodities for the Long Run",):
-            df = file.parse(
-                sheet_name=name,
-                skiprows=range(10),
-                index_col=0
-            )
-            dfs[name] = df
-        return dfs
-
+    def commodites_long_run(cls) -> pd.DataFrame:
+        df = pd.read_excel(
+            io="https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Commodities-for-the-Long-Run-Index-Level-Data-Monthly.xlsx",
+            sheet_name="Commodities for the Long Run",
+            skiprows=range(10),
+            index_col=0
+        )
+        return df
+    
     @classmethod
-    def momentum_indices(cls) -> dict:
-        file = pd.ExcelFile("https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/AQR-Index-Returns.xls")
+    def momentum_indices(cls) -> pd.DataFrame:
         dfs = {}
-        for name in ("Returns",):
-            df = file.parse(
-                sheet_name=name,
-                skiprows=range(1),
-                index_col=0
-            )
-            dfs[name] = df
+        df = pd.read_excel(
+            io="https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/AQR-Index-Returns.xls",
+            sheet_name="Returns",
+            skiprows=range(1),
+            index_col=0
+        )
+        df1 = df[["U.S. Large Cap", "U.S. Small Cap", "International"]]
+        df1.index.name = "Date"
+        df2 = df[['Year', 'U.S. Large Cap.1', 'U.S. Small Cap.1', 'International.1']].dropna(how="all")
+        df2["Year"] = df2["Year"].astype("int64")
+        df2.set_index("Year", inplace=True)
+        df2.columns = ["U.S. Large Cap", "U.S. Small Cap", "International"]
+        dfs["Monthly"] = df1
+        dfs["Yearly"] = df2
         return dfs
-
+    
     @classmethod
     def quality_sorted_portfolios(cls) -> dict:
         file = pd.ExcelFile("https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Quality-Minus-Junk-10-QualitySorted-Portfolios-Monthly.xlsx")
@@ -95,9 +104,9 @@ class AQRReader:
             dfs["US"] = df1
             dfs["Global"] = df2
         return dfs
-
+    
     @classmethod
-    def qmj_factors(cls, frequency = "daily") -> dict:
+    def qmj_factors(cls, frequency="daily") -> dict:
         if frequency not in ("daily", "monthly"):
             raise ValueError("frequency must be daily or monthly")
         dfs = {}
@@ -108,6 +117,7 @@ class AQRReader:
                 skiprows=range(18),
                 index_col=0
             )
+            df.index = [cls._from_excel_ordinal(item) if bool_ else item for (item, bool_) in zip(df.index, df.index.astype(str).str.isdigit())]
             dfs[name] = df
         return dfs
     
@@ -121,16 +131,16 @@ class AQRReader:
                 skiprows=range(18),
                 index_col=0
             )
-            df1 = pd.DataFrame(data=df[["Low", "Medium", "Large", "Low.1", "Medium.1", "Large.1", "QMJ Factor"]])
+            df1 = pd.DataFrame(data=df[["Low", "Medium", "Large", "Low.1", "Medium.1", "Large.1", "Factor"]])
             df1.columns = ["Small Low", "Small Medium", "Small Large", "Big Low", "Big Medium", "Big Large", "Factor"]
             df2 = pd.DataFrame(data=df[["Low.2", "Medium.2", "Large.2", "Low.3", "Medium.3", "Large.3", "Factor.1"]])
-            df2.columns = ["Small Low", "Small Medium", "Small Large", "Big Low", "Big Medium", "Big Large", "QMJ Factor"]
+            df2.columns = ["Small Low", "Small Medium", "Small Large", "Big Low", "Big Medium", "Big Large", "Factor"]
             dfs["US"] = df1
             dfs["Global"] = df2
         return dfs
-
+    
     @classmethod
-    def hml_devil_factors(cls, frequency = "daily") -> dict:
+    def hml_devil_factors(cls, frequency="daily") -> dict:
         if frequency not in ("daily", "monthly"):
             raise ValueError("frequency must be daily or monthly")
         file = pd.ExcelFile(f"https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/The-Devil-in-HMLs-Details-Factors-{frequency}.xlsx")
@@ -141,44 +151,36 @@ class AQRReader:
                 skiprows=range(18),
                 index_col=0
             )
+            df.index = [cls._from_excel_ordinal(item) if bool_ else item for (item, bool_) in zip(df.index, df.index.astype(str).str.isdigit())]
             dfs[name] = df
         return dfs
-
+    
     @classmethod
-    def time_series_momentum(cls) -> dict:
-        file = pd.ExcelFile("https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Time-Series-Momentum-Factors-Monthly.xlsx")
-        dfs = {}
-        for name in ("TSMOM Factors",):
-            df = file.parse(
-                sheet_name=name,
-                skiprows=range(17),
-                index_col=0
-            )
-            dfs[name] = df
-        return dfs
-
+    def time_series_momentum(cls) -> pd.DataFrame:
+        df = pd.read_excel(
+            io="https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Time-Series-Momentum-Factors-Monthly.xlsx",
+            sheet_name="TSMOM Factors",
+            skiprows=range(17),
+            index_col=0
+        )
+        return df
+    
     @classmethod
-    def value_momentum_everywhere_factors(cls) -> dict:
-        file = pd.ExcelFile("https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Value-and-Momentum-Everywhere-Factors-Monthly.xlsx")
-        dfs = {}
-        for name in ("VME Factors",):
-            df = file.parse(
-                sheet_name=name,
-                skiprows=range(21),
-                index_col=0
-            )
-            dfs[name] = df
-        return dfs
-
+    def value_momentum_everywhere_factors(cls) -> pd.DataFrame:
+        df = pd.read_excel(
+            io="https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Value-and-Momentum-Everywhere-Factors-Monthly.xlsx",
+            sheet_name="VME Factors",
+            skiprows=range(21),
+            index_col=0
+        )
+        return df
+    
     @classmethod
-    def value_momentum_everywhere_portfolios(cls) -> dict:
-        file = pd.ExcelFile("https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Value-and-Momentum-Everywhere-Portfolios-Monthly.xlsx")
-        dfs = {}
-        for name in ("VME Portfolios",):
-            df = file.parse(
-                sheet_name=name,
-                skiprows=range(20),
-                index_col=0
-            )
-            dfs[name] = df
-        return dfs
+    def value_momentum_everywhere_portfolios(cls) -> pd.DataFrame:
+        df = pd.read_excel(
+            io="https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Value-and-Momentum-Everywhere-Portfolios-Monthly.xlsx",
+            sheet_name="VME Portfolios",
+            skiprows=range(20),
+            index_col=0
+        )
+        return df
