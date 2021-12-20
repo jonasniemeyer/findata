@@ -107,8 +107,8 @@ class _SECFiling:
     @classmethod
     def from_url(cls, url: str):
         txt = requests.get(
-            url = url,
-            headers = HEADERS
+            url=url,
+            headers=HEADERS
         ).text
         return cls(txt)
     
@@ -296,9 +296,9 @@ class Filing13F(_SECFiling):
 
         if ordered is not None:
             if ordered in ("name", "title", "cusip"):
-                holdings['holdings'] = sorted(holdings['holdings'], key = lambda item: item[ordered])
+                holdings['holdings'] = sorted(holdings['holdings'], key=lambda item: item[ordered])
             else:
-                holdings['holdings'] = sorted(holdings['holdings'], key = lambda item: item[ordered], reverse = True)
+                holdings['holdings'] = sorted(holdings['holdings'], key=lambda item: item[ordered], reverse=True)
         
         return holdings
 

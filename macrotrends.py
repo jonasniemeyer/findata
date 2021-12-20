@@ -22,9 +22,9 @@ class MacrotrendsReader:
 
     def __init__(
         self,
-        ticker = None,
-        statement = "financial-statement",
-        frequency = "yearly",
+        ticker=None,
+        statement="financial-statement",
+        frequency="yearly",
     ):
         if statement not in ("income-statement", "balance-sheet", "cash-flow-statement", "financial-statement"):
             raise ValueError('Statement type has to be "income-statement", "balance-sheet", "cash-flow-statement" or "financial-statement"')
@@ -98,7 +98,7 @@ class MacrotrendsReader:
         if self.statement == "financial-statement":
             for statement in ("income-statement", "balance-sheet", "cash-flow-statement"):
                 href_url = self.url.replace("financial-statement", statement)
-                self._open_website(url = href_url)
+                self._open_website(url=href_url)
                 data = data | {self.conversion[statement]: self._parse_table()}
         else:
             data = self._parse_table()

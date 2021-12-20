@@ -13,7 +13,7 @@ def margin_debt():
         "combined old": []
     }
     
-    html = requests.get(url = dataset_url, headers = HEADERS).text
+    html = requests.get(url=dataset_url, headers=HEADERS).text
     
     finra = html.index("FINRA Statistics (shown in $ millions)")
     nyse = html.index("NYSE Statistics (shown in $ millions)")

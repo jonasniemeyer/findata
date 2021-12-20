@@ -25,8 +25,8 @@ class YahooReader:
     @classmethod
     def crumb(cls) -> str:
         data = requests.get(
-            url = cls._crumb_url,
-            headers = HEADERS
+            url=cls._crumb_url,
+            headers=HEADERS
         ).text
         
         return data
@@ -34,8 +34,8 @@ class YahooReader:
     @classmethod
     def currencies(cls) -> list:
         data = requests.get(
-            url = cls._currencies_url,
-            headers = HEADERS
+            url=cls._currencies_url,
+            headers=HEADERS
         ).json()
         
         data = data["currencies"]["result"]
@@ -50,17 +50,13 @@ class YahooReader:
         
         return data
 
-    def __init__(
-        self,
-        ticker: str = None,
-        isin: str = None
-    ) -> None:
+    def __init__(self, ticker: str = None, isin: str = None) -> None:
         if ticker:
             self._ticker = ticker.upper()
         elif isin:
             response = requests.get(
-                url = f"https://markets.businessinsider.com/ajax/SearchController_Suggest?max_results=1&query={isin}",
-                headers = HEADERS
+                url=f"https://markets.businessinsider.com/ajax/SearchController_Suggest?max_results=1&query={isin}",
+                headers=HEADERS
             ).text
             try:
                 self._ticker = re.findall(f"\|{isin}\|([A-Z0-9]+)\|", response)[0]
@@ -90,8 +86,8 @@ class YahooReader:
         if not hasattr(self, "_isin"):
             ticker_dot = self.ticker.replace('-', '.')
             response = requests.get(
-                url = f"https://markets.businessinsider.com/ajax/SearchController_Suggest?max_results=1&query={ticker_dot}",
-                headers = HEADERS
+                url=f"https://markets.businessinsider.com/ajax/SearchController_Suggest?max_results=1&query={ticker_dot}",
+                headers=HEADERS
             ).text
             try:
                 self._isin = re.findall(f"{ticker_dot}\|([A-Z0-9]+)\|{ticker_dot}", response)[0]
@@ -155,13 +151,13 @@ class YahooReader:
         response = b"\n"
         if "website" in self.profile().keys():
             response = requests.get(
-                url = f"https://logo.clearbit.com/{self.profile()['website']}",
-                headers = HEADERS
+                url=f"https://logo.clearbit.com/{self.profile()['website']}",
+                headers=HEADERS
             ).content
         if response == b"\n":
             response = requests.get(
-                url = f"https://storage.googleapis.com/iex/api/logos/{self.ticker.replace('-', '.')}.png",
-                headers = HEADERS
+                url=f"https://storage.googleapis.com/iex/api/logos/{self.ticker.replace('-', '.')}.png",
+                headers=HEADERS
             ).content
             if response == PLACEHOLDER_LOGO or response == SERVER_ERROR_MESSAGE:
                 response = b"\n"
@@ -169,11 +165,11 @@ class YahooReader:
     
     def historical_data(
         self,
-        frequency = '1d',
-        start = dt.date(1930, 1, 1),
-        end = dt.date.today(),
-        returns = True,
-        timestamps = False
+        frequency="1d",
+        start=dt.date(1930, 1, 1),
+        end=dt.date.today(),
+        returns=True,
+        timestamps=False
     ) -> dict:
 
         """
@@ -255,9 +251,9 @@ class YahooReader:
         }
 
         data = requests.get(
-            url = self._price_url.format(self.ticker),
-            params = parameters,
-            headers = HEADERS
+            url=self._price_url.format(self.ticker),
+            params=parameters,
+            headers=HEADERS
         )
 
         url = data.url
@@ -290,7 +286,7 @@ class YahooReader:
                     index = dividends[0]
                 )
             else:
-                df_div = pd.DataFrame(columns = ["dividends"], dtype="float64")
+                df_div = pd.DataFrame(columns=["dividends"], dtype="float64")
             
             # splits
             if "splits" in events:
@@ -304,11 +300,11 @@ class YahooReader:
                     index = splits[0]
                 )
             else:
-                df_splits = pd.DataFrame(columns = ["splits"], dtype="float64")
+                df_splits = pd.DataFrame(columns=["splits"], dtype="float64")
             
         else:
-            df_div = pd.DataFrame(columns = ["dividends"], dtype="float64")
-            df_splits = pd.DataFrame(columns = ["splits"], dtype="float64")
+            df_div = pd.DataFrame(columns=["dividends"], dtype="float64")
+            df_splits = pd.DataFrame(columns=["splits"], dtype="float64")
 
         # price and volume data
         open_ = history["open"]
@@ -387,18 +383,14 @@ class YahooReader:
             }
         }
     
-    def analyst_recommendations(
-        self,
-        timestamps = False
-    ) -> list:
+    def analyst_recommendations(self, timestamps = False) -> list:
         try:
             data = self._stored_data["upgradeDowngradeHistory"]["history"]
         except:
             raise DatasetError(f"no analyst ratings found for ticker {self.ticker}")
         data = [
             {
-                "date": (dct["epochGradeDate"] if timestamps
-                         else (dt.date(1970, 1, 1) + dt.timedelta(seconds = dct["epochGradeDate"])).isoformat()),
+                "date": (dct["epochGradeDate"] if timestamps else (dt.date(1970, 1, 1) + dt.timedelta(seconds=dct["epochGradeDate"])).isoformat()),
                 "firm": dct["firm"],
                 "new": dct["toGrade"],
                 "old": dct["fromGrade"],
@@ -440,10 +432,10 @@ class YahooReader:
     
     def options(
         self,
-        date = None,
-        strike_min = None,
-        strike_max = None,
-        timestamps = False
+        date=None,
+        strike_min=None,
+        strike_max=None,
+        timestamps=False
     ) -> dict:
         """
         date : int
@@ -471,9 +463,9 @@ class YahooReader:
         }
 
         options_list = requests.get(
-            url = self._options_url.format(self.ticker),
-            headers = HEADERS,
-            params = parameters
+            url=self._options_url.format(self.ticker),
+            headers=HEADERS,
+            params=parameters
         ).json()
         
         try:
@@ -486,7 +478,7 @@ class YahooReader:
             if timestamps:
                 date = dct["expirationDate"]
             else:
-                date = (dt.date(1970, 1, 1) + dt.timedelta(seconds = dct["expirationDate"])).isoformat()
+                date = (dt.date(1970, 1, 1) + dt.timedelta(seconds=dct["expirationDate"])).isoformat()
 
             for call in dct["calls"]:
                 data = {}
@@ -532,10 +524,7 @@ class YahooReader:
         
         return options
     
-    def institutional_ownership(
-        self,
-        timestamps = False
-    ) -> list:        
+    def institutional_ownership(self, timestamps=False) -> list:        
         try:
             data = self._stored_data["institutionOwnership"]["ownershipList"]
         except:
@@ -554,10 +543,7 @@ class YahooReader:
         
         return data
     
-    def fund_ownership(
-        self,
-        timestamps = False
-    ) -> list:        
+    def fund_ownership(self, timestamps=False) -> list:        
         try:
             data = self._stored_data["fundOwnership"]["ownershipList"]
         except:
@@ -576,10 +562,7 @@ class YahooReader:
         
         return data
     
-    def insider_ownership(
-        self,
-        timestamps = False
-    ) -> list:
+    def insider_ownership(self, timestamps=False) -> list:
         try:
             data = self._stored_data["insiderHolders"]["holders"]
         except:
@@ -617,10 +600,7 @@ class YahooReader:
         data.pop("maxAge")
         return data
     
-    def insider_trades(
-        self,
-        timestamps = False
-    ) -> list:        
+    def insider_trades(self, timestamps=False) -> list:        
         try:
             data  = self._stored_data["insiderTransactions"]["transactions"]
         except:
@@ -679,10 +659,7 @@ class YahooReader:
         
         return scores
     
-    def sec_filings(
-        self,
-        timestamps = False
-    ) -> dict:        
+    def sec_filings(self, timestamps=False) -> dict:        
         try:
             data = self._stored_data["secFilings"]["filings"]
         except:
@@ -690,8 +667,8 @@ class YahooReader:
             
         data = [
             {
-                "date_filed": int((dt.date.fromisoformat(entry["date"]) - dt.date(1970,1,1)).total_seconds()) if timestamps else entry["date"],
-                "datetime_filed": entry["epochDate"] if timestamps else (dt.datetime(1970,1,1) + dt.timedelta(seconds=entry["epochDate"])).isoformat(),
+                "date_filed": int((dt.date.fromisoformat(entry["date"]) - dt.date(1970, 1, 1)).total_seconds()) if timestamps else entry["date"],
+                "datetime_filed": entry["epochDate"] if timestamps else (dt.datetime(1970, 1, 1) + dt.timedelta(seconds=entry["epochDate"])).isoformat(),
                 "form_type": entry["type"],
                 "description": entry["title"],
                 "url": entry["edgarUrl"]
@@ -768,9 +745,9 @@ class YahooReader:
      
     def financial_statement(
         self,
-        quarterly = False,
-        timestamps = False,
-        merged = False
+        quarterly=False,
+        timestamps=False,
+        merged=False
     ) -> dict:
         """
         merged : bool
@@ -780,9 +757,9 @@ class YahooReader:
             default : False
         
         """
-        data = self.income_statement(quarterly=quarterly, timestamps = timestamps)        
-        balance_sheet_data = self.balance_sheet(quarterly=quarterly, timestamps = timestamps)
-        cashflow_data = self.cashflow_statement(quarterly=quarterly, timestamps = timestamps)
+        data = self.income_statement(quarterly=quarterly, timestamps=timestamps)        
+        balance_sheet_data = self.balance_sheet(quarterly=quarterly, timestamps=timestamps)
+        cashflow_data = self.cashflow_statement(quarterly=quarterly, timestamps=timestamps)
         if merged:
             for key in data:
                 data[key].update(balance_sheet_data[key])
@@ -797,45 +774,45 @@ class YahooReader:
         
     def income_statement(
         self,
-        quarterly = False,
-        timestamps = False
+        quarterly=False,
+        timestamps=False
     ) -> dict:
         data = self._get_fundamental_data(
-            statement_type = "income_statement",
-            quarterly = quarterly,
-            timestamps = timestamps
+            statement_type="income_statement",
+            quarterly=quarterly,
+            timestamps=timestamps
         )
         return data
     
     def balance_sheet(
         self,
-        quarterly = False,
-        timestamps = False
+        quarterly=False,
+        timestamps=False
     ) -> dict:
         data = self._get_fundamental_data(
-            statement_type = "balance_sheet",
-            quarterly = quarterly,
-            timestamps = timestamps
+            statement_type="balance_sheet",
+            quarterly=quarterly,
+            timestamps=timestamps
         )
         return data
     
     def cashflow_statement(
         self,
-        quarterly = False,
-        timestamps = False
+        quarterly=False,
+        timestamps=False
     ) -> dict:
         data = self._get_fundamental_data(
-            statement_type = "cashflow_statement",
-            quarterly = quarterly,
-            timestamps = timestamps
+            statement_type="cashflow_statement",
+            quarterly=quarterly,
+            timestamps=timestamps
         )
         return data
     
     def _get_fundamental_data(
         self,
         statement_type,
-        quarterly = False,
-        timestamps = False,
+        quarterly=False,
+        timestamps=False,
     ) -> dict:       
         try:
             if statement_type == "income_statement":
@@ -913,9 +890,9 @@ class YahooReader:
             "formatted": False
         }
         data = requests.get(
-            url = self._main_url.format(self.ticker),
-            params = parameters,
-            headers = HEADERS
+            url=self._main_url.format(self.ticker),
+            params=parameters,
+            headers=HEADERS
         ).json()
 
         if data["quoteSummary"]["error"] is not None:

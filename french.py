@@ -12,15 +12,12 @@ from finance_data.utils import HEADERS
 class FrenchReader:
     _base_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
     _dataset_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/{}_CSV.zip"
-    def __init__(
-        self,
-        dataset
-    ):
+    def __init__(self, dataset):
         self._dataset = dataset
           
     def read(self) -> dict:
         time_series = {}
-        response = requests.get(url = self._dataset_url.format(self.dataset), headers = HEADERS).content
+        response = requests.get(url=self._dataset_url.format(self.dataset), headers=HEADERS).content
         data = self._read_zip(response)
         data = data.split("\r\n\r\n")
         for chunk in data:
@@ -80,7 +77,7 @@ class FrenchReader:
         with TemporaryFile() as temp_file:
             temp_file.write(http_response)
             with ZipFile(temp_file, "r") as zip_file:
-                raw_data = zip_file.open(zip_file.namelist()[0]).read().decode(encoding = "cp1252")
+                raw_data = zip_file.open(zip_file.namelist()[0]).read().decode(encoding="cp1252")
                 return raw_data
     
     @classmethod

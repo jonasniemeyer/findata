@@ -30,6 +30,6 @@ def test_hyphen_to_dot():
         and ("cashflow_statement" in data.keys())
     )
 
-def test_no_data():
+def test_missing_data():
     with pytest.raises(TickerError):
         MacrotrendsReader("PLACEHOLDER", frequency="quarterly").read()

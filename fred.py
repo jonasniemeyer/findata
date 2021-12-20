@@ -12,19 +12,14 @@ class FREDReader:
     def __init__(self, dataset) -> None:
         self._dataset = dataset
     
-    def historical_data(
-            self,
-            timestamps = False
-        ) -> pd.DataFrame:
+    def historical_data(self, timestamps=False) -> pd.DataFrame:
 
-        parameters = {
-            "id": self.dataset
-        }
+        parameters = {"id": self.dataset}
 
         response = requests.get(
-            url = self._dataset_url, 
-            headers = HEADERS,
-            params = parameters
+            url=self._dataset_url, 
+            headers=HEADERS,
+            params=parameters
         ).text
 
         df = pd.read_csv(StringIO(response), index_col=0)
@@ -62,7 +57,7 @@ class FREDReader:
     def _get_description_data(self) -> dict:        
         html = requests.get(
             url = self._description_url.format(self.dataset), 
-            headers = HEADERS
+            headers=HEADERS
         ).text
 
         soup = BeautifulSoup(html, "lxml")

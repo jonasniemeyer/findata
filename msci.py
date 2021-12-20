@@ -12,13 +12,13 @@ class MSCIReader:
     def __init__(
         self,
         index_code,
-        index_variant = "STRD",
-        index_currency = "USD",
-        start = dt.date(1969, 1, 1),
-        end = dt.date.today(),
-        frequency = "DAILY",
-        normalize = False,
-        returns = True
+        index_variant="STRD",
+        index_currency="USD",
+        start=dt.date(1969, 1, 1),
+        end=dt.date.today(),
+        frequency="DAILY",
+        normalize=False,
+        returns=True
     ):
         """
         index_code : int or str
@@ -98,9 +98,7 @@ class MSCIReader:
         self.normalize = normalize
         self.returns = returns
 
-    def historical_data(
-        self,
-    ) -> dict:
+    def historical_data(self) -> dict:
 
         start = int(f"{self.start.year}{self.start.month:02}{self.start.day:02}")
         if start < 19690101:
@@ -120,9 +118,9 @@ class MSCIReader:
         }
 
         response = requests.get(
-            url = self._base_url,
-            params = parameters,
-            headers = HEADERS
+            url=self._base_url,
+            params=parameters,
+            headers=HEADERS
         )
 
         url = response.url
@@ -157,8 +155,8 @@ class MSCIReader:
     @classmethod
     def indices(cls) -> pd.DataFrame:
         html = requests.get(
-            url = "https://www.msci.com/ticker-codes",
-            headers = HEADERS
+            url="https://www.msci.com/ticker-codes",
+            headers=HEADERS
         ).content
 
         soup = BeautifulSoup(html, "lxml")
@@ -166,7 +164,7 @@ class MSCIReader:
         paragraph = [paragraph for paragraph in soup.find_all("p") if "Tickers for MSCI Indexes as of " in paragraph][0]
         href = f"https://www.msci.com/{paragraph.find('a').get('href')}"
 
-        data = pd.read_excel(href, engine = "openpyxl")
+        data = pd.read_excel(href, engine="openpyxl")
 
         data = data[data["Index Code"].notna()]
         data = data[["Index Code", "Index Name", "Variant", "Currency", "Vendor", "Ticker Type", "Ticker Code"]]
