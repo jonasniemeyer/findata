@@ -148,18 +148,17 @@ class YahooReader:
         return data
 
     def logo(self) -> bytes:
-        response = b"\n"
-        if "website" in self.profile().keys():
-            response = requests.get(
-                url=f"https://logo.clearbit.com/{self.profile()['website']}",
-                headers=HEADERS
-            ).content
-        if response == b"\n":
-            response = requests.get(
-                url=f"https://storage.googleapis.com/iex/api/logos/{self.ticker.replace('-', '.')}.png",
-                headers=HEADERS
-            ).content
-            if response == PLACEHOLDER_LOGO or response == SERVER_ERROR_MESSAGE:
+        response = requests.get(
+            url=f"https://storage.googleapis.com/iexcloud-hl37opg/api/logos/{self.ticker.replace('-', '.')}.png",
+            headers=HEADERS
+        ).content
+        if response == PLACEHOLDER_LOGO or response == SERVER_ERROR_MESSAGE:
+            if "website" in self.profile().keys():
+                response = requests.get(
+                    url=f"https://logo.clearbit.com/{self.profile()['website']}",
+                    headers=HEADERS
+                ).content
+            else:
                 response = b"\n"
         return response
     
