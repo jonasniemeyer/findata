@@ -4,7 +4,7 @@ import datetime as dt
 import pandas as pd
 from finance_data.utils import HEADERS
 
-def margin_debt():
+def margin_debt() -> dict:
     dataset_url = "https://www.finra.org/investors/learn-to-invest/advanced-investing/margin-statistics"
     data = {
         "combined new": [],
@@ -67,5 +67,7 @@ def margin_debt():
         "finra old": data["finra old"] * 1_000_000,
         "nyse old": data["nyse old"] * 1_000_000
     }
+    for key in data.keys():
+        data[key].index = pd.to_datetime(data[key].index)
     return data
 
