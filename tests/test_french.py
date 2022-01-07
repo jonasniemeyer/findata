@@ -18,7 +18,7 @@ def test_retrieval():
         isinstance(date, pd.Timestamp) for date in data["Main"].index
     )
     assert all(
-        isinstance(date, int) for date in data["Annual Factors"].index
+        isinstance(date, pd.Timestamp) for date in data["Annual Factors"].index
     )
 
 def test_retrieval_sorted_portfolios():
@@ -41,4 +41,13 @@ def test_retrieval_sorted_portfolios():
             isinstance(date, (pd.Timestamp, int)) for date in data[key].index
         )
         for key in data.keys()
+    )
+
+def test_timestamps():
+    data = FrenchReader("Portfolios_Formed_on_BE-ME", timestamps=True).read()
+    assert all(
+        all(
+            isinstance(item, int) for item in data[dataset].index
+        )
+        for dataset in data.keys()
     )

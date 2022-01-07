@@ -4,15 +4,16 @@ import numpy as np
 import datetime as dt
 from bs4 import BeautifulSoup
 from io import StringIO
-from finance_data.utils import HEADERS
+from finance_data.utils import HEADERS, FRED_API_KEY
 
 class FREDReader:
     _description_url = "https://fred.stlouisfed.org/series/{}"
     _dataset_url = "https://fred.stlouisfed.org/graph/fredgraph.csv"
-    def __init__(self, dataset) -> None:
+    def __init__(self, dataset, timestamps=False) -> None:
         self._dataset = dataset
+        self.timestamps = timestamps
     
-    def historical_data(self, timestamps=False) -> pd.DataFrame:
+    def historical_data(self) -> pd.DataFrame:
 
         parameters = {"id": self.dataset}
 
@@ -24,11 +25,8 @@ class FREDReader:
 
         df = pd.read_csv(StringIO(response), index_col=0)
         df.index = pd.to_datetime(df.index)
-        if timestamps:
-            df.index = [
-                int((item - dt.datetime(1970,1,1)).total_seconds())
-                for item in df.index
-            ]
+        if self.timestamps:
+            df.index = [int(date.timestamp()) for date in df.index]
         df = df.replace(".", np.NaN)
         df = df.apply(pd.to_numeric)
 

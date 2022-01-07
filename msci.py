@@ -18,7 +18,8 @@ class MSCIReader:
         end=dt.date.today(),
         frequency="DAILY",
         normalize=False,
-        returns=True
+        returns=True,
+        timestamps=False
     ):
         """
         index_code : int or str
@@ -97,6 +98,7 @@ class MSCIReader:
         
         self.normalize = normalize
         self.returns = returns
+        self.timestamps = timestamps
 
     def historical_data(self) -> dict:
 
@@ -132,6 +134,8 @@ class MSCIReader:
         df = pd.DataFrame(dct["indexes"]["INDEX_LEVELS"])
         df.set_index("calc_date", drop=True, inplace=True)
         df.index = pd.to_datetime(df.index, format=("%Y%m%d"))
+        if self.timestamps:
+            df.index = [int(date.timestamp()) for date in df.index]
         df.index.name = "date"
         df.columns = ["prices"]
 

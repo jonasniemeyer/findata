@@ -22,6 +22,8 @@ if "keys.cfg" in os.listdir():
     cfg = configparser.ConfigParser()
     cfg.read("keys.cfg")
     FRED_API_KEY = cfg.get("KEYS", "fred_api_key")
+else:
+    FRED_API_KEY = None
 
 MACROTRENDS_CONVERSION = {
     # Income Statement

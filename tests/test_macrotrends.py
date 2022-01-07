@@ -33,3 +33,15 @@ def test_hyphen_to_dot():
 def test_missing_data():
     with pytest.raises(TickerError):
         MacrotrendsReader("PLACEHOLDER", frequency="quarterly").read()
+
+def test_timestamps():
+    data = MacrotrendsReader("BRK-A", timestamps=True).read()
+    assert all(
+        all(
+            all(
+                isinstance(key, int) for key in data[statement][variable].keys()
+            )
+            for variable in data[statement].keys()
+        )
+        for statement in data.keys()
+    )

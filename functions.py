@@ -1,10 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
-import datetime as dt
 import pandas as pd
 from finance_data.utils import HEADERS
 
-def margin_debt() -> dict:
+def margin_debt(timestamps=False) -> dict:
     dataset_url = "https://www.finra.org/investors/learn-to-invest/advanced-investing/margin-statistics"
     data = {
         "combined new": [],
@@ -44,9 +43,9 @@ def margin_debt() -> dict:
             date, *values = row
             values = [int(item.replace(",", "")) for item in values]
             try:
-                date = dt.datetime.strptime(date.replace("Sept", "Sep"), "%b-%y").date()
+                date = pd.to_datetime(date.replace("Sept", "Sep"), format="%b-%y")
             except:
-                date = dt.datetime.strptime(date, "%B-%y").date()
+                date = pd.to_datetime(date, format="%B-%y")
             datapoint = (date, *values)
             data[key].append(datapoint)
         data[key] = pd.DataFrame(
@@ -56,6 +55,8 @@ def margin_debt() -> dict:
         )
         data[key].set_index("month", inplace=True, drop=True)
         data[key].sort_index(inplace=True)
+        if timestamps:
+            data[key].index = [int(date.timestamp()) for date in data[key].index]
     new_aggregated = pd.DataFrame()
     new_aggregated["debit"] = data["combined new"]["debit"]
     new_aggregated["credit"] = data["combined new"]["credit cash accounts"] + data["combined new"]["credit margin accounts"]
@@ -67,7 +68,6 @@ def margin_debt() -> dict:
         "finra old": data["finra old"] * 1_000_000,
         "nyse old": data["nyse old"] * 1_000_000
     }
-    for key in data.keys():
-        data[key].index = pd.to_datetime(data[key].index)
+
     return data
 

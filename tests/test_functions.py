@@ -15,3 +15,12 @@ def test_margin_debt():
     assert all(col in ('debit', 'credit cash accounts', 'credit margin accounts') for col in data["nyse old"])
 
     assert all(pd.concat([data["combined old"], data["combined new"]])["debit"] == data["combined full"]["debit"])
+
+    data = margin_debt(timestamps=True)
+    assert all(
+        all(
+            isinstance(item, int) for item in data[dataset].index
+        )
+        for dataset in data.keys()
+    )
+

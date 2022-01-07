@@ -1,5 +1,6 @@
 from finance_data import MSCIReader
 import pandas as pd
+import datetime as dt
 
 def test_indices_list():
     data = MSCIReader.indices()
@@ -18,13 +19,14 @@ def test_indices_list():
     assert data["code"].dtype == "int64"
 
 def test_historical_data_default():
+    end_date = dt.date.today().isoformat().replace("-","")
     data = MSCIReader(139245).historical_data()
     df = data["data"]
     info = data["information"]
     assert info["index_code"] == 139245
     assert info["index_variant"] == "STRD"
     assert info["currency"] == "USD"
-    assert info["url"] == "https://app2.msci.com/products/service/index/indexmaster/getLevelDataForGraph?currency_symbol=USD&index_variant=STRD&start_date=19690101&end_date=20211218&data_frequency=DAILY&index_codes=139245&normalize=False"
+    assert info["url"] == f"https://app2.msci.com/products/service/index/indexmaster/getLevelDataForGraph?currency_symbol=USD&index_variant=STRD&start_date=19690101&end_date={end_date}&data_frequency=DAILY&index_codes=139245&normalize=False"
     assert all(
         isinstance(date, pd.Timestamp)
         for date in df.index
@@ -101,3 +103,10 @@ def test_normalize():
         for col in data.columns
     )
     assert data.iloc[0, 0] == 100
+
+def test_timestamps():
+    data = MSCIReader(139245, timestamps=True).historical_data()["data"]
+    assert all(
+        isinstance(ts, int)
+        for ts in data.index
+    )

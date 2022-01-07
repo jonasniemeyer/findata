@@ -1,3 +1,4 @@
+from datetime import time
 from finance_data import AQRReader
 import pandas as pd
 
@@ -19,6 +20,10 @@ def test_esg_efficient_frontier_portfolios():
             )
             for col in df.columns
         )
+    data = AQRReader.esg_efficient_frontier_portfolios(timestamps=True)
+    for key in ("Value-weighted excess returns", "Equal-weighted excess returns"):
+        df = data[key]
+        assert all(isinstance(ts, int) for ts in df.index)
 
 def test_bab_factors_daily():
     data = AQRReader.bab_factors(frequency="daily")
@@ -39,6 +44,10 @@ def test_bab_factors_daily():
                 for col in df.columns if col != "RF"
             )
     assert "Risk Free Rate" in data["RF"].columns
+    data = AQRReader.bab_factors(frequency="daily", timestamps=True)
+    for key in ("BAB Factors", "MKT", "SMB", "HML FF", "HML Devil", "UMD", "RF"):
+        df = data[key]
+        assert all(isinstance(ts, int) for ts in df.index)
 
 def test_bab_factors_monthly():
     data = AQRReader.bab_factors(frequency="monthly")
@@ -59,6 +68,10 @@ def test_bab_factors_monthly():
                 for col in df.columns if col != "RF"
             )
     assert "Risk Free Rate" in data["RF"].columns
+    data = AQRReader.bab_factors(frequency="monthly", timestamps=True)
+    for key in ("BAB Factors", "MKT", "SMB", "HML FF", "HML Devil", "UMD", "RF"):
+        df = data[key]
+        assert all(isinstance(ts, int) for ts in df.index)
 
 def test_factor_premia_century():
     df = AQRReader.factor_premia_century()
@@ -89,6 +102,8 @@ def test_factor_premia_century():
         )
         for col in df.columns
     )
+    df = AQRReader.factor_premia_century(timestamps=True)
+    assert all(isinstance(ts, int) for ts in df.index)
 
 def test_commodities_long_run():
     df = AQRReader.commodites_long_run()
@@ -110,6 +125,8 @@ def test_commodities_long_run():
         )
         for col in df.columns
     )
+    df = AQRReader.commodites_long_run(timestamps=True)
+    assert all(isinstance(ts, int) for ts in df.index)
 
 def test_momentum_indices():
     data = AQRReader.momentum_indices()
@@ -123,13 +140,18 @@ def test_momentum_indices():
         for col in df.columns
     )
     df = data["Yearly"]
-    assert all(isinstance(date, int) for date in df.index)
+    assert all(isinstance(date, pd.Timestamp) for date in df.index)
     assert df.index.is_unique
     assert all(df[col].dtype == "float64" for col in df.columns)
     assert all(
         col in ("U.S. Large Cap", "U.S. Small Cap", "International")
         for col in df.columns
     )
+    data = AQRReader.momentum_indices(timestamps=True)
+    df = data["Monthly"]
+    assert all(isinstance(ts, int) for ts in df.index)
+    df = data["Yearly"]
+    assert all(isinstance(ts, int) for ts in df.index)
 
 def test_quality_sorted_portfolios():
     data = AQRReader.quality_sorted_portfolios()
@@ -146,6 +168,10 @@ def test_quality_sorted_portfolios():
             )
             for col in df.columns
         )
+    data = AQRReader.quality_sorted_portfolios(timestamps=True)
+    for key in ("US", "Global"):
+        df = data[key]
+        assert all(isinstance(ts, int) for ts in df.index)
 
 def test_qmj_factors_daily():
     data = AQRReader.qmj_factors(frequency="daily")
@@ -186,6 +212,10 @@ def test_qmj_factors_monthly():
                 for col in df.columns
             )
     assert "Risk Free Rate" in data["RF"].columns
+    data = AQRReader.qmj_factors(frequency="daily", timestamps=True)
+    for key in ("QMJ Factors", "MKT", "SMB", "HML FF", "HML Devil", "UMD", "RF"):
+        df = data[key]
+        assert all(isinstance(ts, int) for ts in df.index)
 
 def test_quality_size_sorted_portfolios():
     data = AQRReader.quality_size_sorted_portfolios()
@@ -202,6 +232,10 @@ def test_quality_size_sorted_portfolios():
             )
             for col in df.columns
         )
+    data = AQRReader.quality_size_sorted_portfolios(timestamps=True)
+    for key in ("US", "Global"):
+        df = data[key]
+        assert all(isinstance(ts, int) for ts in df.index)
 
 def test_hml_devil_factors_daily():
     data = AQRReader.hml_devil_factors(frequency="daily")
@@ -222,6 +256,10 @@ def test_hml_devil_factors_daily():
                 for col in df.columns
             )
     assert "Risk Free Rate" in data["RF"].columns
+    data = AQRReader.hml_devil_factors(frequency="daily", timestamps=True)
+    for key in ("HML Devil", "MKT", "SMB", "HML FF", "UMD", "RF"):
+        df = data[key]
+        assert all(isinstance(ts, int) for ts in df.index)
 
 def test_hml_devil_factors_monthly():
     data = AQRReader.hml_devil_factors(frequency="daily")
@@ -242,6 +280,10 @@ def test_hml_devil_factors_monthly():
                 for col in df.columns
             )
     assert "Risk Free Rate" in data["RF"].columns
+    data = AQRReader.hml_devil_factors(frequency="daily", timestamps=True)
+    for key in ("HML Devil", "MKT", "SMB", "HML FF", "UMD", "RF"):
+        df = data[key]
+        assert all(isinstance(ts, int) for ts in df.index)
 
 def test_time_series_momentum():
     df = AQRReader.time_series_momentum()
@@ -249,6 +291,8 @@ def test_time_series_momentum():
     assert df.index.is_unique
     assert all(df[col].dtype == "float64" for col in df.columns)
     assert all(col in ("TSMOM", "TSMOM^CM", "TSMOM^EQ", "TSMOM^FI", "TSMOM^FX") for col in df.columns)
+    df = AQRReader.time_series_momentum(timestamps=True)
+    assert all(isinstance(ts, int) for ts in df.index)
 
 def test_value_momentum_everywhere_factors():
     df = AQRReader.value_momentum_everywhere_factors()
@@ -265,6 +309,8 @@ def test_value_momentum_everywhere_factors():
         )
         for col in df.columns
     )
+    df = AQRReader.value_momentum_everywhere_factors(timestamps=True)
+    assert all(isinstance(ts, int) for ts in df.index)
 
 def test_value_momentum_everywhere_portfolios():
     df = AQRReader.value_momentum_everywhere_portfolios()
@@ -286,3 +332,5 @@ def test_value_momentum_everywhere_portfolios():
         )
         for col in df.columns
     )
+    df = AQRReader.value_momentum_everywhere_portfolios(timestamps=True)
+    assert all(isinstance(ts, int) for ts in df.index)

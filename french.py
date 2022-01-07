@@ -5,15 +5,15 @@ from zipfile import ZipFile
 from io import StringIO
 import pandas as pd
 import numpy as np
-import datetime as dt
 import re
 from finance_data.utils import HEADERS
 
 class FrenchReader:
     _base_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
     _dataset_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/{}_CSV.zip"
-    def __init__(self, dataset):
+    def __init__(self, dataset, timestamps=False):
         self._dataset = dataset
+        self.timestamps = timestamps
           
     def read(self) -> dict:
         time_series = {}
@@ -56,20 +56,20 @@ class FrenchReader:
             if len(df.index) == 0:
                 continue # ignore empty dataframes
             elif all([len(str(date)) == 6 for date in df.index]):
-                df.index = [
-                    dt.datetime.strptime(str(date), "%Y%m")
-                    for date in df.index
-                ]
+                df.index = pd.to_datetime([str(date) for date in df.index], format="%Y%m")
             elif all([len(str(date)) == 8 for date in df.index]):
-                df.index = [
-                    dt.datetime.strptime(str(date), "%Y%m%d")
-                    for date in df.index
-                ]
+                df.index = pd.to_datetime([str(date) for date in df.index], format="%Y%m%d")
             elif not all([len(str(date)) == 4 for date in df.index]):
                 continue # ignore dataframes that contain dataset description
+            else:
+                df.index = pd.to_datetime([str(date) for date in df.index], format="%Y") #yearly data
             if "For portfolios formed in June of year t" in name:
                 name = re.findall("(Value Weight Average of [^\s]+)", name)[0]
             df.columns = [col.strip() for col in df.columns]
+
+            if self.timestamps:
+                df.index = [int(date.timestamp()) for date in df.index]
+            
             time_series[name] = df
         return time_series
         
