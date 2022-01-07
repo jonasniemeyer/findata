@@ -264,7 +264,6 @@ class YahooReader:
         utc_offset = meta_data["gmtoffset"]
         timezone = meta_data["timezone"]
         exchange_timezone = meta_data["exchangeTimezoneName"]
-        tz_offset = meta_data["gmtoffset"]
         
         ts = data["chart"]["result"][0]["timestamp"]
         history = data["chart"]["result"][0]["indicators"]["quote"][0]
@@ -330,9 +329,14 @@ class YahooReader:
         )
         
         if not timestamps:
-            prices.index = [pd.to_datetime(ts + tz_offset, unit="s") for ts in prices.index]
-            df_div.index = [pd.to_datetime(ts + tz_offset, unit="s") for ts in df_div.index]
-            df_splits.index = [pd.to_datetime(ts + tz_offset, unit="s") for ts in df_splits.index]
+            if frequency in ("5d", "1wk", "1mo", "3mo"):
+                prices.index = [pd.to_datetime(dt.date(1970, 1, 1) + dt.timedelta(seconds=ts+utc_offset)) for ts in prices.index]
+                df_div.index = [pd.to_datetime(dt.date(1970, 1, 1) + dt.timedelta(seconds=ts+utc_offset)) for ts in df_div.index]
+                df_splits.index = [pd.to_datetime(dt.date(1970, 1, 1) + dt.timedelta(seconds=ts+utc_offset)) for ts in df_splits.index]
+            else:
+                prices.index = [pd.to_datetime(ts, unit="s") for ts in prices.index]
+                df_div.index = [pd.to_datetime(ts, unit="s") for ts in df_div.index]
+                df_splits.index = [pd.to_datetime(ts, unit="s") for ts in df_splits.index]
 
         if prices.index[-1] == prices.index[-2]:
             prices = prices[:-1]
@@ -341,23 +345,30 @@ class YahooReader:
         df = pd.concat([prices, df_div], axis=1)
         df = df.sort_index()
         
-        if frequency in ("1wk", "1mo", "3mo"):
+        if frequency in ("5d", "1wk", "1mo", "3mo"):
             dividends = df["dividends"].copy()
             for i in range(len(dividends)-1):
                 if not np.isnan(dividends.iloc[i]) and np.isnan(dividends.iloc[i+1]) and np.isnan(df.loc[df.index[i], "close"]):
                     df.loc[df.index[i+1], "dividends"] = df.loc[df.index[i], "dividends"]
             df = df[df["close"].notna()]
         
-        # merge prices, dividends with splits
+        # merge prices and dividends with splits
         df = pd.concat([df, df_splits], axis=1)
         df = df.sort_index()
         
-        if frequency in ("1wk", "1mo", "3mo"):
+        if frequency in ("5d", "1wk", "1mo", "3mo"):
             splits = df["splits"].copy()
             for i in range(len(splits)-1):
                 if not np.isnan(splits.iloc[i]) and np.isnan(splits.iloc[i+1]) and np.isnan(df.loc[df.index[i], "close"]):
                     df.loc[df.index[i+1], "splits"] = df.loc[df.index[i], "splits"]
             df = df[df["close"].notna()]
+
+        # round weird decimal places
+        df["open"] = df["open"].round(6)
+        df["high"] = df["high"].round(6)
+        df["low"] = df["low"].round(6)
+        df["close"] = df["close"].round(6)
+        df["adj_close"] = df["adj_close"].round(6)
 
         if returns:
             df['simple_returns'] = (df['close'] + df['dividends'].fillna(0)) / df['close'].shift(1) - 1
@@ -365,7 +376,7 @@ class YahooReader:
 
         if timestamps:
             df.index.name = "timestamps"
-        elif frequency in ("1d", "1wk", "1mo", "3mo"):
+        elif frequency in ("1d", "5d", "1wk", "1mo", "3mo"):
             df.index.name = "date"
         else:
             df.index.name = "datetime"
