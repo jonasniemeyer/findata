@@ -1,4 +1,5 @@
 import re
+import pandas as pd
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
@@ -12,7 +13,7 @@ from finance_data.utils import (
 
 class MacrotrendsReader:
     
-    base_url = "https://www.macrotrends.net/stocks/charts/{}/placeholder/{}?freq={}"
+    base_url = "https://www.macrotrends.net/stocks/charts/{}/{}/{}?freq={}"
 
     conversion = {
         "income-statement": "income_statement",
@@ -23,8 +24,10 @@ class MacrotrendsReader:
     def __init__(
         self,
         ticker=None,
+        name=None,
         statement="financial-statement",
         frequency="yearly",
+        timestamps=False
     ):
         if statement not in ("income-statement", "balance-sheet", "cash-flow-statement", "financial-statement"):
             raise ValueError('Statement type has to be "income-statement", "balance-sheet", "cash-flow-statement" or "financial-statement"')
@@ -33,6 +36,8 @@ class MacrotrendsReader:
         if "-" in self._ticker:
             self._ticker = self._ticker.replace("-", ".")
         
+        self.name = "placeholder" if name is None else name
+
         if statement == "financial-statements":
             self.statement = "financial-statement"
         else:
@@ -47,9 +52,12 @@ class MacrotrendsReader:
         
         self.url = self.base_url.format(
             self.ticker,
+            self.name,
             self.statement,
             self.frequency
         )
+
+        self.timestamps = timestamps
     
     def read(self):
         self._open_website()
@@ -76,15 +84,19 @@ class MacrotrendsReader:
                 self.driver.get(self.url.replace("financial-statement", "income-statement"))
             else:
                 self.driver.get(self.url)
-        else:
-            self.driver.get(url)
 
-        name = self.driver.current_url.split("/")[-2]
-        if name == "":
-            self.driver.quit()
-            raise TickerError(f"cannot find data with ticker {self.ticker}")
-
-        if url is None:
+            name = self.driver.current_url.split("/")[-2]
+            if name == "":
+                self.driver.quit()
+                raise TickerError(f"cannot find data with ticker {self.ticker}")
+            self.name = name
+            self.url = self.base_url.format(
+                self.ticker,
+                self.name,
+                self.statement,
+                self.frequency
+            )
+            
             try:
                 button_cookies = WebDriverWait(self.driver, 10).until(
                     EC.element_to_be_clickable((By.XPATH, "/html/body/div[5]/div[1]/div[1]/div/button"))
@@ -92,6 +104,9 @@ class MacrotrendsReader:
                 button_cookies.click()
             except:
                 pass
+        
+        else:
+            self.driver.get(url)
 
     def _parse(self):
         data = {}
@@ -159,6 +174,8 @@ class MacrotrendsReader:
                 if col_index < 2:
                     continue
                 date = col.find("span", {"style": "text-overflow: ellipsis; cursor: default;"}).text
+                if self.timestamps:
+                    date = int(pd.to_datetime(date).timestamp())
                 for row_index, row in enumerate(rows):
                     cells = row.find_all("div", {"role": "gridcell"})
                     cell = cells[col_index]
