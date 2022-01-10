@@ -85,7 +85,3 @@ class RSSReader:
             data.append(dct)
             
         return data
-
-    @classmethod
-    def cnbc(cls):
-        pass
