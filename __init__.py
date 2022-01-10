@@ -4,6 +4,7 @@ from .macrotrends import MacrotrendsReader
 from .french import FrenchReader
 from .fred import FREDReader
 from .msci import MSCIReader
+from .rss import RSSReader
 from .sec import (
     _SECFiling,
     Filing13D,
@@ -20,6 +21,7 @@ __all__ = [
     "FrenchReader",
     "MSCIReader",
     "FREDReader",
+    "RSSReader",
     "_SECFiling",
     "Filing13D",
     "Filing13G",
