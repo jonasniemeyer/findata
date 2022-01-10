@@ -1,17 +1,17 @@
 import requests
+import pandas as pd
 from bs4 import BeautifulSoup
 from finance_data.utils import HEADERS
-from requests.api import head
 
 class RSSReader:
 
     @classmethod
     def seekingalpha(cls, ticker, timestamps=False) -> list:
-        url = f"https://seekingalpha.com/api/sa/combined/{ticker.upper()}.xml"
-        
+        url = f"https://seekingalpha.com/api/sa/combined/{ticker}.xml"
         response = requests.get(url=url, headers=HEADERS).text
         soup = BeautifulSoup(response, "lxml")
         tags = soup.find_all("item")
+        
         data = []
         for tag in tags:
             dct = {}
@@ -29,8 +29,26 @@ class RSSReader:
         return data
 
     @classmethod
-    def nasdaq(cls):
-        pass
+    def nasdaq(cls, ticker, timestamps=False) -> list:
+        url = f"https://www.nasdaq.com/feed/rssoutbound?symbol={ticker}"
+        response = requests.get(url=url, headers=HEADERS).text
+        soup = BeautifulSoup(response, "lxml")
+        tags = soup.find_all("item")
+        
+        data = []
+        for tag in tags:
+            dct = {}
+            dct["header"] = tag.find("title").text
+            dct["url"] = tag.find("guid").text
+            date =  tag.find("pubdate").text
+            date = int(pd.to_datetime(date).timestamp())
+            if not timestamps:
+                date = pd.to_datetime(date, unit="s").isoformat()
+            dct["date"] = date
+            dct["category"] = tag.find("category").text
+            data.append(dct)
+            
+        return data
 
     @classmethod
     def wsj(cls):
