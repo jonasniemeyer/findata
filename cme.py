@@ -72,7 +72,7 @@ class CMEReader:
         data = {}
         
         html = self.driver.page_source
-        soup = BeautifulSoup(html)
+        soup = BeautifulSoup(html, "lxml")
         button = soup.find("select", {"class": "dropdown-toggle"})
         options = button.find_all("option")
         
@@ -109,8 +109,9 @@ class CMEReader:
         df.index = [item.replace("JLY", "JUL") for item in df.index]
         df.index = pd.to_datetime(df.index, format="%b %y")
         for col in df.columns:
-            df[col] = df[col].apply(lambda x: x.replace("B", "") if isinstance(x, str) else x)
             df[col] = df[col].apply(lambda x: x.replace("A", "") if isinstance(x, str) else x)
+            df[col] = df[col].apply(lambda x: x.replace("B", "") if isinstance(x, str) else x)
+            df[col] = df[col].apply(lambda x: x.replace("'", "") if isinstance(x, str) else x)
             df[col] = df[col].apply(lambda x: x.replace("-", "") if isinstance(x, str) else x)
             df[col] = df[col].apply(lambda x: x.replace("UNCH", "0") if isinstance(x, str) else x)
             df[col] = pd.to_numeric(df[col])
