@@ -46,6 +46,7 @@ class CMEReader:
             self.group,
             self.name
         )
+        self.timestamps = timestamps
     
     def read(self) -> dict:
         self._open_website()
@@ -77,7 +78,10 @@ class CMEReader:
         options = button.find_all("option")
         
         date = pd.to_datetime(options[0].get("value"))
-        data[date.date().isoformat()] = self._parse_table()
+        if self.timestamps:
+            data[int(date.timestamp())] = self._parse_table()
+        else:
+            data[date.date().isoformat()] = self._parse_table()
         
         for index, option in enumerate(options):
             if index == 0:
@@ -89,7 +93,10 @@ class CMEReader:
             button_dates.click()
             button_refresh = self.driver.find_element_by_xpath(f"/html/body/main/div/div[3]/div[2]/div/div/div/div/div/div/div[4]/div/div/div/div/select/option[{index+1}]")
             button_refresh.click()
-            data[date.date().isoformat()] = self._parse_table()
+            if self.timestamps:
+                data[int(date.timestamp())] = self._parse_table()
+            else:
+                data[date.date().isoformat()] = self._parse_table()
         
         return data
     
@@ -108,6 +115,8 @@ class CMEReader:
         df = df.set_index("Month")
         df.index = [item.replace("JLY", "JUL") for item in df.index]
         df.index = pd.to_datetime(df.index, format="%b %y")
+        if self.timestamps:
+            df.index = [int(date.timestamp()) for date in df.index]
         for col in df.columns:
             df[col] = df[col].apply(lambda x: x.replace("A", "") if isinstance(x, str) else x)
             df[col] = df[col].apply(lambda x: x.replace("B", "") if isinstance(x, str) else x)
