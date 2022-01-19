@@ -1,4 +1,5 @@
 from .aqr import AQRReader
+from .cme import CMEReader
 from .yahoo import YahooReader
 from .macrotrends import MacrotrendsReader
 from .french import FrenchReader
@@ -16,6 +17,7 @@ from .utils import DatasetError, TickerError
 
 __all__ = [
     "AQRReader",
+    "CMEReader",
     "YahooReader",
     "MacrotrendsReader",
     "FrenchReader",
