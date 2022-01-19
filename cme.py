@@ -124,4 +124,5 @@ class CMEReader:
             df[col] = df[col].apply(lambda x: x.replace("-", "") if isinstance(x, str) else x)
             df[col] = df[col].apply(lambda x: x.replace("UNCH", "0") if isinstance(x, str) else x)
             df[col] = pd.to_numeric(df[col])
+        df = df.rename(columns = {"Est. Volume": "Volume", "Prior day OI": "Open Interest"})
         return df
