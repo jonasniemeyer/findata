@@ -70,4 +70,3 @@ def margin_debt(timestamps=False) -> dict:
     }
 
     return data
-

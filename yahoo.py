@@ -380,6 +380,8 @@ class YahooReader:
             df.index.name = "date"
         else:
             df.index.name = "datetime"
+        
+        df = df[:-1]
        
         return {
             "data": df,
