@@ -63,7 +63,7 @@ class CMEReader:
         self.driver.get(self.url)
         try:
             button_cookies = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, "/html/body/div[9]/div/div/div/a"))
+                EC.element_to_be_clickable((By.XPATH, "/html/body/div[9]/div[3]/div/div[1]/div/div[2]/div/button[3]"))
             )
             button_cookies.click()
         except:
