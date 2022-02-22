@@ -12,6 +12,7 @@ from .sec import (
     Filing13G,
     Filing13F
 )
+from .shiller import ShillerReader
 from .functions import margin_debt
 from .utils import DatasetError, TickerError
 

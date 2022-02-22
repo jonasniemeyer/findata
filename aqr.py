@@ -1,6 +1,5 @@
 import pandas as pd
 from datetime import datetime, timedelta
-from finance_data.utils import HEADERS
 
 class AQRReader:
 
