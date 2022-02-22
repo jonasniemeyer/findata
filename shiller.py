@@ -12,7 +12,7 @@ class ShillerReader:
             index_col=0
         )
         df.index = [
-            pd.to_datetime(f"{str(item)[:4]}-{str(item)[-1:]}-01") if len(str(item)) == 7
+            pd.to_datetime(f"{str(item)[:4]}-{str(item)[-2:]}-01") if len(str(item)) == 7
             else pd.to_datetime(f"{str(item)[:4]}-10-01")
             for item in df.index
         ]
