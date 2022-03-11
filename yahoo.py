@@ -330,13 +330,13 @@ class YahooReader:
         
         if not timestamps:
             if frequency in ("5d", "1wk", "1mo", "3mo"):
-                prices.index = [pd.to_datetime(dt.date(1970, 1, 1) + dt.timedelta(seconds=ts+utc_offset)) for ts in prices.index]
-                df_div.index = [pd.to_datetime(dt.date(1970, 1, 1) + dt.timedelta(seconds=ts+utc_offset)) for ts in df_div.index]
-                df_splits.index = [pd.to_datetime(dt.date(1970, 1, 1) + dt.timedelta(seconds=ts+utc_offset)) for ts in df_splits.index]
+                prices.index = pd.to_datetime([pd.to_datetime(ts+utc_offset, unit="s").date() for ts in prices.index])
+                df_div.index = pd.to_datetime([pd.to_datetime(ts+utc_offset, unit="s").date() for ts in df_div.index])
+                df_splits.index = pd.to_datetime([pd.to_datetime(ts+utc_offset, unit="s").date() for ts in df_splits.index])
             else:
-                prices.index = [pd.to_datetime(ts, unit="s") for ts in prices.index]
-                df_div.index = [pd.to_datetime(ts, unit="s") for ts in df_div.index]
-                df_splits.index = [pd.to_datetime(ts, unit="s") for ts in df_splits.index]
+                prices.index = pd.to_datetime(prices.index, unit="s")
+                df_div.index = pd.to_datetime(df_div.index, unit="s")
+                df_splits.index = pd.to_datetime(df_splits.index, unit="s")
 
         if prices.index[-1] == prices.index[-2]:
             prices = prices[:-1]
@@ -490,7 +490,7 @@ class YahooReader:
             if timestamps:
                 date = dct["expirationDate"]
             else:
-                date = (dt.date(1970, 1, 1) + dt.timedelta(seconds=dct["expirationDate"])).isoformat()
+                date = (dt.date(1970, 1, 1) + dt.timedelta(seconds=dct["expirationDate"])).isoformat()###
 
             for call in dct["calls"]:
                 data = {}
