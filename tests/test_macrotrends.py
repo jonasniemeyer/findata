@@ -14,6 +14,11 @@ def test_default():
         for key in MACROTRENDS_CONVERSION.values()
     )
 
+def test_single_statement():
+    for statement in ("income-statement", "balance-sheet", "cash-flow-statement"):
+        data = MacrotrendsReader(ticker="AAPL", statement=statement).read()
+        assert isinstance(data, dict)
+
 def test_quarterly():
     data = MacrotrendsReader("AAPL", frequency="quarterly").read()
     assert (
