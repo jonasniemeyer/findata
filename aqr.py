@@ -65,13 +65,14 @@ class AQRReader:
         return df
     
     @classmethod
-    def commodites_long_run(cls, timestamps=False) -> pd.DataFrame:
+    def commodities_long_run(cls, timestamps=False) -> pd.DataFrame:
         df = pd.read_excel(
             io="https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Commodities-for-the-Long-Run-Index-Level-Data-Monthly.xlsx",
             sheet_name="Commodities for the Long Run",
             skiprows=range(10),
             index_col=0
         )
+        df.index = pd.to_datetime(df.index, format="%m/%d/%Y")
         if timestamps:
             df.index = [int(date.timestamp()) for date in df.index]
         return df
@@ -191,6 +192,7 @@ class AQRReader:
             skiprows=range(17),
             index_col=0
         )
+        df.index = pd.to_datetime(df.index, format="%m/%d/%Y")
         if timestamps:
             df.index = [int(date.timestamp()) for date in df.index]
         return df

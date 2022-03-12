@@ -106,7 +106,7 @@ def test_factor_premia_century():
     assert all(isinstance(ts, int) for ts in df.index)
 
 def test_commodities_long_run():
-    df = AQRReader.commodites_long_run()
+    df = AQRReader.commodities_long_run()
     assert all(isinstance(date, pd.Timestamp) for date in df.index)
     assert df.index.is_unique
     assert all(df[col].dtype == "float64" for col in df.columns if col not in("State of backwardation/contango", "State of inflation"))
@@ -125,7 +125,7 @@ def test_commodities_long_run():
         )
         for col in df.columns
     )
-    df = AQRReader.commodites_long_run(timestamps=True)
+    df = AQRReader.commodities_long_run(timestamps=True)
     assert all(isinstance(ts, int) for ts in df.index)
 
 def test_momentum_indices():
