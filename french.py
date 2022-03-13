@@ -11,6 +11,7 @@ from finance_data.utils import HEADERS
 class FrenchReader:
     _base_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
     _dataset_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/{}_CSV.zip"
+    
     def __init__(self, dataset, timestamps=False):
         self._dataset = dataset
         self.timestamps = timestamps
