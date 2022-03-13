@@ -42,4 +42,46 @@ class TipranksReader:
         ]
         
         return data
+    
+
+    def news_sentiment(self, timestamps=False):
+        data = requests.get(
+            url = f"{self.base_url}getNewsSentiments/",
+            headers = HEADERS,
+            params = {"ticker": self.ticker}
+        ).json()
         
+        data = {
+            "articles_last_week": data["buzz"]["articlesInLastWeek"],
+            "average_weekly_articles": data["buzz"]["weeklyAverage"],
+            "positive_percent": data["sentiment"]["bullishPercent"],
+            "negative_percent": data["sentiment"]["bearishPercent"],
+            "sector_sentiment": [
+                {
+                    "ticker": item["ticker"],
+                    "name": item["companyName"],
+                    "positive_percent": item["bullishPercent"],
+                    "negative_percent": item["bearishPercent"]
+                } 
+                for item in data["sector"]
+            ],
+            "sector_average_sentiment": data["sectorAverageBullishPercent"],
+            "news_score": data["score"],
+            "articles": [
+                {
+                    "week": (
+                        int(pd.to_datetime(item["weekStart"]).date().timestamps()) if timestamps
+                        else pd.to_datetime(item["weekStart"]).date().isoformat()
+                    ),
+                    "buy": item["buy"],
+                    "neutral": item["neutral"],
+                    "sell": item["sell"],
+                    "total": item["all"]
+                }
+                for item in data["counts"]
+            ],
+            "sector_average_news_score": data["sectorAverageNewsScore"]
+
+        }
+        
+        return data
