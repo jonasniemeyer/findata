@@ -856,8 +856,6 @@ class YahooReader:
         return data
     
     def _get_stored_data(self) -> dict:
-        if hasattr(self, "_stored_data"):
-            return self._stored_data
         
         parameters = {
             "modules": ",".join(
@@ -910,6 +908,5 @@ class YahooReader:
         if data["quoteSummary"]["error"] is not None:
             raise TickerError(f"no data found for ticker {self.ticker}")
         data = data["quoteSummary"]["result"][0]
-        self._stored_data = data
-        
-        return self._stored_data
+
+        return data
