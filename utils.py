@@ -13,15 +13,17 @@ HEADERS = {
         "Expires": "-1",
         "Upgrade-Insecure-Requests": "-1",
         "User-Agent": (
-            "Mozilla/5.0 (X11; CrOS x86_64 12871.102.0) AppleWebKit/537.36 "
-            "(KHTML, like Gecko) Chrome/81.0.4044.141 Safari/537.36"
-        ),
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36"
+        )
     }
+TIPRANKS_HEADERS = HEADERS
 
-if "keys.cfg" in os.listdir():
+if "private.cfg" in os.listdir():
     cfg = configparser.ConfigParser()
-    cfg.read("keys.cfg")
+    cfg.read("private.cfg")
     FRED_API_KEY = cfg.get("KEYS", "fred_api_key")
+    TIPRANKS_HEADERS["cookie"] = cfg.get("COOKIES", "tipranks_cookies")
 else:
     FRED_API_KEY = None
 
