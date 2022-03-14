@@ -88,6 +88,38 @@ class TipranksReader:
         }
         
         return data
+
+    def recommendation_trend_breakup(self, timestamps=False, sorted_by="stars"):
+        data_raw = self._get_ratings_data()["consensuses"]
+        data = {}
+        if sorted_by == "stars":
+            for item in data_raw:
+                stars = item["mStars"]
+                date = pd.to_datetime(item["d"]).date()
+                date = date.timestamp() if timestamps else date.isoformat()
+                
+                data[stars] = data.get(stars, {})
+                data[stars][date] = data.get(date, {})
+                data[stars][date]["consensus_rating"] = item["rating"]
+                data[stars][date]["buy"] = item["nB"]
+                data[stars][date]["hold"] = item["nH"]
+                data[stars][date]["sell"] = item["nS"]
+                data[stars][date]["average"] = (item["nB"]*5+item["nH"]*3+item["nS"]) / (item["nB"]+item["nH"]+item["nS"])
+        elif sorted_by == "date":
+            for item in data_raw:
+                stars = item["mStars"]
+                date = pd.to_datetime(item["d"]).date()
+                date = date.timestamp() if timestamps else date.isoformat()
+                
+                data[date] = data.get(date, {})
+                data[date][stars] = data.get(stars, {})
+                data[date][stars]["consensus_rating"] = item["rating"]
+                data[date][stars]["buy"] = item["nB"]
+                data[date][stars]["hold"] = item["nH"]
+                data[date][stars]["sell"] = item["nS"]
+                data[date][stars]["average"] = (item["nB"]*5+item["nH"]*3+item["nS"]) / (item["nB"]+item["nH"]+item["nS"])
+        
+        return data
     
     def _get_ratings_data(self):
         if not hasattr(self, "_ratings_data"):
