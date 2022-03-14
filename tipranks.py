@@ -37,8 +37,7 @@ class TipranksReader:
                     int(pd.to_datetime(item["lastRatingDate"]).date().timestamps()) if timestamps
                     else pd.to_datetime(item["lastRatingDate"]).date().isoformat()
                 )
-            }
-            for item in data
+            } for item in data
         ]
         
         return data
@@ -65,8 +64,7 @@ class TipranksReader:
                     "name": item["companyName"],
                     "positive_percent": item["bullishPercent"],
                     "negative_percent": item["bearishPercent"]
-                } 
-                for item in data["sector"]
+                } for item in data["sector"]
             ],
             "sector_average_sentiment": data["sectorAverageBullishPercent"],
             "news_score": data["score"],
@@ -80,16 +78,14 @@ class TipranksReader:
                     "neutral": item["neutral"],
                     "sell": item["sell"],
                     "total": item["all"]
-                }
-                for item in data["counts"]
+                } for item in data["counts"]
             ],
             "sector_average_news_score": data["sectorAverageNewsScore"]
-
         }
         
         return data
 
-    def recommendation_trend_breakup(self, timestamps=False, sorted_by="stars"):
+    def recommendation_trend_breakup(self, sorted_by="stars", timestamps=False):
         data_raw = self._get_ratings_data()["consensuses"]
         data = {}
         if sorted_by == "stars":
@@ -118,6 +114,70 @@ class TipranksReader:
                 data[date][stars]["hold"] = item["nH"]
                 data[date][stars]["sell"] = item["nS"]
                 data[date][stars]["average"] = (item["nB"]*5+item["nH"]*3+item["nS"]) / (item["nB"]+item["nH"]+item["nS"])
+        
+        return data
+    
+    def recommendation_trend(self, timestamps=False):
+        data_all = self._get_ratings_data()["consensusOverTime"]
+        data_best = self._get_ratings_data()["bestConsensusOverTime"]
+        data = {"all": {}, "best": {}}
+        for item in data_all:
+            date = pd.to_datetime(item["date"]).date()
+            date = date.timestamp() if timestamps else date.isoformat()
+            
+            data["all"][date] = data["all"].get(date, {})
+            data["all"][date]["consensus_rating"] = item["consensus"]
+            data["all"][date]["buy"] = item["buy"]
+            data["all"][date]["hold"] = item["hold"]
+            data["all"][date]["sell"] = item["sell"]
+            data["all"][date]["average"] = (item["buy"]*5+item["hold"]*3+item["sell"]) / (item["buy"]+item["hold"]+item["sell"])
+            data["all"][date]["average_price_target"] = item["priceTarget"]
+        
+        for item in data_best:
+            date = pd.to_datetime(item["date"]).date()
+            date = date.timestamp() if timestamps else date.isoformat()
+            
+            data["best"][date] = data["all"].get(date, {})
+            data["best"][date]["consensus_rating"] = item["consensus"]
+            data["best"][date]["buy"] = item["buy"]
+            data["best"][date]["hold"] = item["hold"]
+            data["best"][date]["sell"] = item["sell"]
+            data["best"][date]["average"] = (item["buy"]*5+item["hold"]*3+item["sell"]) / (item["buy"]+item["hold"]+item["sell"])
+            data["best"][date]["average_price_target"] = item["priceTarget"]
+        
+        return data
+    
+    def covering_analysts(self, include_retail=False, timestamps=False):
+        data = self._get_ratings_data()["experts"]
+        data = [
+            {
+                "name": item["name"],
+                "firm": item["firm"],
+                "image_url": f"https://cdn.tipranks.com/expert-pictures/{item['expertImg']}_tsqr.jpg",
+                "stock_success_rate": item["stockSuccessRate"],
+                "average_rating_return": item["stockAverageReturn"],
+                "total_recommendations": item["stockTotalRecommendations"],
+                "total_positive_recommendations": item["stockGoodRecommendations"],
+                "consensus_analyst": item["includedInConsensus"],
+                "ratings": [
+                    {
+                        "date": pd.to_datetime(rating["date"]).date().timestamp() if timestamps else pd.to_datetime(rating["date"]).date().isoformat(),
+                        "price_target": rating["priceTarget"],
+                        "news_url": rating["url"],
+                        "news_title": rating["quote"]["title"]
+                    } for rating in item["ratings"]
+                ],
+                "analyst_ranking": {
+                    "rank": item["rankings"][0]["lRank"],
+                    "successfull_recommendations": item["rankings"][0]["gRecs"],
+                    "total_recommendations": item["rankings"][0]["tRecs"],
+                    "average_rating_return": item["rankings"][0]["avgReturn"],
+                    "stars": item["rankings"][0]["stars"]
+                }
+            } for item in data
+        ]
+        if not include_retail:
+            data = [item for item in data if item["consensus_analyst"] is True]
         
         return data
     
