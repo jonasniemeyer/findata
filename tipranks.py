@@ -1,6 +1,6 @@
 import pandas as pd
 import requests
-from finance_data.utils import HEADERS
+from finance_data.utils import TIPRANKS_HEADERS
 
 class TipranksReader:
     base_url = "https://www.tipranks.com/api/stocks/"
@@ -12,7 +12,7 @@ class TipranksReader:
     def trending_stocks(cls, timestamps=False):
         data = requests.get(
             url = f"{cls.base_url}gettrendingstocks",
-            headers = HEADERS,
+            headers = TIPRANKS_HEADERS,
             params = {
                 "daysago": 30,
                 "which": "most"
@@ -47,7 +47,7 @@ class TipranksReader:
     def news_sentiment(self, timestamps=False):
         data = requests.get(
             url = f"{self.base_url}getNewsSentiments/",
-            headers = HEADERS,
+            headers = TIPRANKS_HEADERS,
             params = {"ticker": self.ticker}
         ).json()
         
