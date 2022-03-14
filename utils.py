@@ -1,6 +1,7 @@
 import re
 import configparser
 import os
+from pathlib import Path
 
 class TickerError(ValueError):
     pass
@@ -19,9 +20,9 @@ HEADERS = {
     }
 TIPRANKS_HEADERS = HEADERS
 
-if "private.cfg" in os.listdir():
+if "private.cfg" in os.listdir(Path(__file__).parent):
     cfg = configparser.ConfigParser()
-    cfg.read("private.cfg")
+    cfg.read(rf"{Path(__file__).parent}\private.cfg")
     FRED_API_KEY = cfg.get("KEYS", "fred_api_key")
     TIPRANKS_HEADERS["cookie"] = cfg.get("COOKIES", "tipranks_cookies")
 else:
