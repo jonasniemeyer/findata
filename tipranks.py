@@ -3,7 +3,7 @@ import requests
 from finance_data.utils import TIPRANKS_HEADERS
 
 class TipranksReader:
-    base_url = "https://www.tipranks.com/api/stocks/"
+    _base_url = "https://www.tipranks.com/api/stocks/"
     
     def __init__(self, ticker) -> None:
         self.ticker = ticker
@@ -11,7 +11,7 @@ class TipranksReader:
     @classmethod
     def trending_stocks(cls, timestamps=False):
         data = requests.get(
-            url = f"{cls.base_url}gettrendingstocks",
+            url = f"{cls._base_url}gettrendingstocks/",
             headers = TIPRANKS_HEADERS,
             params = {
                 "daysago": 30,
@@ -43,10 +43,13 @@ class TipranksReader:
         
         return data
     
-
+    @property
+    def isin(self):
+        return self._get_ratings_data()["isin"]
+    
     def news_sentiment(self, timestamps=False):
         data = requests.get(
-            url = f"{self.base_url}getNewsSentiments/",
+            url = f"{self._base_url}getNewsSentiments/",
             headers = TIPRANKS_HEADERS,
             params = {"ticker": self.ticker}
         ).json()
@@ -85,3 +88,12 @@ class TipranksReader:
         }
         
         return data
+    
+    def _get_ratings_data(self):
+        if not hasattr(self, "_ratings_data"):
+            self._ratings_data = requests.get(
+                url = f"{self._base_url}getData/",
+                headers = TIPRANKS_HEADERS,
+                params = {"name": self.ticker}
+            ).json()
+        return self._ratings_data
