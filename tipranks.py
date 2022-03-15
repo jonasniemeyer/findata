@@ -180,6 +180,28 @@ class TipranksReader:
             data = [item for item in data if item["consensus_analyst"] is True]
         
         return data
+
+    def institutional_ownership(self, sorted_by="name"):
+        data = self._get_ratings_data()["hedgeFundData"]["institutionalHoldings"]
+        data = [
+            {
+                "name": item["managerName"],
+                "firm": item["institutionName"],
+                "stars": round(item["stars"], 3),
+                "rank": item["rank"],
+                "ranked_institutions": item["totalRankedInstitutions"],
+                "value": item["value"],
+                "change": round(item["change"]/100, 4),
+                "percentage_of_portfolio": round(item["percentageOfPortfolio"], 4),
+                "image_url": None if item["imageURL"] is None else f"https://cdn.tipranks.com/expert-pictures/{item['imageURL']}_tsqr.jpg"
+            }
+            for item in data
+        ]
+        
+        desc = True if sorted_by in ("stars", "value", "change", "percentage_of_portfolio") else False            
+        data = sorted(data, key=lambda x: x[sorted_by], reverse=desc)
+        
+        return data
     
     def _get_ratings_data(self):
         if not hasattr(self, "_ratings_data"):
