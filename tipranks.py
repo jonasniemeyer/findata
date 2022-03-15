@@ -71,7 +71,7 @@ class TipranksReader:
             "articles": [
                 {
                     "week": (
-                        int(pd.to_datetime(pd.to_datetime(item["weekStart"])).date().timestamp()) if timestamps
+                        int(pd.to_datetime(pd.to_datetime(item["weekStart"]).date()).timestamp()) if timestamps
                         else pd.to_datetime(item["weekStart"]).date().isoformat()
                     ),
                     "buy": item["buy"],
@@ -158,7 +158,7 @@ class TipranksReader:
                 "stock_success_rate": item["stockSuccessRate"],
                 "average_rating_return": item["stockAverageReturn"],
                 "total_recommendations": item["stockTotalRecommendations"],
-                "total_positive_recommendations": item["stockGoodRecommendations"],
+                "positive_recommendations": item["stockGoodRecommendations"],
                 "consensus_analyst": item["includedInConsensus"],
                 "ratings": [
                     {
@@ -173,7 +173,7 @@ class TipranksReader:
                 ],
                 "analyst_ranking": {
                     "rank": item["rankings"][0]["lRank"],
-                    "successfull_recommendations": item["rankings"][0]["gRecs"],
+                    "successful_recommendations": item["rankings"][0]["gRecs"],
                     "total_recommendations": item["rankings"][0]["tRecs"],
                     "average_rating_return": item["rankings"][0]["avgReturn"],
                     "stars": item["rankings"][0]["stars"]

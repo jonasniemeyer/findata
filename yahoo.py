@@ -483,7 +483,7 @@ class YahooReader:
         try:
             options_list = options_list["optionChain"]["result"][0]["options"]
         except:
-            raise TickerError(f"no options found for ticker {self.ticker}")
+            raise DatasetError(f"no options found for ticker {self.ticker}")
         
         options = {"calls": [], "puts": []}
         for dct in options_list:
