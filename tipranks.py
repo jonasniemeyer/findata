@@ -232,7 +232,7 @@ class TipranksReader:
         insiders = self._get_ratings_data()["insiders"]
         trades_sum = self._get_ratings_data()["insiderslast3MonthsSum"]
         data = {"insiders": [], "insider_trades_last_3_months": trades_sum}
-        data = [
+        data["insiders"] = [
             {
                 "name": item["name"],
                 "company": item["company"],
