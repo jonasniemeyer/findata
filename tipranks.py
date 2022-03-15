@@ -225,6 +225,31 @@ class TipranksReader:
         }
         return data
     
+    def insider_trades(self, timestamps=False):
+        insiders = self._get_ratings_data()["insiders"]
+        trades_sum = self._get_ratings_data()["insiderslast3MonthsSum"]
+        data = {"insiders": [], "insider_trades_last_3_months": trades_sum}
+        data = [
+            {
+                "name": item["name"],
+                "company": item["company"],
+                "officer": item["isOfficer"],
+                "director": item["isDirector"],
+                "title": item["officerTitle"],
+                "amount": item["amount"],
+                "shares": item["numberOfShares"],
+                "form_type": item["action"],
+                "report_date": (
+                    int(pd.to_datetime(pd.to_datetime(item["rDate"]).date()).timestamp()) if timestamps 
+                    else pd.to_datetime(item["rDate"]).date().isoformat()
+                ),
+                "file_url": item["link"],
+                "image_url": None if item["expertImg"] is None else f"https://cdn.tipranks.com/expert-pictures/{item['expertImg']}_tsqr.jpg"
+            }
+            for item in insiders
+        ]
+        return data
+    
     def _get_ratings_data(self):
         if not hasattr(self, "_ratings_data"):
             self._ratings_data = requests.get(
