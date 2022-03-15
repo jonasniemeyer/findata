@@ -71,7 +71,7 @@ class TestRatingData:
         for item in data:
             assert isinstance(item["name"], str)
             assert isinstance(item["firm"], str)
-            assert isinstance(item["image_url"], str)
+            assert (isinstance(item["image_url"], str) or item["image_url"] is None)
             assert isinstance(item["stock_success_rate"], float)
             assert isinstance(item["average_rating_return"], float)
             assert isinstance(item["total_recommendations"], int)
@@ -88,4 +88,69 @@ class TestRatingData:
             assert isinstance(item["analyst_ranking"]["total_recommendations"], int)
             assert isinstance(item["analyst_ranking"]["average_rating_return"], float)
             assert isinstance(item["analyst_ranking"]["stars"], float)
+    
+    def test_insider_trades(self):
+        data = self.reader.insider_trades()
+        assert isinstance(data, dict)
+        assert isinstance(data["insiders"], list)
+        for item in data["insiders"]:
+            assert isinstance(item["name"], str)
+            assert isinstance(item["company"], str)
+            assert isinstance(item["officer"], bool)
+            assert isinstance(item["director"], bool)
+            assert isinstance(item["title"], str)
+            assert isinstance(item["amount"], float)
+            assert isinstance(item["shares"], int)
+            assert isinstance(item["form_type"], int)
+            assert isinstance(item["report_date"], str)
+            assert isinstance(item["file_url"], str)
+            assert (isinstance(item["image_url"], str) or item["image_url"] is None)
+        assert isinstance(data["insider_trades_last_3_months"], float)
+
+        data = self.reader.insider_trades(timestamps=True)
+        for item in data["insiders"]:
+            assert isinstance(item["report_date"], int)
+
+    def test_institutional_ownership(self):
+        data = self.reader.institutional_ownership()
+        assert isinstance(data, list)
+        for item in data:
+            assert isinstance(item["name"], str)
+            assert isinstance(item["firm"], str)
+            assert isinstance(item["stars"], float)
+            assert round(item["stars"], 4) == item["stars"]
+            assert isinstance(item["rank"], int)
+            assert isinstance(item["ranked_institutions"], int)
+            assert isinstance(item["value"], int)
+            assert isinstance(item["change"], float)
+            assert isinstance(item["percentage_of_portfolio"], float)
+            assert round(item["percentage_of_portfolio"], 4) == item["percentage_of_portfolio"]
+            assert (isinstance(item["image_url"], str) or item["image_url"] is None) 
+    
+    def test_institutional_ownership_trend(self):
+        data = self.reader.institutional_ownership_trend()
+        assert isinstance(data, dict)
+        for key in data:
+            assert isinstance(key, str)
+            assert isinstance(data[key], int)
+        
+        data = self.reader.institutional_ownership_trend(timestamps=True)
+        for key in data:
+            assert isinstance(key, int)
+    
+    def test_recommendation_trend(self):
+        data = self.reader.recommendation_trend()
+        assert isinstance(data, dict)
+        for key in ("all", "best"):
+            for date in data[key]:
+                assert isinstance(date, str)
+                assert isinstance(data[key][date]["consensus_rating"], int)
+                assert isinstance(data[key][date]["buy"], int)
+                assert isinstance(data[key][date]["hold"], int)
+                assert isinstance(data[key][date]["sell"], int)
+                assert isinstance(data[key][date]["average"], float)
+                assert isinstance(data[key][date]["average_price_target"], float)
+        
+
+
 
