@@ -202,6 +202,16 @@ class TipranksReader:
         data = sorted(data, key=lambda x: x[sorted_by], reverse=desc)
         
         return data
+
+    def institutional_ownership_trend(self, timestamps=False):
+        data_raw = self._get_ratings_data()["hedgeFundData"]["holdingsByTime"]
+        data = {}
+        for item in data_raw:
+            date = pd.to_datetime(item["date"]).date()
+            date = int(pd.to_datetime(date).timestamp()) if timestamps else date.isoformat()
+            data[date] = item["holdingAmount"]
+        
+        return data
     
     def _get_ratings_data(self):
         if not hasattr(self, "_ratings_data"):
