@@ -34,7 +34,7 @@ class TipranksReader:
                 "consensus_rating": item["rating"],
                 "price_target": item["priceTarget"],
                 "latest_rating": (
-                    int(pd.to_datetime(item["lastRatingDate"]).date().timestamps()) if timestamps
+                    int(pd.to_datetime(pd.to_datetime(item["lastRatingDate"]).date()).timestamp()) if timestamps
                     else pd.to_datetime(item["lastRatingDate"]).date().isoformat()
                 )
             } for item in data
@@ -71,7 +71,7 @@ class TipranksReader:
             "articles": [
                 {
                     "week": (
-                        int(pd.to_datetime(item["weekStart"]).date().timestamps()) if timestamps
+                        int(pd.to_datetime(pd.to_datetime(item["weekStart"])).date().timestamp()) if timestamps
                         else pd.to_datetime(item["weekStart"]).date().isoformat()
                     ),
                     "buy": item["buy"],
@@ -92,8 +92,8 @@ class TipranksReader:
         if sorted_by == "stars":
             for item in data_raw:
                 stars = item["mStars"]
-                date = pd.to_datetime(item["d"]).date()
-                date = date.timestamp() if timestamps else date.isoformat()
+                date = pd.to_datetime(item["d"])
+                date = int(pd.to_timestamp(date).timestamp()) if timestamps else date.isoformat()
                 
                 data[stars] = data.get(stars, {})
                 data[stars][date] = data.get(date, {})
@@ -106,7 +106,7 @@ class TipranksReader:
             for item in data_raw:
                 stars = item["mStars"]
                 date = pd.to_datetime(item["d"]).date()
-                date = date.timestamp() if timestamps else date.isoformat()
+                date = int(pd.to_timestamp(date).timestamp()) if timestamps else date.isoformat()
                 
                 data[date] = data.get(date, {})
                 data[date][stars] = data.get(stars, {})
@@ -124,7 +124,7 @@ class TipranksReader:
         data = {"all": {}, "best": {}}
         for item in data_all:
             date = pd.to_datetime(item["date"]).date()
-            date = date.timestamp() if timestamps else date.isoformat()
+            date = int(pd.to_timestamp(date).timestamp()) if timestamps else date.isoformat()
             
             data["all"][date] = data["all"].get(date, {})
             data["all"][date]["consensus_rating"] = item["consensus"]
@@ -136,7 +136,7 @@ class TipranksReader:
         
         for item in data_best:
             date = pd.to_datetime(item["date"]).date()
-            date = date.timestamp() if timestamps else date.isoformat()
+            date = int(pd.to_timestamp(date).timestamp()) if timestamps else date.isoformat()
             
             data["best"][date] = data["all"].get(date, {})
             data["best"][date]["consensus_rating"] = item["consensus"]
@@ -162,7 +162,10 @@ class TipranksReader:
                 "consensus_analyst": item["includedInConsensus"],
                 "ratings": [
                     {
-                        "date": pd.to_datetime(rating["date"]).date().timestamp() if timestamps else pd.to_datetime(rating["date"]).date().isoformat(),
+                        "date": (
+                            int(pd.to_datetime(pd.to_datetime(rating["date"]).date()).timestamp()) if timestamps 
+                            else pd.to_datetime(rating["date"]).date().isoformat()
+                        ),
                         "price_target": rating["priceTarget"],
                         "news_url": rating["url"],
                         "news_title": rating["quote"]["title"]
