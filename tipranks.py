@@ -88,6 +88,7 @@ class TipranksReader:
     def recommendation_trend_breakup(self, sorted_by="stars", timestamps=False):
         data_raw = self._get_ratings_data()["consensuses"]
         data = {}
+        
         if sorted_by == "stars":
             for item in data_raw:
                 stars = item["mStars"]
@@ -176,11 +177,12 @@ class TipranksReader:
                 }
             } for item in data
         ]
+        
         if not include_retail:
             data = [item for item in data if item["consensus_analyst"] is True]
         
         return data
-
+    
     def institutional_ownership(self, sorted_by="name"):
         data = self._get_ratings_data()["hedgeFundData"]["institutionalHoldings"]
         data = [
@@ -211,6 +213,16 @@ class TipranksReader:
             date = int(pd.to_datetime(date).timestamp()) if timestamps else date.isoformat()
             data[date] = item["holdingAmount"]
         
+        return data
+    
+    def blogger_sentiment(self):
+        data = self._get_ratings_data()["bloggerSentiment"]
+        data = {
+            "positive": data["bullishCount"],
+            "neutral": data["neutralCount"],
+            "negative": data["bearishCount"],
+            "average": data["avg"]
+        }
         return data
     
     def _get_ratings_data(self):
