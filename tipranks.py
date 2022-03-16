@@ -251,6 +251,28 @@ class TipranksReader:
         
         return data
     
+    def peers(self):
+        data = self._get_ratings_data()["similarStocks"]
+        data = [
+            {
+                "ticker": item["ticker"],
+                "name": item["name"],
+                "buy": item["consensusData"][0]["nB"],
+                "hold": item["consensusData"][0]["nH"],
+                "sell": item["consensusData"][0]["nS"],
+                "average": (
+                    round(
+                        (item["consensusData"][0]["nB"]*5+item["consensusData"][0]["nH"]*3+item["consensusData"][0]["nS"])
+                        /(item["consensusData"][0]["nB"]+item["consensusData"][0]["nH"]+item["consensusData"][0]["nS"]),
+                        2
+                    )
+                ) if item["consensusData"][0]["nB"]+item["consensusData"][0]["nH"]+item["consensusData"][0]["nS"] != 0 else None,
+                "average_price_target": item["consensusData"][0]["priceTarget"]
+            }
+            for item in data
+        ]
+        return data
+    
     def recommendation_trend(self, timestamps=False):
         data_raw = self._get_ratings_data()
         data = {"all_analysts": {}, "best_analysts": {}}
