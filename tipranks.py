@@ -25,7 +25,7 @@ class TipranksReader:
                 "name": item["companyName"],
                 "popularity": item["popularity"],
                 "sentiment": item["sentiment"],
-                "consensus_score": round(item["consensusScore"], 4),
+                "consensus_score": round(item["consensusScore"], 2),
                 "sector": item["sector"],
                 "market_cap": item["marketCap"],
                 "buy": item["buy"],
@@ -46,95 +46,14 @@ class TipranksReader:
     def isin(self):
         return self._get_ratings_data()["isin"]
     
-    def news_sentiment(self, timestamps=False):
-        data = requests.get(
-            url = f"{self._base_url}getNewsSentiments/",
-            headers = TIPRANKS_HEADERS,
-            params = {"ticker": self.ticker}
-        ).json()
-        
+    def blogger_sentiment(self):
+        data = self._get_ratings_data()["bloggerSentiment"]
         data = {
-            "articles_last_week": data["buzz"]["articlesInLastWeek"],
-            "average_weekly_articles": data["buzz"]["weeklyAverage"],
-            "positive_percent": data["sentiment"]["bullishPercent"],
-            "negative_percent": data["sentiment"]["bearishPercent"],
-            "sector_sentiment": [
-                {
-                    "ticker": item["ticker"],
-                    "name": item["companyName"],
-                    "positive_percent": item["bullishPercent"],
-                    "negative_percent": item["bearishPercent"]
-                } for item in data["sector"]
-            ],
-            "sector_average_sentiment": data["sectorAverageBullishPercent"],
-            "news_score": data["score"],
-            "articles": [
-                {
-                    "week": (
-                        int(pd.to_datetime(pd.to_datetime(item["weekStart"]).date()).timestamp()) if timestamps
-                        else pd.to_datetime(item["weekStart"]).date().isoformat()
-                    ),
-                    "buy": item["buy"],
-                    "neutral": item["neutral"],
-                    "sell": item["sell"],
-                    "total": item["all"]
-                } for item in data["counts"]
-            ],
-            "sector_average_news_score": data["sectorAverageNewsScore"]
+            "positive": data["bullishCount"],
+            "neutral": data["neutralCount"],
+            "negative": data["bearishCount"],
+            "average": round(data["avg"], 2)
         }
-        
-        return data
-
-    def recommendation_trend_breakup(self, sorted_by="stars", timestamps=False):
-        data_raw = self._get_ratings_data()["consensuses"]
-        data = {}
-        
-        for item in data_raw:
-            stars = item["mStars"]
-            date = pd.to_datetime(item["d"])
-            date = (
-                int(pd.to_datetime(date.date()).timestamp()) if timestamps 
-                else date.date().isoformat()
-            )
-            
-            prim_k = stars if sorted_by == "stars" else date
-            sec_k = date if sorted_by == "stars" else stars
-            
-            data[prim_k] = data.get(prim_k, {})
-            data[prim_k][sec_k] = data.get(sec_k, {})
-            data[prim_k][sec_k]["consensus_rating"] = item["rating"]
-            data[prim_k][sec_k]["buy"] = item["nB"]
-            data[prim_k][sec_k]["hold"] = item["nH"]
-            data[prim_k][sec_k]["sell"] = item["nS"]
-            data[prim_k][sec_k]["average"] = (
-                round((item["nB"]*5+item["nH"]*3+item["nS"]) / (item["nB"]+item["nH"]+item["nS"]), 2)
-            )
-        
-        return data
-    
-    def recommendation_trend(self, timestamps=False):
-        data_raw = self._get_ratings_data()
-        data_best = self._get_ratings_data()
-        data = {"all_analysts": {}, "best_analysts": {}}
-        
-        for dataset, key in zip(
-            ("all_analysts", "best_analysts"),
-            ("consensusOverTime", "bestConsensusOverTime")
-        ):
-            for item in data_raw[key]:
-                date = pd.to_datetime(item["date"]).date()
-                date = int(pd.to_timestamp(date).timestamp()) if timestamps else date.isoformat()
-
-                data[dataset][date] = data[dataset].get(date, {})
-                data[dataset][date]["consensus_rating"] = item["consensus"]
-                data[dataset][date]["buy"] = item["buy"]
-                data[dataset][date]["hold"] = item["hold"]
-                data[dataset][date]["sell"] = item["sell"]
-                data[dataset][date]["average"] = (
-                    round((item["buy"]*5+item["hold"]*3+item["sell"]) / (item["buy"]+item["hold"]+item["sell"]), 2)
-                )
-                data[dataset][date]["average_price_target"] = round(item["priceTarget"], 2)
-        
         return data
     
     def covering_analysts(self, include_retail=False, timestamps=False):
@@ -178,6 +97,33 @@ class TipranksReader:
         
         return data
     
+    def insider_trades(self, timestamps=False):
+        insiders = self._get_ratings_data()["insiders"]
+        trades_sum = self._get_ratings_data()["insiderslast3MonthsSum"]
+        data = {"insiders": [], "insider_trades_last_3_months": trades_sum}
+        data["insiders"] = [
+            {
+                "name": item["name"],
+                "company": item["company"],
+                "officer": item["isOfficer"],
+                "director": item["isDirector"],
+                "title": item["officerTitle"],
+                "amount": item["amount"],
+                "shares": item["numberOfShares"],
+                "report_date": (
+                    int(pd.to_datetime(pd.to_datetime(item["rDate"]).date()).timestamp()) if timestamps 
+                    else pd.to_datetime(item["rDate"]).date().isoformat()
+                ),
+                "file_url": item["link"],
+                "image_url": (
+                    None if item["expertImg"] is None 
+                    else f"https://cdn.tipranks.com/expert-pictures/{item['expertImg']}_tsqr.jpg"
+                )
+            }
+            for item in insiders
+        ]
+        return data
+    
     def institutional_ownership(self, sorted_by="name"):
         data = self._get_ratings_data()["hedgeFundData"]["institutionalHoldings"]
         data = [
@@ -213,43 +159,96 @@ class TipranksReader:
         
         return data
     
-    def blogger_sentiment(self):
-        data = self._get_ratings_data()["bloggerSentiment"]
+    def news_sentiment(self, timestamps=False):
+        data = requests.get(
+            url = f"{self._base_url}getNewsSentiments/",
+            headers = TIPRANKS_HEADERS,
+            params = {"ticker": self.ticker}
+        ).json()
+        
         data = {
-            "positive": data["bullishCount"],
-            "neutral": data["neutralCount"],
-            "negative": data["bearishCount"],
-            "average": data["avg"]
+            "articles_last_week": data["buzz"]["articlesInLastWeek"],
+            "average_weekly_articles": data["buzz"]["weeklyAverage"],
+            "positive_percent": data["sentiment"]["bullishPercent"],
+            "negative_percent": data["sentiment"]["bearishPercent"],
+            "sector_sentiment": [
+                {
+                    "ticker": item["ticker"],
+                    "name": item["companyName"],
+                    "positive_percent": item["bullishPercent"],
+                    "negative_percent": item["bearishPercent"]
+                } for item in data["sector"]
+            ],
+            "sector_average_sentiment": data["sectorAverageBullishPercent"],
+            "news_score": data["score"],
+            "articles": [
+                {
+                    "week": (
+                        int(pd.to_datetime(pd.to_datetime(item["weekStart"]).date()).timestamp()) if timestamps
+                        else pd.to_datetime(item["weekStart"]).date().isoformat()
+                    ),
+                    "buy": item["buy"],
+                    "neutral": item["neutral"],
+                    "sell": item["sell"],
+                    "total": item["all"]
+                } for item in data["counts"]
+            ],
+            "sector_average_news_score": data["sectorAverageNewsScore"]
         }
+        
         return data
     
-    def insider_trades(self, timestamps=False):
-        insiders = self._get_ratings_data()["insiders"]
-        trades_sum = self._get_ratings_data()["insiderslast3MonthsSum"]
-        data = {"insiders": [], "insider_trades_last_3_months": trades_sum}
-        data["insiders"] = [
-            {
-                "name": item["name"],
-                "company": item["company"],
-                "officer": item["isOfficer"],
-                "director": item["isDirector"],
-                "title": item["officerTitle"],
-                "amount": item["amount"],
-                "shares": item["numberOfShares"],
-                "report_date": (
-                    int(pd.to_datetime(pd.to_datetime(item["rDate"]).date()).timestamp()) if timestamps 
-                    else pd.to_datetime(item["rDate"]).date().isoformat()
-                ),
-                "file_url": item["link"],
-                "image_url": (
-                    None if item["expertImg"] is None 
-                    else f"https://cdn.tipranks.com/expert-pictures/{item['expertImg']}_tsqr.jpg"
+    def recommendation_trend(self, timestamps=False):
+        data_raw = self._get_ratings_data()
+        data = {"all_analysts": {}, "best_analysts": {}}
+        
+        for dataset, key in zip(
+            ("all_analysts", "best_analysts"),
+            ("consensusOverTime", "bestConsensusOverTime")
+        ):
+            for item in data_raw[key]:
+                date = pd.to_datetime(item["date"]).date()
+                date = int(pd.to_timestamp(date).timestamp()) if timestamps else date.isoformat()
+
+                data[dataset][date] = data[dataset].get(date, {})
+                data[dataset][date]["consensus_rating"] = item["consensus"]
+                data[dataset][date]["buy"] = item["buy"]
+                data[dataset][date]["hold"] = item["hold"]
+                data[dataset][date]["sell"] = item["sell"]
+                data[dataset][date]["average"] = (
+                    round((item["buy"]*5+item["hold"]*3+item["sell"]) / (item["buy"]+item["hold"]+item["sell"]), 2)
                 )
-            }
-            for item in insiders
-        ]
+                data[dataset][date]["average_price_target"] = round(item["priceTarget"], 2)
+        
         return data
     
+    def recommendation_trend_breakup(self, sorted_by="stars", timestamps=False):
+        data_raw = self._get_ratings_data()["consensuses"]
+        data = {}
+        
+        for item in data_raw:
+            stars = item["mStars"]
+            date = pd.to_datetime(item["d"])
+            date = (
+                int(pd.to_datetime(date.date()).timestamp()) if timestamps 
+                else date.date().isoformat()
+            )
+            
+            prim_k = stars if sorted_by == "stars" else date
+            sec_k = date if sorted_by == "stars" else stars
+            
+            data[prim_k] = data.get(prim_k, {})
+            data[prim_k][sec_k] = data.get(sec_k, {})
+            data[prim_k][sec_k]["consensus_rating"] = item["rating"]
+            data[prim_k][sec_k]["buy"] = item["nB"]
+            data[prim_k][sec_k]["hold"] = item["nH"]
+            data[prim_k][sec_k]["sell"] = item["nS"]
+            data[prim_k][sec_k]["average"] = (
+                round((item["nB"]*5+item["nH"]*3+item["nS"]) / (item["nB"]+item["nH"]+item["nS"]), 2)
+            )
+        
+        return data
+        
     def _get_ratings_data(self):
         if not hasattr(self, "_ratings_data"):
             self._ratings_data = requests.get(
