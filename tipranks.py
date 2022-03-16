@@ -56,7 +56,24 @@ class TipranksReader:
         }
         return data
     
-    def covering_analysts(self, include_retail=False, timestamps=False):
+    def covering_analysts(self, include_retail=False, timestamps=False, sorted_by="name"):
+        sort_variables = (
+            "name",
+            "firm",
+            "stock_success_rate",
+            "average_rating_return_stock",
+            "total_recommendations_stock",
+            "positive_recommendations_stock",
+            "price_target",
+            "rank",
+            "successful_recommendations",
+            "total_recommendations",
+            "average_rating_return",
+            "stars",
+        )
+        if sorted_by not in (sort_variables):
+            raise ValueError(f"sorting variable has to be in {sort_variables}")
+
         data = self._get_ratings_data()["experts"]
         data = [
             {
@@ -67,9 +84,9 @@ class TipranksReader:
                     else f"https://cdn.tipranks.com/expert-pictures/{item['expertImg']}_tsqr.jpg"
                 ),
                 "stock_success_rate": round(item["stockSuccessRate"], 4),
-                "average_rating_return": round(item["stockAverageReturn"], 4),
-                "total_recommendations": item["stockTotalRecommendations"],
-                "positive_recommendations": item["stockGoodRecommendations"],
+                "average_rating_return_stock": round(item["stockAverageReturn"], 4),
+                "total_recommendations_stock": item["stockTotalRecommendations"],
+                "positive_recommendations_stock": item["stockGoodRecommendations"],
                 "consensus_analyst": item["includedInConsensus"],
                 "ratings": [
                     {
@@ -86,6 +103,7 @@ class TipranksReader:
                     "rank": item["rankings"][0]["lRank"],
                     "successful_recommendations": item["rankings"][0]["gRecs"],
                     "total_recommendations": item["rankings"][0]["tRecs"],
+                    "percentage_successful_recommendations": round(item["rankings"][0]["gRecs"] / item["rankings"][0]["tRecs"], 4),
                     "average_rating_return": round(item["rankings"][0]["avgReturn"], 4),
                     "stars": round(item["rankings"][0]["originalStars"], 1)
                 }
@@ -95,9 +113,28 @@ class TipranksReader:
         if not include_retail:
             data = [item for item in data if item["consensus_analyst"] is True]
         
+        desc = False if sorted_by in ("name", "firm") else True
+        if sorted_by in (
+            "rank",
+            "successful_recommendations",
+            "total_recommendations",
+            "percentage_successful_recommendations",
+            "average_rating_return",
+            "stars"
+        ):
+            data = sorted(data, key=lambda x: (x["analyst_ranking"][sorted_by] is None, x["analyst_ranking"][sorted_by]), reverse=desc)
+        elif sorted_by == "price_target":
+            data = sorted(data, key=lambda x: (x["ratings"][0][sorted_by] is None, x["ratings"][0][sorted_by]), reverse=desc)
+        else:
+            data = sorted(data, key=lambda x: (x[sorted_by] is None, x[sorted_by]), reverse=desc)
+
         return data
     
-    def insider_trades(self, timestamps=False):
+    def insider_trades(self, timestamps=False, sorted_by="name"):
+        sort_variables = ("name", "amount", "shares", "report_date")
+        if sorted_by not in sort_variables:
+            raise ValueError(f"sorting variable has to be in {sort_variables}")
+
         insiders = self._get_ratings_data()["insiders"]
         trades_sum = self._get_ratings_data()["insiderslast3MonthsSum"]
         data = {"insiders": [], "insider_trades_last_3_months": trades_sum}
@@ -122,9 +159,25 @@ class TipranksReader:
             }
             for item in insiders
         ]
+
+        desc = True if sorted_by in ("amount", "shares", "report_date") else False
+        data["insiders"] = sorted(data["insiders"], key=lambda x: (x[sorted_by] is None, x[sorted_by]), reverse=desc)
+
         return data
     
     def institutional_ownership(self, sorted_by="name"):
+        sort_variables = (
+            "name",
+            "firm",
+            "stars",
+            "rank",
+            "value",
+            "change",
+            "percentage_of_portfolio"
+        )
+        if sorted_by not in sort_variables:
+            raise ValueError(f"sorting variable has to be in {sort_variables}")
+
         data = self._get_ratings_data()["hedgeFundData"]["institutionalHoldings"]
         data = [
             {
@@ -144,8 +197,8 @@ class TipranksReader:
             for item in data
         ]
         
-        desc = True if sorted_by in ("stars", "value", "change", "percentage_of_portfolio") else False            
-        data = sorted(data, key=lambda x: x[sorted_by], reverse=desc)
+        desc = False if sorted_by in ("name", "firm") else True
+        data = sorted(data, key=lambda x: (x[sorted_by] is None, x[sorted_by]), reverse=desc)
         
         return data
 
@@ -208,7 +261,7 @@ class TipranksReader:
         ):
             for item in data_raw[key]:
                 date = pd.to_datetime(item["date"]).date()
-                date = int(pd.to_timestamp(date).timestamp()) if timestamps else date.isoformat()
+                date = int(pd.to_datetime(date).timestamp()) if timestamps else date.isoformat()
 
                 data[dataset][date] = data[dataset].get(date, {})
                 data[dataset][date]["consensus_rating"] = item["consensus"]
