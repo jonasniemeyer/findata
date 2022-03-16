@@ -159,6 +159,17 @@ class TestRatingData:
         for key in data:
             assert isinstance(key, int)
     
+    def test_peers(self):
+        data = self.reader.peers()
+        for item in data:
+            assert isinstance(item["ticker"], str)
+            assert isinstance(item["name"], str)
+            assert isinstance(item["buy"], int)
+            assert isinstance(item["hold"], int)
+            assert isinstance(item["sell"], int)
+            assert item["average"] is None or round(item["average"], 2) == item["average"] 
+            assert item["average_price_target"] is None or round(item["average_price_target"], 2) == item["average_price_target"]
+    
     def test_recommendation_trend(self):
         data = self.reader.recommendation_trend()
         assert isinstance(data, dict)
