@@ -115,10 +115,10 @@ class TipranksReader:
     def recommendation_trend(self, timestamps=False):
         data_raw = self._get_ratings_data()
         data_best = self._get_ratings_data()
-        data = {"all": {}, "best": {}}
+        data = {"all_analysts": {}, "best_analysts": {}}
         
         for dataset, key in zip(
-            ("all", "best"),
+            ("all_analysts", "best_analysts"),
             ("consensusOverTime", "bestConsensusOverTime")
         ):
             for item in data_raw[key]:
@@ -133,7 +133,7 @@ class TipranksReader:
                 data[dataset][date]["average"] = (
                     round((item["buy"]*5+item["hold"]*3+item["sell"]) / (item["buy"]+item["hold"]+item["sell"]), 2)
                 )
-                data["all"][date]["average_price_target"] = round(item["priceTarget"], 2)
+                data[dataset][date]["average_price_target"] = round(item["priceTarget"], 2)
         
         return data
     
