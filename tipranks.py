@@ -25,7 +25,7 @@ class TipranksReader:
                 "name": item["companyName"],
                 "popularity": item["popularity"],
                 "sentiment": item["sentiment"],
-                "consensus_score": round(item["consensusScore"], 6),
+                "consensus_score": round(item["consensusScore"], 4),
                 "sector": item["sector"],
                 "market_cap": item["marketCap"],
                 "buy": item["buy"],
@@ -89,62 +89,51 @@ class TipranksReader:
         data_raw = self._get_ratings_data()["consensuses"]
         data = {}
         
-        if sorted_by == "stars":
-            for item in data_raw:
-                stars = item["mStars"]
-                date = pd.to_datetime(item["d"])
-                date = int(pd.to_timestamp(date).timestamp()) if timestamps else date.isoformat()
-                
-                data[stars] = data.get(stars, {})
-                data[stars][date] = data.get(date, {})
-                data[stars][date]["consensus_rating"] = item["rating"]
-                data[stars][date]["buy"] = item["nB"]
-                data[stars][date]["hold"] = item["nH"]
-                data[stars][date]["sell"] = item["nS"]
-                data[stars][date]["average"] = (item["nB"]*5+item["nH"]*3+item["nS"]) / (item["nB"]+item["nH"]+item["nS"])
-        elif sorted_by == "date":
-            for item in data_raw:
-                stars = item["mStars"]
-                date = pd.to_datetime(item["d"]).date()
-                date = int(pd.to_timestamp(date).timestamp()) if timestamps else date.isoformat()
-                
-                data[date] = data.get(date, {})
-                data[date][stars] = data.get(stars, {})
-                data[date][stars]["consensus_rating"] = item["rating"]
-                data[date][stars]["buy"] = item["nB"]
-                data[date][stars]["hold"] = item["nH"]
-                data[date][stars]["sell"] = item["nS"]
-                data[date][stars]["average"] = (item["nB"]*5+item["nH"]*3+item["nS"]) / (item["nB"]+item["nH"]+item["nS"])
+        for item in data_raw:
+            stars = item["mStars"]
+            date = pd.to_datetime(item["d"])
+            date = (
+                int(pd.to_datetime(date.date()).timestamp()) if timestamps 
+                else date.date().isoformat()
+            )
+            
+            prim_k = stars if sorted_by == "stars" else date
+            sec_k = date if sorted_by == "stars" else stars
+            
+            data[prim_k] = data.get(prim_k, {})
+            data[prim_k][sec_k] = data.get(sec_k, {})
+            data[prim_k][sec_k]["consensus_rating"] = item["rating"]
+            data[prim_k][sec_k]["buy"] = item["nB"]
+            data[prim_k][sec_k]["hold"] = item["nH"]
+            data[prim_k][sec_k]["sell"] = item["nS"]
+            data[prim_k][sec_k]["average"] = (
+                round((item["nB"]*5+item["nH"]*3+item["nS"]) / (item["nB"]+item["nH"]+item["nS"]), 2)
+            )
         
         return data
     
     def recommendation_trend(self, timestamps=False):
-        data_all = self._get_ratings_data()["consensusOverTime"]
-        data_best = self._get_ratings_data()["bestConsensusOverTime"]
+        data_raw = self._get_ratings_data()
+        data_best = self._get_ratings_data()
         data = {"all": {}, "best": {}}
-        for item in data_all:
-            date = pd.to_datetime(item["date"]).date()
-            date = int(pd.to_timestamp(date).timestamp()) if timestamps else date.isoformat()
-            
-            data["all"][date] = data["all"].get(date, {})
-            data["all"][date]["consensus_rating"] = item["consensus"]
-            data["all"][date]["buy"] = item["buy"]
-            data["all"][date]["hold"] = item["hold"]
-            data["all"][date]["sell"] = item["sell"]
-            data["all"][date]["average"] = (item["buy"]*5+item["hold"]*3+item["sell"]) / (item["buy"]+item["hold"]+item["sell"])
-            data["all"][date]["average_price_target"] = item["priceTarget"]
         
-        for item in data_best:
-            date = pd.to_datetime(item["date"]).date()
-            date = int(pd.to_timestamp(date).timestamp()) if timestamps else date.isoformat()
-            
-            data["best"][date] = data["all"].get(date, {})
-            data["best"][date]["consensus_rating"] = item["consensus"]
-            data["best"][date]["buy"] = item["buy"]
-            data["best"][date]["hold"] = item["hold"]
-            data["best"][date]["sell"] = item["sell"]
-            data["best"][date]["average"] = (item["buy"]*5+item["hold"]*3+item["sell"]) / (item["buy"]+item["hold"]+item["sell"])
-            data["best"][date]["average_price_target"] = item["priceTarget"]
+        for dataset, key in zip(
+            ("all", "best"),
+            ("consensusOverTime", "bestConsensusOverTime")
+        ):
+            for item in data_raw[key]:
+                date = pd.to_datetime(item["date"]).date()
+                date = int(pd.to_timestamp(date).timestamp()) if timestamps else date.isoformat()
+
+                data[dataset][date] = data[dataset].get(date, {})
+                data[dataset][date]["consensus_rating"] = item["consensus"]
+                data[dataset][date]["buy"] = item["buy"]
+                data[dataset][date]["hold"] = item["hold"]
+                data[dataset][date]["sell"] = item["sell"]
+                data[dataset][date]["average"] = (
+                    round((item["buy"]*5+item["hold"]*3+item["sell"]) / (item["buy"]+item["hold"]+item["sell"]), 2)
+                )
+                data["all"][date]["average_price_target"] = round(item["priceTarget"], 2)
         
         return data
     
@@ -154,9 +143,12 @@ class TipranksReader:
             {
                 "name": item["name"],
                 "firm": item["firm"],
-                "image_url": f"https://cdn.tipranks.com/expert-pictures/{item['expertImg']}_tsqr.jpg",
-                "stock_success_rate": item["stockSuccessRate"],
-                "average_rating_return": item["stockAverageReturn"],
+                "image_url": (
+                    None if item['expertImg'] is None 
+                    else f"https://cdn.tipranks.com/expert-pictures/{item['expertImg']}_tsqr.jpg"
+                ),
+                "stock_success_rate": round(item["stockSuccessRate"], 4),
+                "average_rating_return": round(item["stockAverageReturn"], 4),
                 "total_recommendations": item["stockTotalRecommendations"],
                 "positive_recommendations": item["stockGoodRecommendations"],
                 "consensus_analyst": item["includedInConsensus"],
@@ -175,8 +167,8 @@ class TipranksReader:
                     "rank": item["rankings"][0]["lRank"],
                     "successful_recommendations": item["rankings"][0]["gRecs"],
                     "total_recommendations": item["rankings"][0]["tRecs"],
-                    "average_rating_return": item["rankings"][0]["avgReturn"],
-                    "stars": item["rankings"][0]["stars"]
+                    "average_rating_return": round(item["rankings"][0]["avgReturn"], 4),
+                    "stars": round(item["rankings"][0]["originalStars"], 1)
                 }
             } for item in data
         ]
@@ -192,13 +184,16 @@ class TipranksReader:
             {
                 "name": item["managerName"],
                 "firm": item["institutionName"],
-                "stars": round(item["stars"], 3),
+                "stars": round(item["stars"], 1),
                 "rank": item["rank"],
                 "ranked_institutions": item["totalRankedInstitutions"],
                 "value": item["value"],
                 "change": round(item["change"]/100, 4),
                 "percentage_of_portfolio": round(item["percentageOfPortfolio"], 4),
-                "image_url": None if item["imageURL"] is None else f"https://cdn.tipranks.com/expert-pictures/{item['imageURL']}_tsqr.jpg"
+                "image_url": (
+                    None if item["imageURL"] is None 
+                    else f"https://cdn.tipranks.com/expert-pictures/{item['imageURL']}_tsqr.jpg"
+                )
             }
             for item in data
         ]
@@ -241,13 +236,15 @@ class TipranksReader:
                 "title": item["officerTitle"],
                 "amount": item["amount"],
                 "shares": item["numberOfShares"],
-                "form_type": item["action"],
                 "report_date": (
                     int(pd.to_datetime(pd.to_datetime(item["rDate"]).date()).timestamp()) if timestamps 
                     else pd.to_datetime(item["rDate"]).date().isoformat()
                 ),
                 "file_url": item["link"],
-                "image_url": None if item["expertImg"] is None else f"https://cdn.tipranks.com/expert-pictures/{item['expertImg']}_tsqr.jpg"
+                "image_url": (
+                    None if item["expertImg"] is None 
+                    else f"https://cdn.tipranks.com/expert-pictures/{item['expertImg']}_tsqr.jpg"
+                )
             }
             for item in insiders
         ]
