@@ -1,4 +1,3 @@
-from os import times
 from finance_data import TipranksReader
 import datetime as dt
 

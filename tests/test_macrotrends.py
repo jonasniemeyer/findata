@@ -4,8 +4,8 @@ import pytest
 
 def test_default():
     data = MacrotrendsReader("AAPL").read()
-    assert (("income_statement" in data) and ("balance_sheet" in data) and ("cashflow_statement" in data))
-    assert all(key in (data["income_statement"] | data["balance_sheet"] | data["cashflow_statement"]) for key in MACROTRENDS_CONVERSION.values())
+    assert (("income statement" in data) and ("balance sheet" in data) and ("cashflow statement" in data))
+    assert all(key in (data["income statement"] | data["balance sheet"] | data["cashflow statement"]) for key in MACROTRENDS_CONVERSION.values())
 
 def test_single_statement():
     for statement in ("income-statement", "balance-sheet", "cash-flow-statement"):
@@ -14,11 +14,11 @@ def test_single_statement():
 
 def test_quarterly():
     data = MacrotrendsReader("AAPL", frequency="quarterly").read()
-    assert (("income_statement" in data) and ("balance_sheet" in data)and ("cashflow_statement" in data))
+    assert (("income statement" in data) and ("balance sheet" in data)and ("cashflow statement" in data))
 
 def test_hyphen_to_dot():
     data = MacrotrendsReader("BRK-A", frequency="quarterly").read()
-    assert (("income_statement" in data) and ("balance_sheet" in data) and ("cashflow_statement" in data))
+    assert (("income statement" in data) and ("balance sheet" in data) and ("cashflow statement" in data))
 
 def test_missing_data():
     with pytest.raises(TickerError):

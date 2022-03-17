@@ -16,9 +16,9 @@ class MacrotrendsReader:
     base_url = "https://www.macrotrends.net/stocks/charts/{}/{}/{}?freq={}"
 
     conversion = {
-        "income-statement": "income_statement",
-        "balance-sheet": "balance_sheet",
-        "cash-flow-statement": "cashflow_statement"
+        "income-statement": "income statement",
+        "balance-sheet": "balance sheet",
+        "cash-flow-statement": "cashflow statement"
     }
 
     def __init__(
