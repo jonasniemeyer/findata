@@ -3,7 +3,7 @@ import pandas as pd
 
 def test_margin_debt():
     data = margin_debt()
-    assert all(key in ("combined full", "combined new", "combined old", "finra old", "nyse old") for key in data.keys())
+    assert all(key in ("combined full", "combined new", "combined old", "finra old", "nyse old") for key in data)
     for key in data:
         df = data[key]
         assert all(isinstance(date, pd.Timestamp) for date in df.index)
@@ -17,10 +17,5 @@ def test_margin_debt():
     assert all(pd.concat([data["combined old"], data["combined new"]])["debit"] == data["combined full"]["debit"])
 
     data = margin_debt(timestamps=True)
-    assert all(
-        all(
-            isinstance(item, int) for item in data[dataset].index
-        )
-        for dataset in data.keys()
-    )
-
+    for key in data:
+        assert all(isinstance(item, int) for item in data[key].index)

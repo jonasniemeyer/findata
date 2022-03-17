@@ -8,23 +8,15 @@ def test_datasets():
 
 def test_retrieval():
     data = FrenchReader("F-F_Research_Data_Factors").read()
-    assert ("Main" in data.keys()) and ("Annual Factors" in data.keys())
-    assert all(
-        column in data["Main"].columns for column in (
-            "Mkt-RF", "SMB", "HML", "RF"
-        )
-    )
-    assert all(
-        isinstance(date, pd.Timestamp) for date in data["Main"].index
-    )
-    assert all(
-        isinstance(date, pd.Timestamp) for date in data["Annual Factors"].index
-    )
+    assert ("Main" in data) and ("Annual Factors" in data)
+    assert all(column in data["Main"].columns for column in ("Mkt-RF", "SMB", "HML", "RF"))
+    assert all(isinstance(date, pd.Timestamp) for date in data["Main"].index)
+    assert all(isinstance(date, pd.Timestamp) for date in data["Annual Factors"].index)
 
 def test_retrieval_sorted_portfolios():
     data = FrenchReader("Portfolios_Formed_on_BE-ME").read()
     assert all(
-        key in data.keys() for key in (
+        key in data for key in (
             "Value Weight Returns Monthly",
             "Equal Weight Returns Monthly",
             "Value Weight Returns Annual",
@@ -36,18 +28,10 @@ def test_retrieval_sorted_portfolios():
             "Value Weight Average of BE / ME"
         )
     )
-    assert all(
-        all(
-            isinstance(date, (pd.Timestamp, int)) for date in data[key].index
-        )
-        for key in data.keys()
-    )
+    for key in data:
+        assert all(isinstance(date, pd.Timestamp) for date in data[key].index)
 
 def test_timestamps():
     data = FrenchReader("Portfolios_Formed_on_BE-ME", timestamps=True).read()
-    assert all(
-        all(
-            isinstance(item, int) for item in data[dataset].index
-        )
-        for dataset in data.keys()
-    )
+    for key in data:
+        assert all(isinstance(item, int) for item in data[key].index)

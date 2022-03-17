@@ -7,7 +7,7 @@ class TestClassMethods:
     @classmethod
     def setup_class(cls):
         cls.reader = YahooReader
-
+    
     def test_crumb(self):
         assert self.reader.crumb() == ""
     
@@ -55,9 +55,9 @@ class TestEquity:
                 "description",
                 "executives"
             )
-            for entry in profile.keys()
+            for entry in profile
         )
-        assert len(profile.keys()) == 12
+        assert len(profile) == 12
         assert profile["address1"] == "One Apple Park Way"
         assert profile["city"] == "Cupertino"
         assert profile["state"] == "CA"
@@ -67,12 +67,12 @@ class TestEquity:
         assert profile["website"] == "https://www.apple.com"
         assert profile["industry"] == "Consumer Electronics"
         assert profile["sector"] == "Technology"
-        assert isinstance(profile["employees"], int) #the value constantly changes
+        assert isinstance(profile["employees"], int)
         assert profile["description"] == "Apple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories worldwide. It also sells various related services. In addition, the company offers iPhone, a line of smartphones; Mac, a line of personal computers; iPad, a line of multi-purpose tablets; AirPods Max, an over-ear wireless headphone; and wearables, home, and accessories comprising AirPods, Apple TV, Apple Watch, Beats products, HomePod, and iPod touch. Further, it provides AppleCare support services; cloud services store services; and operates various platforms, including the App Store that allow customers to discover and download applications and digital content, such as books, music, video, games, and podcasts. Additionally, the company offers various services, such as Apple Arcade, a game subscription service; Apple Music, which offers users a curated listening experience with on-demand radio stations; Apple News+, a subscription news and magazine service; Apple TV+, which offers exclusive original content; Apple Card, a co-branded credit card; and Apple Pay, a cashless payment service, as well as licenses its intellectual property. The company serves consumers, and small and mid-sized businesses; and the education, enterprise, and government markets. It distributes third-party applications for its products through the App Store. The company also sells its products through its retail and online stores, and direct sales force; and third-party cellular network carriers, wholesalers, retailers, and resellers. Apple Inc. was incorporated in 1977 and is headquartered in Cupertino, California."
 
         executives = profile["executives"]
-        assert all(
-            all(
+        for item in executives:
+            assert all(
                 key in (
                     "name",
                     "age",
@@ -82,38 +82,26 @@ class TestEquity:
                     "exersized_options",
                     "unexersized_options"
                 )
-                for key in item.keys()
+                for key in item
             )
-            for item in executives
-        )
 
     def test_analyst_recommendations(self):
         recommendations = self.reader.analyst_recommendations()
-        assert all(
-            all(key in ("date", "firm", "old", "new", "change") for key in item.keys())
-            for item in recommendations
-        )
+        for item in recommendations:
+            assert all(key in ("date", "firm", "old", "new", "change") for key in item)
     
     def test_recommendation_trend(self):
         recommendation_trend = self.reader.recommendation_trend()
-        assert all (key in ("today", "-1month", "-2months", "-3months") for key in recommendation_trend.keys())
-        assert all (
-            all(
-                key in ("count", "average", "strong_buy", "buy", "hold", "sell", "strong_sell")
-                for key in item
-            )
-            for item in recommendation_trend.values()
-        )
-        assert not any(
-            value == np.NaN
-            for value in recommendation_trend["-1month"].values()
-        )
+        assert all(key in ("today", "-1month", "-2months", "-3months") for key in recommendation_trend)
+        for item in recommendation_trend.values():
+            assert all(key in ("count", "average", "strong_buy", "buy", "hold", "sell", "strong_sell") for key in item)
+        assert not any(value == np.NaN for value in recommendation_trend["-1month"].values())
     
     def test_options(self):
         options = self.reader.options()
-        assert ("calls" in options.keys()) and ("puts" in options.keys())
-        assert all(
-            all(
+        assert ("calls" in options) and ("puts" in options)
+        for item in options["calls"]:
+            assert all(
                 key in (
                     "maturity",
                     "strike",
@@ -125,16 +113,14 @@ class TestEquity:
                     "implied_volatility",
                     "itm"
                 )
-                for key in item.keys()
+                for key in item
             )
-            for item in options["calls"]
-        )
-
+    
     def test_institutional_ownership(self):
         holders = self.reader.institutional_ownership()
         assert isinstance(holders, list)
-        assert all(
-            all(
+        for item in holders:
+            assert all(
                 key in (
                     "date",
                     "company",
@@ -142,16 +128,14 @@ class TestEquity:
                     "shares",
                     "value"
                 )
-                for key in item.keys()
+                for key in item
             )
-            for item in holders
-        )
 
     def test_fund_ownership(self):
         funds = self.reader.fund_ownership()
         assert isinstance(funds, list)
-        assert all(
-            all(
+        for item in funds:
+            assert all(
                 key in (
                     "date",
                     "fund",
@@ -159,16 +143,14 @@ class TestEquity:
                     "shares",
                     "value"
                 )
-                for key in item.keys()
+                for key in item
             )
-            for item in funds
-        )
 
     def test_insider_ownership(self):
         insider = self.reader.insider_ownership()
         assert isinstance(insider, list)
-        assert all(
-            all(
+        for item in insider:
+            assert all(
                 key in (
                     "date",
                     "name",
@@ -177,10 +159,8 @@ class TestEquity:
                     "file",
                     "latest_trade"
                 )
-                for key in item.keys()
+                for key in item
             )
-            for item in insider
-        )
         assert isinstance(insider[0]["latest_trade"], tuple)
 
     def test_ownership_breakdown(self):
@@ -192,14 +172,14 @@ class TestEquity:
                 "institutions_ownership_float",
                 "count_institutions"
             )
-            for key in breakdown.keys()
+            for key in breakdown
         )
 
     def test_insider_trades(self):
         trades = self.reader.insider_trades()
         assert isinstance(trades, list)
-        assert all(
-            all(
+        for item in trades:
+            assert all(
                 key in (
                     "date",
                     "name",
@@ -209,10 +189,8 @@ class TestEquity:
                     "file",
                     "text"
                 )
-                for key in item.keys()
+                for key in item
             )
-            for item in trades
-        )
 
     def test_esg_scores(self):
         scores = self.reader.esg_scores()
@@ -222,7 +200,7 @@ class TestEquity:
                 "scores",
                 "involvements",
             )
-            for key in scores.keys()
+            for key in scores
         )
         assert isinstance(scores["month"], tuple)
         assert all(
@@ -231,7 +209,7 @@ class TestEquity:
                 "social",
                 "governance"
             )
-            for key in scores["scores"].keys()
+            for key in scores["scores"]
         )
         assert all(
             key in (
@@ -251,14 +229,14 @@ class TestEquity:
                 "coal",
                 "tobacco"
             )
-            for key in scores["involvements"].keys()
+            for key in scores["involvements"]
         )
 
     def test_sec_filings(self):
         filings = self.reader.sec_filings()
         assert isinstance(filings, list)
-        assert all(
-            all(
+        for item in filings:
+            assert all(
                 key in (
                     "date_filed",
                     "datetime_filed",
@@ -266,10 +244,8 @@ class TestEquity:
                     "description",
                     "url"
                 )
-                for key in item.keys()
+                for key in item
             )
-            for item in filings
-        )
 
     def test_financial_statement(self):
         income = self.reader.income_statement()
@@ -288,11 +264,11 @@ class TestEquity:
         assert balance.keys() == cashflow.keys()
         assert cashflow.keys() == statement_merged.keys()
 
-        key = list(income.keys())[0]
+        key = list(income)[0]
         total_variables = 0
         for item in (income, balance, cashflow):
-            total_variables += len(item[key].keys())
-        assert len(statement_merged[key]) == total_variables - 1 #net income on income and cf
+            total_variables += len(item[key])
+        assert len(statement_merged[key]) == total_variables - 1 #net income on income and cf statement have different names
 
     def test_fund_statistics(self):
         with pytest.raises(DatasetError) as exception:
@@ -331,7 +307,7 @@ class TestHistoricalData:
                 "exchange_timezone",
                 "url"
             )
-            for key in data["information"].keys()
+            for key in data["information"]
         )
         df = data["data"]
         assert all(
@@ -400,7 +376,7 @@ class TestETF:
                 "phone",
                 "description"
             )
-            for entry in profile.keys()
+            for entry in profile
         )
     
     def test_fund_statistics(self):
@@ -415,7 +391,7 @@ class TestETF:
                 "style",
                 "style_url"
             )
-            for key in statistics.keys()
+            for key in statistics
         )
 
     def test_holdings(self):
@@ -430,20 +406,11 @@ class TestETF:
                 "bond_ratings",
                 "sector_weights"
             )
-            for key in holdings.keys()
+            for key in holdings
         )
         assert isinstance(holdings["holdings"], list)
-        assert all(
-            all(
-                key in (
-                    "ticker",
-                    "name",
-                    "percentage"
-                )
-                for key in item.keys()
-            )
-            for item in holdings["holdings"]
-        )
+        for item in holdings["holdings"]:
+            assert all(key in ("ticker", "name", "percentage") for key in item)
         assert all(
             key in (
                 "average_price/earnings",
@@ -637,7 +604,7 @@ class TestCrypto:
                 "name",
                 "description"
             )
-            for entry in profile.keys()
+            for entry in profile
         )
     
     def test_historical_data(self):
@@ -744,7 +711,7 @@ class TestMutualFund:
                 "phone",
                 "description"
             )
-            for entry in profile.keys()
+            for entry in profile
         )
     
     def test_esg_scores(self):
@@ -755,7 +722,7 @@ class TestMutualFund:
                 "scores",
                 "involvements",
             )
-            for key in scores.keys()
+            for key in scores
         )
         assert len(scores["involvements"]) == 0
     
@@ -771,20 +738,11 @@ class TestMutualFund:
                 "bond_ratings",
                 "sector_weights"
             )
-            for key in holdings.keys()
+            for key in holdings
         )
         assert isinstance(holdings["holdings"], list)
-        assert all(
-            all(
-                key in (
-                    "ticker",
-                    "name",
-                    "percentage"
-                )
-                for key in item.keys()
-            )
-            for item in holdings["holdings"]
-        )
+        for item in holdings["holdings"]:
+            assert all(key in ("ticker", "name", "percentage") for key in item)
         assert all(
             key in (
                 "average_price/earnings",
