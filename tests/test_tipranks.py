@@ -215,6 +215,3 @@ class TestRatingData:
         data = self.reader.recommendation_trend_breakup(sorted_by="date", timestamps=True)
         for date in data:
             assert isinstance(date, int)
-            for star in data[date]:
-                assert 1 <= star <= 5 and isinstance(star, int)
-
