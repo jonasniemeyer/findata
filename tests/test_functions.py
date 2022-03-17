@@ -8,11 +8,11 @@ def test_margin_debt():
         df = data[key]
         assert all(isinstance(date, pd.Timestamp) for date in df.index)
         assert all(df[col].dtype == "int64" for col in df.columns)
-    assert all(col in ('debit', 'credit') for col in data["combined full"])
-    assert all(col in ('debit', 'credit cash accounts', 'credit margin accounts') for col in data["combined new"])
-    assert all(col in ('debit', 'credit') for col in data["combined old"])
-    assert all(col in ('debit', 'credit') for col in data["finra old"])
-    assert all(col in ('debit', 'credit cash accounts', 'credit margin accounts') for col in data["nyse old"])
+    assert all(col in ("debit", "credit") for col in data["combined full"])
+    assert all(col in ("debit", "credit cash accounts", "credit margin accounts") for col in data["combined new"])
+    assert all(col in ("debit", "credit") for col in data["combined old"])
+    assert all(col in ("debit", "credit") for col in data["finra old"])
+    assert all(col in ("debit", "credit cash accounts", "credit margin accounts") for col in data["nyse old"])
 
     assert all(pd.concat([data["combined old"], data["combined new"]])["debit"] == data["combined full"]["debit"])
 

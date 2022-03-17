@@ -244,10 +244,10 @@ def test_hml_devil_factors_daily():
         if key != "RF":
             assert all(
                 col in (
-                    'AUS', 'AUT', 'BEL', 'CAN', 'CHE', 'DEU', 'DNK', 'ESP', 'FIN', 'FRA',
-                    'GBR', 'GRC', 'HKG', 'IRL', 'ISR', 'ITA', 'JPN', 'NLD', 'NOR', 'NZL',
-                    'PRT', 'SGP', 'SWE', 'USA', 'Global', 'Global Ex USA', 'Europe',
-                    'North America', 'Pacific'
+                    "AUS", "AUT", "BEL", "CAN", "CHE", "DEU", "DNK", "ESP", "FIN", "FRA",
+                    "GBR", "GRC", "HKG", "IRL", "ISR", "ITA", "JPN", "NLD", "NOR", "NZL",
+                    "PRT", "SGP", "SWE", "USA", "Global", "Global Ex USA", "Europe",
+                    "North America", "Pacific"
                 )
                 for col in df.columns
             )
