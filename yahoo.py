@@ -124,8 +124,8 @@ class YahooReader:
                 "position": entry["title"],
                 "born": entry["yearBorn"] if "yearBorn" in entry else None,
                 "salary": entry["totalPay"]["raw"] if "totalPay" in entry else None,
-                "exersized_options": entry["exercisedValue"]["raw"],
-                "unexersized_options": entry["unexercisedValue"]["raw"]
+                "exercised_options": entry["exercisedValue"]["raw"],
+                "unexercised_options": entry["unexercisedValue"]["raw"]
             }
             for entry in data["companyOfficers"]
         ]
@@ -403,7 +403,7 @@ class YahooReader:
         data = [
             {
                 "date": (dct["epochGradeDate"] if timestamps else (dt.date(1970, 1, 1) + dt.timedelta(seconds=dct["epochGradeDate"])).isoformat()),
-                "firm": dct["firm"],
+                "company": dct["firm"],
                 "new": dct["toGrade"],
                 "old": dct["fromGrade"],
                 "change": dct["action"]
@@ -422,8 +422,11 @@ class YahooReader:
             entry["period"]: {
                 "count": int(entry["strongBuy"] + entry["buy"] + entry["hold"] + entry["sell"] + entry["strongSell"]),
                 "average": (
-                    (entry["strongBuy"] * 5 + entry["buy"] * 4 + entry["hold"] * 3 + entry["sell"] * 2 + entry["strongSell"] * 1)
-                    / (entry["strongBuy"] + entry["buy"] + entry["hold"] + entry["sell"] + entry["strongSell"])
+                    round(
+                        (entry["strongBuy"] * 5 + entry["buy"] * 4 + entry["hold"] * 3 + entry["sell"] * 2 + entry["strongSell"] * 1)
+                        / (entry["strongBuy"] + entry["buy"] + entry["hold"] + entry["sell"] + entry["strongSell"]),
+                        2
+                    )
                     if (entry["strongBuy"] + entry["buy"] + entry["hold"] + entry["sell"] + entry["strongSell"]) != 0 else None
                 ),
                 "strong_buy": entry["strongBuy"],
@@ -510,7 +513,7 @@ class YahooReader:
                     data["volume"] = call["volume"]
                 else:
                     data["volume"] = None
-                data["implied_volatility"] = call["impliedVolatility"]
+                data["implied_volatility"] = round(call["impliedVolatility"], 4)
                 data["itm"] = call["inTheMoney"]
             
                 options["calls"].append(data)
@@ -529,7 +532,7 @@ class YahooReader:
                     data["ask"] = put["ask"]
                 else:
                     data["ask"] = None
-                data["implied_volatility"] = put["impliedVolatility"]
+                data["implied_volatility"] = round(put["impliedVolatility"], 4)
                 data["itm"] = put["inTheMoney"]
             
                 options["puts"].append(data)
@@ -565,7 +568,7 @@ class YahooReader:
             {
                 "date": (entry["reportDate"]["raw"] if timestamps else entry["reportDate"]["fmt"]),
                 "fund": entry["organization"],
-                "percentage": entry["pctHeld"]["raw"],
+                "percentage": round(entry["pctHeld"]["raw"], 4),
                 "shares": entry["position"]["raw"],
                 "value": entry["value"]["raw"]
             }
@@ -604,9 +607,9 @@ class YahooReader:
         except:
             raise DatasetError(f"no ownership breakdown data found for ticker {self.ticker}")
         
-        data["insider_ownership"] = data.pop("insidersPercentHeld")
-        data["institutions_ownership"] = data.pop("institutionsPercentHeld")
-        data["institutions_ownership_float"] = data.pop("institutionsFloatPercentHeld")
+        data["insider_ownership"] = round(data.pop("insidersPercentHeld"), 4)
+        data["institutions_ownership"] = round(data.pop("institutionsPercentHeld"), 4)
+        data["institutions_ownership_float"] = round(data.pop("institutionsFloatPercentHeld"), 4)
         data["count_institutions"] = data.pop("institutionsCount")
         
         data.pop("maxAge")
@@ -640,7 +643,7 @@ class YahooReader:
             raise DatasetError(f"no esg scores found for ticker {self.ticker}")
         
         scores = {
-            "month": (data["ratingYear"], data["ratingMonth"]),
+            "date": pd.to_datetime(f"{data['ratingYear']}-{data['ratingMonth']}-01").date().isoformat(),
             "scores" : {
                 "environment": data["environmentScore"],
                 "social": data["socialScore"],
@@ -703,15 +706,15 @@ class YahooReader:
             "style_url": data["styleBoxUrl"]
         }
         try:
-            scores["expense_ratio"] = data["feesExpensesInvestment"]["annualReportExpenseRatio"]
+            scores["expense_ratio"] = round(data["feesExpensesInvestment"]["annualReportExpenseRatio"], 4)
         except KeyError:
             pass
         try:
-            scores["turnover"] = data["feesExpensesInvestment"]["annualHoldingsTurnover"]
+            scores["turnover"] = round(data["feesExpensesInvestment"]["annualHoldingsTurnover"], 4)
         except KeyError:
             pass
         try:
-            scores["aum"] = data["feesExpensesInvestment"]["totalNetAssets"] * 10_000
+            scores["aum"] = round(data["feesExpensesInvestment"]["totalNetAssets"] * 10_000, 2)
         except KeyError:
             pass
             
@@ -730,7 +733,7 @@ class YahooReader:
                 {
                     "ticker": entry["symbol"],
                     "name": entry["holdingName"],
-                    "percentage": entry["holdingPercent"]
+                    "percentage": round(entry["holdingPercent"], 4)
                 }
                 for entry in data["holdings"]
             ],
@@ -745,13 +748,13 @@ class YahooReader:
                 "average_duration": data["bondHoldings"]["duration"] if "duration" in data["bondHoldings"] else None
             },
             "bond_ratings": {
-                key: entry[key] for entry in data["bondRatings"] for key in entry
+                key: round(entry[key], 2) for entry in data["bondRatings"] for key in entry
             },
             "sector_weights": {
-                key: entry[key] for entry in data["sectorWeightings"] for key in entry
+                key: round(entry[key], 4) for entry in data["sectorWeightings"] for key in entry
             }
         }
-        data["sector_weights"]["real_estate"] = data["sector_weights"].pop("realestate")
+        data["sector_weights"]["real_estate"] = round(data["sector_weights"].pop("realestate"), 4)
 
         return data
      
