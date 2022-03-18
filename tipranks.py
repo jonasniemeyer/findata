@@ -59,7 +59,7 @@ class TipranksReader:
     def covering_analysts(self, include_retail=False, timestamps=False, sorted_by="name"):
         sort_variables = (
             "name",
-            "firm",
+            "company",
             "stock_success_rate",
             "average_rating_return_stock",
             "total_recommendations_stock",
@@ -78,7 +78,7 @@ class TipranksReader:
         data = [
             {
                 "name": item["name"],
-                "firm": item["firm"],
+                "company": item["firm"],
                 "image_url": (
                     None if item['expertImg'] is None 
                     else f"https://cdn.tipranks.com/expert-pictures/{item['expertImg']}_tsqr.jpg"
@@ -113,7 +113,7 @@ class TipranksReader:
         if not include_retail:
             data = [item for item in data if item["consensus_analyst"] is True]
         
-        desc = False if sorted_by in ("name", "firm") else True
+        desc = False if sorted_by in ("name", "company") else True
         if sorted_by in (
             "rank",
             "successful_recommendations",
@@ -168,7 +168,7 @@ class TipranksReader:
     def institutional_ownership(self, sorted_by="name"):
         sort_variables = (
             "name",
-            "firm",
+            "company",
             "stars",
             "rank",
             "value",
@@ -182,7 +182,7 @@ class TipranksReader:
         data = [
             {
                 "name": item["managerName"],
-                "firm": item["institutionName"],
+                "company": item["institutionName"],
                 "stars": round(item["stars"], 1),
                 "rank": item["rank"],
                 "ranked_institutions": item["totalRankedInstitutions"],
@@ -197,7 +197,7 @@ class TipranksReader:
             for item in data
         ]
         
-        desc = False if sorted_by in ("name", "firm") else True
+        desc = False if sorted_by in ("name", "company") else True
         data = sorted(data, key=lambda x: (x[sorted_by] is None, x[sorted_by]), reverse=desc)
         
         return data
