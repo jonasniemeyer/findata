@@ -169,6 +169,17 @@ class TestRatingData:
             assert item["average"] is None or round(item["average"], 2) == item["average"] 
             assert item["average_price_target"] is None or round(item["average_price_target"], 2) == item["average_price_target"]
     
+    def test_profile(self):
+        data = self.reader.profile()
+        assert isinstance(data["isin"], str)
+        assert isinstance(data["description"], str)
+        assert isinstance(data["industry"], str)
+        assert isinstance(data["sector"], str)
+        assert isinstance(data["ceo"], str)
+        assert isinstance(data["employees"], int)
+        assert isinstance(data["website"], str)
+        assert isinstance(data["address"], str)
+    
     def test_recommendation_trend(self):
         data = self.reader.recommendation_trend()
         assert isinstance(data, dict)

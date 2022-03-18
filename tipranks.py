@@ -273,6 +273,20 @@ class TipranksReader:
         ]
         return data
     
+    def profile(self):
+        company_data = self._get_ratings_data()["companyData"]
+        data = {
+            "isin": self._get_ratings_data()["isin"],
+            "description": self._get_ratings_data()["description"],
+            "industry": company_data["industry"],
+            "sector": company_data["sector"],
+            "ceo": company_data["ceo"],
+            "employees": company_data["employees"],
+            "website": company_data["website"],
+            "address": company_data["companyAddress"]
+        }
+        return data
+    
     def recommendation_trend(self, timestamps=False):
         data_raw = self._get_ratings_data()
         data = {"all_analysts": {}, "best_analysts": {}}

@@ -32,5 +32,6 @@ __all__ = [
     "margin_debt",
     "shiller_cape",
     "DatasetError",
-    "TickerError"
+    "TickerError",
+    "TipranksReader"
 ]
