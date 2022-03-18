@@ -532,6 +532,10 @@ class YahooReader:
                     data["ask"] = put["ask"]
                 else:
                     data["ask"] = None
+                if "volume" in put.keys():
+                    data["volume"] = put["volume"]
+                else:
+                    data["volume"] = None
                 data["implied_volatility"] = round(put["impliedVolatility"], 4)
                 data["itm"] = put["inTheMoney"]
             
@@ -636,14 +640,17 @@ class YahooReader:
         
         return data
     
-    def esg_scores(self) -> dict:        
+    def esg_scores(self, timestamps=False) -> dict:        
         try:
             data = self._stored_data["esgScores"]
         except:
             raise DatasetError(f"no esg scores found for ticker {self.ticker}")
         
         scores = {
-            "date": pd.to_datetime(f"{data['ratingYear']}-{data['ratingMonth']}-01").date().isoformat(),
+            "date": (
+                int(pd.to_datetime(pd.to_datetime(f"{data['ratingYear']}-{data['ratingMonth']}-01").date()).timestamp()) if timestamps
+                else pd.to_datetime(f"{data['ratingYear']}-{data['ratingMonth']}-01").date().isoformat()
+            ),
             "scores" : {
                 "environment": data["environmentScore"],
                 "social": data["socialScore"],
