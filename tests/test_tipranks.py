@@ -70,7 +70,7 @@ class TestRatingData:
         assert isinstance(data, list)
         for item in data:
             assert isinstance(item["name"], str)
-            assert isinstance(item["firm"], str)
+            assert isinstance(item["company"], str)
             assert (isinstance(item["image_url"], str) or item["image_url"] is None)
             assert round(item["stock_success_rate"], 4) == item["stock_success_rate"]
             assert round(item["average_rating_return_stock"], 4) == item["average_rating_return_stock"]
@@ -92,7 +92,7 @@ class TestRatingData:
         
         for key in (
             "name",
-            "firm",
+            "company",
             "stock_success_rate",
             "average_rating_return_stock",
             "total_recommendations_stock",
@@ -135,7 +135,7 @@ class TestRatingData:
         assert isinstance(data, list)
         for item in data:
             assert isinstance(item["name"], str)
-            assert isinstance(item["firm"], str)
+            assert isinstance(item["company"], str)
             assert round(item["stars"], 1) == item["stars"]
             assert isinstance(item["rank"], int)
             assert isinstance(item["ranked_institutions"], int)
@@ -144,7 +144,7 @@ class TestRatingData:
             assert round(item["percentage_of_portfolio"], 4) == item["percentage_of_portfolio"]
             assert (isinstance(item["image_url"], str) or item["image_url"] is None)
         
-        for key in ("name", "firm", "stars", "rank", "value", "percentage_of_portfolio"):
+        for key in ("name", "company", "stars", "rank", "value", "percentage_of_portfolio"):
             assert self.reader.institutional_ownership(sorted_by=key)
     
     def test_institutional_ownership_trend(self):
