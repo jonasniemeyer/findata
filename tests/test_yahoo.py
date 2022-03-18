@@ -9,6 +9,7 @@ class TestClassMethods:
     def setup_class(cls):
         cls.reader = YahooReader
     
+    @pytest.mark.skip()
     def test_crumb(self):
         assert self.reader.crumb() == ""
     
@@ -72,6 +73,10 @@ class TestEquity:
             assert isinstance(item["old"], str)
             assert isinstance(item["new"], str)
             assert isinstance(item["change"], str)
+        
+        recommendations = self.reader.analyst_recommendations(timestamps=True)
+        for item in recommendations:
+            assert isinstance(item["date"], int)
     
     def test_recommendation_trend(self):
         recommendation_trend = self.reader.recommendation_trend()
@@ -89,16 +94,22 @@ class TestEquity:
     def test_options(self):
         options = self.reader.options()
         assert ("calls" in options) and ("puts" in options)
-        for item in options["calls"]:
-            assert dt.date.fromisoformat(item["maturity"])
-            assert round(item["strike"], 2) == item["strike"]
-            assert isinstance(item["symbol"], str)
-            assert round(item["last_price"], 2) == item["last_price"]
-            assert round(item["bid"], 2) == item["bid"]
-            assert round(item["ask"], 2) == item["ask"]
-            assert item["volume"] is None or isinstance(item["volume"], int)
-            assert round(item["implied_volatility"], 4) == item["implied_volatility"]
-            assert isinstance(item["itm"], bool)
+        for type_ in ("calls", "puts"):
+            for item in options[type_]:
+                assert dt.date.fromisoformat(item["maturity"])
+                assert round(item["strike"], 2) == item["strike"]
+                assert isinstance(item["symbol"], str)
+                assert round(item["last_price"], 2) == item["last_price"]
+                assert round(item["bid"], 2) == item["bid"]
+                assert round(item["ask"], 2) == item["ask"]
+                assert item["volume"] is None or isinstance(item["volume"], int)
+                assert round(item["implied_volatility"], 4) == item["implied_volatility"]
+                assert isinstance(item["itm"], bool)
+        
+        options = self.reader.options(timestamps=True)
+        for type_ in ("calls", "puts"):
+            for item in options[type_]:
+                assert isinstance(item["maturity"], int)
     
     def test_institutional_ownership(self):
         holders = self.reader.institutional_ownership()
@@ -109,6 +120,10 @@ class TestEquity:
             assert round(item["percentage"], 4) == item["percentage"]
             assert isinstance(item["shares"], int)
             assert round(item["value"], 2) == item["value"]
+        
+        holders = self.reader.institutional_ownership(timestamps=True)
+        for item in holders:
+            assert isinstance(item["date"], int)
     
     def test_fund_ownership(self):
         funds = self.reader.fund_ownership()
@@ -119,6 +134,10 @@ class TestEquity:
             assert round(item["percentage"], 4) == item["percentage"]
             assert isinstance(item["shares"], int)
             assert round(item["value"], 2) == item["value"]
+        
+        funds = self.reader.fund_ownership(timestamps=True)
+        for item in funds:
+            assert isinstance(item["date"], int)
     
     def test_insider_ownership(self):
         insider = self.reader.insider_ownership()
@@ -131,6 +150,10 @@ class TestEquity:
             assert item["file"] is None or isinstance(item["file"], str)
             assert dt.date.fromisoformat(item["latest_trade"][0])
             assert isinstance(item["latest_trade"][1], str)
+        
+        insider = self.reader.insider_ownership(timestamps=True)
+        for item in insider:
+            assert isinstance(item["date"], int)
     
     def test_ownership_breakdown(self):
         breakdown = self.reader.ownership_breakdown()
@@ -150,6 +173,10 @@ class TestEquity:
             assert item["value"] is None or round(item["value"], 2) == item["value"]
             assert item["file"] is None or isinstance(item["file"], str)
             assert item["text"] is None or isinstance(item["text"], str)
+        
+        trades = self.reader.insider_trades(timestamps=True)
+        for item in trades:
+            assert isinstance(item["date"], int)
 
     def test_esg_scores(self):
         scores = self.reader.esg_scores()
@@ -174,6 +201,9 @@ class TestEquity:
             "tobacco"
         ):
             assert isinstance(scores["involvements"][key], bool)
+        
+        scores = self.reader.esg_scores(timestamps=True)
+        assert isinstance(scores["date"], int)
 
     def test_sec_filings(self):
         filings = self.reader.sec_filings()
@@ -184,6 +214,11 @@ class TestEquity:
             assert isinstance(item["form_type"], str)
             assert isinstance(item["description"], str)
             assert isinstance(item["url"], str)
+        
+        filings = self.reader.sec_filings(timestamps=True)
+        for item in filings:
+            assert isinstance(item["date_filed"], int)
+            assert isinstance(item["datetime_filed"], int)
 
     def test_financial_statement(self):
         income = self.reader.income_statement()
@@ -207,6 +242,42 @@ class TestEquity:
         for item in (income, balance, cashflow):
             total_variables += len(item[key])
         assert len(statement_merged[key]) == total_variables - 1 #net income on income and cf statement have different names
+
+        for date in income:
+            for var in income[date]:
+                assert isinstance(income[date][var], (int, float))
+        for date in balance:
+            for var in balance[date]:
+                assert isinstance(balance[date][var], (int, float))
+        for date in cashflow:
+            for var in cashflow[date]:
+                assert isinstance(cashflow[date][var], (int, float))
+        for type_ in ("income_statement", "balance_sheet", "cashflow_statement"):
+            for date in statement[type_]:
+                for var in statement[type_][date]:
+                    assert isinstance(statement[type_][date][var], (int, float))
+        for date in statement_merged:
+            for var in statement_merged[date]:
+                assert isinstance(statement_merged[date][var], (int, float))
+
+        income = self.reader.income_statement(timestamps=True)
+        for date in income:
+            assert isinstance(date, int)
+        balance = self.reader.balance_sheet(timestamps=True)
+        for date in balance:
+            assert isinstance(date, int)
+        cashflow = self.reader.cashflow_statement(timestamps=True)
+        for date in cashflow:
+            assert isinstance(date, int)
+        statement = self.reader.financial_statement(timestamps=True)
+        for type_ in ("income_statement", "balance_sheet", "cashflow_statement"):
+            for date in statement[type_]:
+                assert isinstance(date, int)
+        statement_merged = self.reader.financial_statement(merged=True, timestamps=True)
+        for date in statement_merged:
+            assert isinstance(date, int)
+
+
 
     def test_fund_statistics(self):
         with pytest.raises(DatasetError) as exception:
@@ -627,6 +698,9 @@ class TestMutualFund:
         ):
             assert round(scores["scores"][key], 2) == scores["scores"][key]
         assert len(scores["involvements"]) == 0
+
+        scores = self.reader.esg_scores(timestamps=True)
+        assert isinstance(scores["date"], int)
     
     def test_holdings(self):
         holdings = self.reader.holdings()
