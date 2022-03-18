@@ -113,7 +113,7 @@ class TipranksReader:
         if not include_retail:
             data = [item for item in data if item["consensus_analyst"] is True]
         
-        desc = False if sorted_by in ("name", "company") else True
+        desc = False if sorted_by in ("name", "company", "rank") else True
         if sorted_by in (
             "rank",
             "successful_recommendations",
@@ -197,7 +197,7 @@ class TipranksReader:
             for item in data
         ]
         
-        desc = False if sorted_by in ("name", "company") else True
+        desc = False if sorted_by in ("name", "company", "rank") else True
         data = sorted(data, key=lambda x: (x[sorted_by] is None, x[sorted_by]), reverse=desc)
         
         return data
