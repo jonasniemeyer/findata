@@ -30,6 +30,7 @@ __all__ = [
     "Filing13G",
     "Filing13F",
     "margin_debt",
+    "shiller_cape",
     "DatasetError",
     "TickerError"
 ]

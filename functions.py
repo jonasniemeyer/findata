@@ -87,12 +87,13 @@ def shiller_cape(timestamps=False) -> pd.DataFrame:
     df = df.drop(["Date  ", "Unnamed: 13", "Unnamed: 15"], axis=1)
     df = df.rename(
         columns = {
-            "Comp.": "Index",
-            "Dividend": "Dividends",
+            "Comp.": "S&P 500 Index",
+            "Dividend": "S&P 500 Dividends",
+            "Earnings": "S&P 500 Earnings",
             "Index": "CPI",
             "Interest": "10-Year Interest Rate",
-            "Real": "Real Index",
-            "Real.1": "Real Dividends",
+            "Real": "S&P 500 Real Index",
+            "Real.1": "S&P 500 Real Dividends",
             "Return": "Real Total Price Return",
             "Real.2": "Real Earnings",
             "Scaled": "Real TR Scaled Earnings",
@@ -102,7 +103,7 @@ def shiller_cape(timestamps=False) -> pd.DataFrame:
             "Bond": "Total Bond Return",
             "Bond.1": "Real Total Bond Return",
             "Annualized Stock": "10-Year Annualized Real Stock Return",
-            "Annualized Bonds": "10-Year Annualized Real Bond Return",
+            "Annualized Bonds ": "10-Year Annualized Real Bond Return",
             "Excess Annualized ": "10-Year Annualized Excess Stock Return"
         }
     )
