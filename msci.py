@@ -12,7 +12,7 @@ class MSCIReader:
     def __init__(
         self,
         index_code,
-        index_variant="STRD",
+        index_variant="NETR",
         index_currency="USD",
         start=dt.date(1969, 1, 1),
         end=dt.date.today(),
@@ -29,7 +29,7 @@ class MSCIReader:
         index_variant : str
             specifies the variant of the index
             possible values: "GRTR" (accumulated), "NETR" (accumulated with taxes incorporated), "STRD" (raw index, not considering dividends)
-            default : "STRD"
+            default : "NETR"
         
         index_currency : str
             sets the currency of the time-series
