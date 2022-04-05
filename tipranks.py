@@ -241,13 +241,21 @@ class TipranksReader:
                         else pd.to_datetime(item["weekStart"]).date().isoformat()
                     ),
                     "buy": item["buy"],
-                    "neutral": item["neutral"],
+                    "hold": item["neutral"],
                     "sell": item["sell"],
-                    "total": item["all"]
+                    "count": item["all"]
                 } for item in data["counts"]
             ],
             "sector_average_news_score": data["sectorAverageNewsScore"]
         }
+
+        for week in data["articles"]:
+            if data["articles"][week]["count"] != 0:
+                data["articles"][week]["average"] = (
+                    round(
+                        (data["articles"][week]["buy"]*5 + data["articles"][week]["hold"]*3 + data["articles"][week]["sell"]*1) / data["articles"][week]["count"], 2
+                    )
+                )
         
         return data
     
@@ -304,9 +312,10 @@ class TipranksReader:
                 data[dataset][date]["buy"] = item["buy"]
                 data[dataset][date]["hold"] = item["hold"]
                 data[dataset][date]["sell"] = item["sell"]
+                data[dataset][date]["count"] = item["buy"] + item["hold"] + item["sell"]
                 data[dataset][date]["average"] = (
-                    round((item["buy"]*5+item["hold"]*3+item["sell"]) / (item["buy"]+item["hold"]+item["sell"]), 2)
-                )
+                    round((item["buy"]*5+item["hold"]*3+item["sell"]) / data[dataset][date]["count"], 2)
+                ) if data[dataset][date]["count"] != 0 else None
                 data[dataset][date]["average_price_target"] = round(item["priceTarget"], 2)
         
         return data
