@@ -338,7 +338,8 @@ class TipranksReader:
         
         for date in data:
             for star in data[date]:
-                if data[date][star]["buy"] + data[date][star]["hold"] + data[date][star]["sell"] != 0:
+                data[date][star]["count"] = data[date][star]["buy"] + data[date][star]["hold"] + data[date][star]["sell"]
+                if data[date][star]["count"] != 0:
                     data[date][star]["average"] = (
                             round((data[date][star]["buy"]*5+data[date][star]["hold"]*3+data[date][star]["sell"])
                             / (data[date][star]["buy"]+data[date][star]["hold"]+data[date][star]["sell"]), 2)
