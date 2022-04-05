@@ -311,30 +311,47 @@ class TipranksReader:
         
         return data
     
-    def recommendation_trend_breakup(self, sorted_by="stars", timestamps=False):
+    def recommendation_trend_breakup(self, sorted_by="star", timestamps=False):
+        if sorted_by not in ("star", "date"):
+            raise ValueError(f"sorting variable has to be in 'star' or 'date'")
         data_raw = self._get_ratings_data()["consensuses"]
         data = {}
         
         for item in data_raw:
-            stars = item["mStars"]
+            star = item["mStars"]
             date = pd.to_datetime(item["d"])
             date = (
                 int(pd.to_datetime(date.date()).timestamp()) if timestamps 
                 else date.date().isoformat()
             )
-            
-            prim_k = stars if sorted_by == "stars" else date
-            sec_k = date if sorted_by == "stars" else stars
-            
-            data[prim_k] = data.get(prim_k, {})
-            data[prim_k][sec_k] = data.get(sec_k, {})
-            data[prim_k][sec_k]["consensus_rating"] = item["rating"]
-            data[prim_k][sec_k]["buy"] = item["nB"]
-            data[prim_k][sec_k]["hold"] = item["nH"]
-            data[prim_k][sec_k]["sell"] = item["nS"]
-            data[prim_k][sec_k]["average"] = (
-                round((item["nB"]*5+item["nH"]*3+item["nS"]) / (item["nB"]+item["nH"]+item["nS"]), 2)
-            )
+
+            data[date] = data.get(date, {})
+            data[date][star] = data.get(star, {})
+            data[date][star]["buy"] = item["nB"]
+            data[date][star]["hold"] = item["nH"]
+            data[date][star]["sell"] = item["nS"]
+        
+        for date in data:
+            data[date]["all"] = data[date][1]
+            for star in range(1, 5):
+                data[date][star] = {key: data[date][star][key] - data[date][star+1][key] for key in ("buy", "hold", "sell")}
+        
+        for date in data:
+            for star in data[date]:
+                if data[date][star]["buy"] + data[date][star]["hold"] + data[date][star]["sell"] != 0:
+                    data[date][star]["average"] = (
+                            round((data[date][star]["buy"]*5+data[date][star]["hold"]*3+data[date][star]["sell"])
+                            / (data[date][star]["buy"]+data[date][star]["hold"]+data[date][star]["sell"]), 2)
+                        )
+                else:
+                    data[date][star]["average"] = None
+        
+        if sorted_by == "star":
+            temp_dct = data.copy()
+            data = {1: {}, 2: {}, 3:{}, 4:{}, 5:{}, "all": {}}
+            for date in temp_dct:
+                for star in temp_dct[date]:
+                    data[star][date] = temp_dct[date][star]
         
         return data
         
@@ -346,3 +363,6 @@ class TipranksReader:
                 params = {"name": self.ticker}
             ).json()
         return self._ratings_data
+
+if __name__ == "__main__":
+    print(TipranksReader("AAPL").recommendation_trend_breakup())
