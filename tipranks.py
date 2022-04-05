@@ -243,19 +243,14 @@ class TipranksReader:
                     "buy": item["buy"],
                     "hold": item["neutral"],
                     "sell": item["sell"],
+                    "average": round(
+                            (item["buy"]*5+item["neutral"]*3+item["sell"]*1) / (item["buy"]+item["neutral"]+item["sell"]), 2
+                        ) if item["buy"]+item["neutral"]+item["sell"] != 0 else None,
                     "count": item["all"]
                 } for item in data["counts"]
             ],
             "sector_average_news_score": data["sectorAverageNewsScore"]
         }
-
-        for week in data["articles"]:
-            if data["articles"][week]["count"] != 0:
-                data["articles"][week]["average"] = (
-                    round(
-                        (data["articles"][week]["buy"]*5 + data["articles"][week]["hold"]*3 + data["articles"][week]["sell"]*1) / data["articles"][week]["count"], 2
-                    )
-                )
         
         return data
     
@@ -373,6 +368,3 @@ class TipranksReader:
                 params = {"name": self.ticker}
             ).json()
         return self._ratings_data
-
-if __name__ == "__main__":
-    print(TipranksReader("AAPL").recommendation_trend_breakup())
