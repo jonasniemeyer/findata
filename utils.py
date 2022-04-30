@@ -10,14 +10,14 @@ class DatasetError(KeyError):
     pass
 
 HEADERS = {
-        "Connection": "keep-alive",
-        "Expires": "-1",
-        "Upgrade-Insecure-Requests": "1",
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-            "(KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36"
-        )
-    }
+    "Connection": "keep-alive",
+    "Expires": "-1",
+    "Upgrade-Insecure-Requests": "1",
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36"
+    )
+}
 TIPRANKS_HEADERS = HEADERS
 
 if "private.cfg" in os.listdir(Path(__file__).parent):
