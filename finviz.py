@@ -98,7 +98,7 @@ class FinvizReader:
             )
         return trades
     
-    def news(self) -> list:
+    def news(self, timestamps=False) -> list:
         table = self._soup.find_all("table", {"class": "fullview-news-outer"})
         if len(table) == 1:
             table = table[0]
