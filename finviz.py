@@ -63,10 +63,9 @@ class FinvizReader:
                     }
                 )
         return recommendations
-        
 
     def insider_trades(self) -> list:
-        table = soup.find_all("table", {"class": "body-table"})
+        table = self._soup.find_all("table", {"class": "body-table"})
         if len(table) == 1:
             table = table[0]
         else:
