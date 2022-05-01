@@ -1,12 +1,12 @@
 import requests
 from bs4 import BeautifulSoup
 from tempfile import TemporaryFile
-from zipfile import ZipFile
+from zipfile import ZipFile, BadZipFile
 from io import StringIO
 import pandas as pd
 import numpy as np
 import re
-from finance_data.utils import HEADERS
+from finance_data.utils import HEADERS, DatasetError
 
 class FrenchReader:
     _base_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
@@ -77,9 +77,12 @@ class FrenchReader:
     def _read_zip(self, http_response) -> str:
         with TemporaryFile() as temp_file:
             temp_file.write(http_response)
-            with ZipFile(temp_file, "r") as zip_file:
-                raw_data = zip_file.open(zip_file.namelist()[0]).read().decode(encoding="cp1252")
-                return raw_data
+            try:
+                with ZipFile(temp_file, "r") as zip_file:
+                    raw_data = zip_file.open(zip_file.namelist()[0]).read().decode(encoding="cp1252")
+                    return raw_data
+            except BadZipFile:
+                raise DatasetError(f"Could not fetch data for {self._dataset}")
     
     @classmethod
     def datasets(cls) -> list:
