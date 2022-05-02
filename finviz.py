@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 import re
 from bs4 import BeautifulSoup
-from utils import HEADERS
+from finance_data.utils import HEADERS
 
 class FinvizReader:
     _base_url = "https://finviz.com/quote.ashx?t={}"
@@ -13,7 +13,7 @@ class FinvizReader:
             url=self._base_url.format(self._ticker),
             headers=HEADERS
         ).text
-        self._soup = BeautifulSoup(self._html)
+        self._soup = BeautifulSoup(self._html, "lxml")
     
     def analyst_recommendations(self, timestamps=False) -> list:
         table = self._soup.find_all("table", {"class": "fullview-ratings-outer"})
@@ -33,24 +33,26 @@ class FinvizReader:
                     date = int(date.timestamp())
                 else:
                     date = date.date().isoformat()
-                change = cells[1].text
-                company = cells[2].text
+                change = cells[1].text.strip()
+                company = cells[2].text.strip()
                 ratings = cells[3].text.split("→")
                 prices = cells[4].text.replace("$", "").split("→")
                 
                 if len(ratings) == 1:
-                    rating_old = ""
                     rating_new = ratings[0].strip()
+                    if change == "Reiterated":
+                        rating_old = ratings[0].strip()
+                    else:
+                        rating_old = ""
                 else:
                     rating_old = ratings[0].strip()
                     rating_new = ratings[1].strip()
-                price_old = prices[0].strip()
+                
+                price_old = float(prices[0])
                 if len(prices) == 1:
-                    price_old = ""
-                    price_new = prices[0].strip()
+                    price_new = float(prices[0])
                 else:
-                    price_new = prices[0].strip()
-                    price_new = prices[1].strip()
+                    price_new = float(prices[1])
                 recommendations.append(
                     {
                         "date": date,
