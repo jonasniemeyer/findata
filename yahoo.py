@@ -404,8 +404,8 @@ class YahooReader:
             {
                 "date": (dct["epochGradeDate"] if timestamps else (dt.date(1970, 1, 1) + dt.timedelta(seconds=dct["epochGradeDate"])).isoformat()),
                 "company": dct["firm"],
+                "old": dct["toGrade"] if dct["action"] == "main" else dct["fromGrade"],
                 "new": dct["toGrade"],
-                "old": dct["fromGrade"],
                 "change": dct["action"]
             }
             for dct in data

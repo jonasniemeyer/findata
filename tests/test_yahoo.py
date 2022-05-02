@@ -73,6 +73,8 @@ class TestEquity:
             assert isinstance(item["old"], str)
             assert isinstance(item["new"], str)
             assert isinstance(item["change"], str)
+            if item["change"] == "main":
+                assert item["old"] == item["new"]
         
         recommendations = self.reader.analyst_recommendations(timestamps=True)
         for item in recommendations:
