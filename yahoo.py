@@ -400,11 +400,13 @@ class YahooReader:
             data = self._stored_data["upgradeDowngradeHistory"]["history"]
         except:
             raise DatasetError(f"no analyst ratings found for ticker {self.ticker}")
+        for dct in data:
+            assert dct["action"] in ("main", "reit", "init", "up", "down")
         data = [
             {
                 "date": (dct["epochGradeDate"] if timestamps else (dt.date(1970, 1, 1) + dt.timedelta(seconds=dct["epochGradeDate"])).isoformat()),
                 "company": dct["firm"],
-                "old": dct["toGrade"] if dct["action"] == "main" else dct["fromGrade"],
+                "old": dct["toGrade"] if dct["action"] in ("main", "reit") else None if dct["action"] == "init" else dct["fromGrade"],
                 "new": dct["toGrade"],
                 "change": dct["action"]
             }

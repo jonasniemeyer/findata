@@ -38,24 +38,29 @@ class FinvizReader:
                 ratings = cells[3].text.split("→")
                 prices = cells[4].text.replace("$", "").split("→")
                 
-                if len(ratings) == 1:
+                assert change in ("Reiterated", "Initiated", "Resumed", "Upgrade", "Downgrade")
+                if change in ("Reiterated", "Resumed"):
                     rating_new = ratings[0].strip()
-                    if change == "Reiterated":
-                        rating_old = ratings[0].strip()
-                    else:
-                        rating_old = ""
+                    rating_old = ratings[0].strip()
+                elif change == "Initiated":
+                    rating_new = ratings[0].strip()
+                    rating_old = None
                 else:
                     rating_old = ratings[0].strip()
                     rating_new = ratings[1].strip()
                 
-                if prices[0] == "":
-                    price_old = None
+                if change == "Initiated":
+                    price_old = ""
+                    price_new = prices[0]
                 else:
-                    price_old = float(prices[0])
-                if len(prices) == 1:
-                    price_new = price_old
-                else:
-                    price_new = float(prices[1])
+                    price_old = prices[0]
+                    if len(prices) == 1:
+                        price_new = price_old
+                    else:
+                        price_new = prices[1]
+                
+                price_old = None if price_old == "" else float(price_old)
+                price_new = None if price_new == "" else float(price_new)
                 
                 recommendations.append(
                     {
@@ -133,6 +138,3 @@ class FinvizReader:
                 }
             )
         return news
-
-if __name__ == "__main__":
-    data = FinvizReader("GPI").analyst_recommendations()
