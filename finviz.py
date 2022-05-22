@@ -48,11 +48,15 @@ class FinvizReader:
                     rating_old = ratings[0].strip()
                     rating_new = ratings[1].strip()
                 
-                price_old = float(prices[0])
+                if prices[0] == "":
+                    price_old = None
+                else:
+                    price_old = float(prices[0])
                 if len(prices) == 1:
-                    price_new = float(prices[0])
+                    price_new = price_old
                 else:
                     price_new = float(prices[1])
+                
                 recommendations.append(
                     {
                         "date": date,
@@ -129,3 +133,6 @@ class FinvizReader:
                 }
             )
         return news
+
+if __name__ == "__main__":
+    data = FinvizReader("GPI").analyst_recommendations()
