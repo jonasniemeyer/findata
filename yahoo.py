@@ -67,7 +67,7 @@ class YahooReader:
         self._stored_data = self._get_stored_data()
         
         self._security_type = self._stored_data["quoteType"]["quoteType"]
-        self._name = self._stored_data["quoteType"]["shortName"]
+        self._name = self._stored_data["quoteType"]["longName"]
 
     @property
     def ticker(self):
