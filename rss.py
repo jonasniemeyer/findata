@@ -23,7 +23,7 @@ class RSSReader:
                 date = pd.to_datetime(date, unit="s").isoformat()
             dct["date"] = date
             dct["author"] = tag.find("sa:author_name").text
-            dct["type"] = "news" if "https://seekingalpha.com/news/" in dct["url"] else "article" if "https://seekingalpha.com/article/" in dct["url"] else "unclassified"
+            dct["type"] = "News" if "https://seekingalpha.com/news/" in dct["url"] else "Article" if "https://seekingalpha.com/article/" in dct["url"] else "Unclassified"
             data.append(dct)
             
         return data
