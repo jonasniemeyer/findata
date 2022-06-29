@@ -555,7 +555,7 @@ class YahooReader:
             {
                 "date": (entry["reportDate"]["raw"] if timestamps else dt.date.fromtimestamp(entry["reportDate"]["raw"]).isoformat()),
                 "company": entry["organization"],
-                "percentage": entry["pctHeld"]["raw"],
+                "percentage": np.round(entry["pctHeld"]["raw"], 4),
                 "shares": entry["position"]["raw"],
                 "value": entry["value"]["raw"]
             }
@@ -922,3 +922,7 @@ class YahooReader:
         data = data["quoteSummary"]["result"][0]
 
         return data
+
+if __name__ == "__main__":
+    data = YahooReader("AAPL").institutional_ownership()
+    print(data)
