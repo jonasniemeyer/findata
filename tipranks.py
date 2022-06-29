@@ -317,7 +317,7 @@ class TipranksReader:
     
     def recommendation_trend_breakup(self, sorted_by="star", timestamps=False):
         if sorted_by not in ("star", "date"):
-            raise ValueError(f"sorting variable has to be in 'star' or 'date'")
+            raise ValueError(f"sorting variable has to be 'star' or 'date'")
         data_raw = self._get_ratings_data()["consensuses"]
         data = {}
         

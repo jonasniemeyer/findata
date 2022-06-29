@@ -10,7 +10,7 @@ def test_trending_stocks():
         assert isinstance(item["sentiment"], int)
         assert round(item["consensus_score"], 2) == item["consensus_score"]
         assert isinstance(item["sector"], str)
-        assert isinstance(item["market_cap"], int)
+        assert item["market_cap"] is None or isinstance(item["market_cap"], int)
         assert isinstance(item["buy"], int)
         assert isinstance(item["hold"], int)
         assert isinstance(item["sell"], int)
@@ -41,9 +41,10 @@ def test_news_sentiment():
     for item in data["articles"]:
         assert isinstance(item["week"], str)
         assert isinstance(item["buy"], int)
-        assert isinstance(item["neutral"], int)
+        assert isinstance(item["hold"], int)
         assert isinstance(item["sell"], int)
-        assert isinstance(item["total"], int)
+        assert isinstance(item["average"], float)
+        assert isinstance(item["count"], int)
     
     data = TipranksReader("AAPL").news_sentiment(timestamps=True)
     for item in data["articles"]:
@@ -202,14 +203,14 @@ class TestRatingData:
     def test_recommendation_trend_breakup(self):
         data = self.reader.recommendation_trend_breakup()
         for star in data:
-            assert 1 <= star <= 5 and isinstance(star, int)
+            if star != "all":
+                assert 1 <= star <= 5 and isinstance(star, int)
             for date in data[star]:
                 assert dt.date.fromisoformat(date)
-                assert isinstance(data[star][date]["consensus_rating"], int)
                 assert isinstance(data[star][date]["buy"], int)
                 assert isinstance(data[star][date]["hold"], int)
                 assert isinstance(data[star][date]["sell"], int)
-                assert round(data[star][date]["average"], 2) == data[star][date]["average"]
+                assert data[star][date]["average"] is None or round(data[star][date]["average"], 2) == data[star][date]["average"]
         
         data = self.reader.recommendation_trend_breakup(timestamps=True)
         for star in data:
@@ -220,7 +221,8 @@ class TestRatingData:
         for date in data:
             assert dt.date.fromisoformat(date)
             for star in data[date]:
-                assert 1 <= star <= 5 and isinstance(star, int)
+                if star != "all":
+                    assert 1 <= star <= 5 and isinstance(star, int)
         
         data = self.reader.recommendation_trend_breakup(sorted_by="date", timestamps=True)
         for date in data:
