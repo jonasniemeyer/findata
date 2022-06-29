@@ -23,9 +23,9 @@ def test_historical_data_default():
     data = MSCIReader(139245).historical_data()
     info = data["information"]
     assert info["index_code"] == 139245
-    assert info["index_variant"] == "STRD"
+    assert info["index_variant"] == "NETR"
     assert info["currency"] == "USD"
-    assert info["url"] == f"https://app2.msci.com/products/service/index/indexmaster/getLevelDataForGraph?currency_symbol=USD&index_variant=STRD&start_date=19690101&end_date={end_date}&data_frequency=DAILY&index_codes=139245&normalize=False"
+    assert info["url"] == f"https://app2.msci.com/products/service/index/indexmaster/getLevelDataForGraph?currency_symbol=USD&index_variant=NETR&start_date=19690101&end_date={end_date}&data_frequency=DAILY&index_codes=139245&normalize=False"
     df = data["data"]
     assert all(isinstance(date, pd.Timestamp) for date in df.index)
     assert all(df[col].dtype == "float64" for col in df.columns)
