@@ -922,7 +922,3 @@ class YahooReader:
         data = data["quoteSummary"]["result"][0]
 
         return data
-
-if __name__ == "__main__":
-    data = YahooReader("SPY").profile()
-    print(data)
