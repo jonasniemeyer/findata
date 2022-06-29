@@ -70,7 +70,7 @@ class TestEquity:
         for item in recommendations:
             assert dt.date.fromisoformat(item["date"])
             assert isinstance(item["company"], str)
-            assert isinstance(item["old"], str)
+            assert item["old"] is None or isinstance(item["old"], str)
             assert isinstance(item["new"], str)
             assert isinstance(item["change"], str)
             if item["change"] == "main":
@@ -145,17 +145,17 @@ class TestEquity:
         insider = self.reader.insider_ownership()
         assert isinstance(insider, list)
         for item in insider:
-            assert dt.date.fromisoformat(item["date"])
+            assert item["date"] is None or dt.date.fromisoformat(item["date"])
             assert isinstance(item["name"], str)
             assert isinstance(item["position"], str)
-            assert isinstance(item["shares"], int)
+            assert item["shares"] is None or isinstance(item["shares"], int)
             assert item["file"] is None or isinstance(item["file"], str)
             assert dt.date.fromisoformat(item["latest_trade"][0])
             assert isinstance(item["latest_trade"][1], str)
         
         insider = self.reader.insider_ownership(timestamps=True)
         for item in insider:
-            assert isinstance(item["date"], int)
+            assert item["date"] is None or isinstance(item["date"], int)
     
     def test_ownership_breakdown(self):
         breakdown = self.reader.ownership_breakdown()
