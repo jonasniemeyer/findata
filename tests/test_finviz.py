@@ -11,9 +11,9 @@ class TestMethods:
             assert isinstance(item["date"], str)
             assert isinstance(item["company"], str)
             assert isinstance(item["change"], str)
-            assert isinstance(item["rating_old"], str)
+            assert item["rating_old"] is None or isinstance(item["rating_old"], str)
             assert isinstance(item["rating_new"], str)
-            assert round(item["price_old"], 2) == item["price_old"]
+            assert item["price_old"] is None or round(item["price_old"], 2) == item["price_old"]
             assert round(item["price_new"], 2) == item["price_new"]
             if item["change"] == "Reiterated":
                 assert item["rating_old"] == item["rating_new"]
