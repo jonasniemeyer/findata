@@ -13,28 +13,16 @@ from finance_data.utils import (
 )
 
 class YahooReader:
-    _crumb_url = "https://query1.finance.yahoo.com/v1/test/getcrumb"
-    _currencies_url = "https://query1.finance.yahoo.com/v1/finance/currencies"
-    
     _main_url = "https://query1.finance.yahoo.com/v10/finance/quoteSummary/{}"
     _price_url = "https://query1.finance.yahoo.com/v8/finance/chart/{}"
     _estimates_url = "https://finance.yahoo.com/quote{}/analysis"
     _options_url = "https://query1.finance.yahoo.com/v7/finance/options/{}"
     _esg_ts_url = "https://query1.finance.yahoo.com/v1/finance/esgChart"
-
-    @classmethod
-    def crumb(cls) -> str:
-        data = requests.get(
-            url=cls._crumb_url,
-            headers=HEADERS
-        ).text
-        
-        return data
     
-    @classmethod
-    def currencies(cls) -> list:
+    @staticmethod
+    def currencies() -> list:
         data = requests.get(
-            url=cls._currencies_url,
+            url="https://query1.finance.yahoo.com/v1/finance/currencies",
             headers=HEADERS
         ).json()
         
