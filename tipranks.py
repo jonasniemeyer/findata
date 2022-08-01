@@ -1,6 +1,128 @@
 import pandas as pd
 import requests
-from finance_data.utils import TIPRANKS_HEADERS
+import re
+from bs4 import BeautifulSoup
+from finance_data.utils import TIPRANKS_HEADERS, HEADERS
+
+class TipranksAnalystReader:
+    _base_url = "https://www.tipranks.com/experts/analysts/"
+    
+    def __init__(self, name) -> None:
+        self.name = name
+    
+    def ratings(self, timestamps=False):
+        table = self._get_analyst_data().find("div", {"data-sc": "StockCoverage"})
+        rows = table.find_all("div", {"class": "rt-tr-group"})
+        ratings = []
+        
+        for row in rows:
+            cells = row.find("div", {"class": "rt-tr"}, recursive=False).find_all("div", recursive=False)
+            assert len(cells) == 9
+            ticker = cells[1].find("div", recursive=False).find("div", recursive=False).find("a").text
+            name = cells[1].find("div", recursive=False).find("span", recursive=False).text
+            date = cells[2].find("time").get("datetime")
+            date = pd.to_datetime(date)
+            if timestamps:
+                date = int(pd.to_datetime(date.date()).timestamp())
+            else:
+                date = date.date().isoformat()
+            rating = cells[3].find("span").text
+            change = cells[4].find("span").text
+            price = cells[5].find("div")
+            if price is None:
+                price = None
+            else:
+                price = price.text.split("(")[0].replace("$", "").strip()
+            no_ratings = int(cells[8].find("span").text)
+            ratings.append(
+                {
+                   "ticker": ticker,
+                    "name": name,
+                    "date": date,
+                    "rating": rating,
+                    "change": change,
+                    "price_target": price,
+                    "no_ratings": no_ratings
+                }
+            )
+        
+        return ratings
+    
+    def profile(self):        
+        return {**self._get_profile(), **self._get_coverage_information(), **self._get_rating_distribution()}
+    
+    def _get_analyst_data(self):
+        if not hasattr(self, "_analyst_data"):
+            name_encoded = self.name.lower().replace(" ", "-")
+            self._analyst_data = requests.get(
+                url = f"{self._base_url}{name_encoded}",
+                headers = HEADERS
+            ).text
+            self._analyst_data = BeautifulSoup(self._analyst_data, "lxml")
+        
+        return self._analyst_data
+    
+    def _get_coverage_information(self):
+        information = self._get_analyst_data().find("div", {"data-sc": "Information"}).find_all("div", recursive=False)[1].find_all("div")
+        
+        assert information[0].find_all("span")[0].text == "Main Sector:"
+        assert information[1].find_all("span")[0].text == "Geo Coverage:"
+        sector = information[0].find_all("span")[1].text
+        country = information[1].find_all("span")[1].text
+        
+        return {"sector": sector, "country": country}
+    
+    def _get_profile(self):
+        profile_divs = self._get_analyst_data().find("div", {"data-sc": "Profile"}).find_all("div", recursive=False)[1].find_all("div", recursive=False)
+
+        personal = profile_divs[0]
+        performance = profile_divs[1].find_all("div", recursive=False)[1]
+
+        name = personal.find("h1").text
+        company = personal.find("span").text
+        analyst_rank, total_analysts = re.findall(
+            "Ranked #([0-9,]+) out of ([0-9,]+) Analysts on TipRanks",
+            personal.find_all("div", recursive=False)[1].find_all("div", recursive=False)[1].text
+        )[0]
+        analyst_rank = int(analyst_rank.replace(",", ""))
+        total_analysts = int(total_analysts.replace(",", ""))
+        image_url = personal.find("img").get("src")
+
+        positive_recommendations, total_recommendations = re.findall(
+            "([0-9]+) out of ([0-9]+) Profitable Transactions",
+            performance.find_all("div", recursive=False)[0].find_all("div", recursive=False)[2].text
+        )[0]
+        positive_recommendations = int(positive_recommendations)
+        total_recommendations = int(total_recommendations)
+        success_rate = round(positive_recommendations/total_recommendations, 4)
+        average_rating_return = performance.find_all("div", recursive=False)[2].find_all("div", recursive=False)[1].find("span").text
+        average_rating_return = round(float(average_rating_return.replace("%", "")) / 100, 4)
+        
+        dct = {
+            "name": name,
+            "company": company,
+            "image_url": image_url,
+            "rank": analyst_rank,
+            "total_analysts": total_analysts,
+            "positive_recommendations": positive_recommendations,
+            "total_recommendations": total_recommendations,
+            "success_rate": success_rate,
+            "average_rating_return": average_rating_return
+        }
+        
+        return dct
+    
+    def _get_rating_distribution(self):
+        rating_distribution = self._get_analyst_data().find("div", {"data-sc": "StockRating"}).find_all("div", recursive=False)[1].find_all("div")[1].find_all("div", recursive=False)
+        
+        distribution = {}
+        for tag in rating_distribution:
+            percentage, rating = tag.find("div").text.split()
+            percentage = round(float(percentage.replace("%", "")) / 100, 2)
+            distribution[rating.lower()] = percentage
+        
+        return distribution
+
 
 class TipranksStockReader:
     _base_url = "https://www.tipranks.com/api/stocks/"

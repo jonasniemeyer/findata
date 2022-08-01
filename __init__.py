@@ -13,7 +13,7 @@ from .sec import (
     Filing13G,
     Filing13F
 )
-from .tipranks import TipranksStockReader
+from .tipranks import TipranksAnalystReader, TipranksStockReader
 from .functions import margin_debt, shiller_cape
 from .utils import DatasetError, TickerError
 
@@ -35,5 +35,6 @@ __all__ = [
     "shiller_cape",
     "DatasetError",
     "TickerError",
-    "TipranksReader"
+    "TipranksAnalystReader",
+    "TipranksStockReader"
 ]
