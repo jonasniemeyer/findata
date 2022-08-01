@@ -1,6 +1,7 @@
 import re
 import configparser
 import os
+from copy import deepcopy
 from pathlib import Path
 
 class TickerError(ValueError):
@@ -18,7 +19,7 @@ HEADERS = {
         "(KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36"
     )
 }
-TIPRANKS_HEADERS = HEADERS
+TIPRANKS_HEADERS = deepcopy(HEADERS)
 
 if "private.cfg" in os.listdir(Path(__file__).parent):
     cfg = configparser.ConfigParser()
@@ -112,7 +113,7 @@ MACROTRENDS_CONVERSION = {
 
 CAMEL_TO_SPACE = re.compile(r"(?<!^)(?=[A-Z])")
 
-_YAHOO_CONVERSION = {
+YAHOO_CONVERSION = {
     # Income Statement
     "totalRevenue": "revenue",
     "costOfRevenue": "cost of goods sold",

@@ -1,8 +1,8 @@
-from finance_data import TipranksReader
+from finance_data import TipranksStockReader
 import datetime as dt
 
 def test_trending_stocks():
-    data = TipranksReader.trending_stocks()
+    data = TipranksStockReader.trending_stocks()
     assert isinstance(data, list)
     for item in data:
         assert isinstance(item["ticker"], str)
@@ -18,12 +18,12 @@ def test_trending_stocks():
         assert isinstance(item["price_target"], float)
         assert dt.date.fromisoformat(item["latest_rating"])
 
-    data = TipranksReader.trending_stocks(timestamps=True)
+    data = TipranksStockReader.trending_stocks(timestamps=True)
     for item in data:
         assert isinstance(item["latest_rating"], int)
 
 def test_news_sentiment():
-    data = TipranksReader("AAPL").news_sentiment()
+    data = TipranksStockReader("AAPL").news_sentiment()
     assert isinstance(data, dict)
     assert isinstance(data["articles_last_week"], int)
     assert isinstance(data["average_weekly_articles"], float)
@@ -46,14 +46,14 @@ def test_news_sentiment():
         assert isinstance(item["average"], float)
         assert isinstance(item["count"], int)
     
-    data = TipranksReader("AAPL").news_sentiment(timestamps=True)
+    data = TipranksStockReader("AAPL").news_sentiment(timestamps=True)
     for item in data["articles"]:
         assert isinstance(item["week"], int)
 
 class TestRatingData:
     @classmethod
     def setup_class(cls):
-        cls.reader = TipranksReader("AAPL")
+        cls.reader = TipranksStockReader("AAPL")
     
     def test_isin(self):
         isin = self.reader.isin
