@@ -66,7 +66,8 @@ class CMEReader:
         while not clicked:
             try:
                 button_cookies = WebDriverWait(self.driver, 1).until(
-                    EC.element_to_be_clickable((By.XPATH, f"/html/body/div[{i}]/div[2]/div/div[1]/div/div[2]/div/button[2]"))
+                    EC.element_to_be_clickable((By.XPATH, f"/html/body/div[{i}]/div[2]/div/div[1]/div/div[2]/div/button[2]"))#2
+                #                                           /html/body/div[4]  /div[2]/div/div[1]/div/div[2]/div/button[2]
                 )
                 button_cookies.click()
                 clicked = True
@@ -92,11 +93,13 @@ class CMEReader:
             if index == 0:
                 continue
             date = pd.to_datetime(option.get("value"))
-            button_dates = self.driver.find_element_by_xpath("/html/body/main/div/div[3]/div[2]/div/div/div/div/div/div[2]/div/div/div/div/div/div[4]/div/div/div/div/select")
+            button_dates = self.driver.find_element_by_xpath("/html/body/main/div/div[3]/div[2]/div/div/div/div/div/div/div[4]/div/div/div/div/select")
+            #                                                 /html/body/main/div/div[3]/div[2]/div/div/div/div/div/div/div[4]/div/div/div/div/select
             actions = ActionChains(self.driver)
             actions.move_to_element(button_dates).perform()
             button_dates.click()
-            button_refresh = self.driver.find_element_by_xpath(f"/html/body/main/div/div[3]/div[2]/div/div/div/div/div/div[2]/div/div/div/div/div/div[4]/div/div/div/div/select/option[{index+1}]")
+            button_refresh = self.driver.find_element_by_xpath(f"/html/body/main/div/div[3]/div[2]/div/div/div/div/div/div/div[4]/div/div/div/div/select/option[{index+1}]")
+            #                                                    /html/body/main/div/div[3]/div[2]/div/div/div/div/div/div/div[4]/div/div/div/div/select/option[3]
             button_refresh.click()
             if self.timestamps:
                 data[int(date.timestamp())] = self._parse_table()
@@ -108,7 +111,8 @@ class CMEReader:
     def _parse_table(self) -> pd.DataFrame:
         time.sleep(1)
         try:
-            button_expand = self.driver.find_element_by_xpath("/html/body/main/div/div[3]/div[2]/div/div/div/div/div/div[2]/div/div/div/div/div/div[8]/div[2]/button")
+            button_expand = self.driver.find_element_by_xpath("/html/body/main/div/div[3]/div[2]/div/div/div/div/div/div/div[8]/div[2]/button")
+            #                                                  /html/body/main/div/div[3]/div[2]/div/div/div/div/div/div/div[8]/div[2]/button
             actions = ActionChains(self.driver)
             actions.move_to_element(button_expand).perform()
             self.driver.execute_script("window.scrollBy(0, 200)")
