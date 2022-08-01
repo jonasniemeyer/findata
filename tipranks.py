@@ -32,7 +32,7 @@ class TipranksAnalystReader:
             if price is None:
                 price = None
             else:
-                price = price.text.split("(")[0].replace("$", "").strip()
+                price = float(price.text.split("(")[0].replace("$", "").replace(",", "").strip())
             no_ratings = int(cells[8].find("span").text)
             ratings.append(
                 {
