@@ -2,7 +2,7 @@ import pandas as pd
 import requests
 from finance_data.utils import TIPRANKS_HEADERS
 
-class TipranksReader:
+class TipranksStockReader:
     _base_url = "https://www.tipranks.com/api/stocks/"
     
     def __init__(self, ticker) -> None:
