@@ -118,8 +118,8 @@ class TipranksAnalystReader:
         distribution = {}
         for tag in rating_distribution:
             percentage, rating = tag.find("div").text.split()
-            percentage = round(float(percentage.replace("%", "")) / 100, 2)
-            distribution[rating.lower()] = percentage
+            percentage = round(float(percentage.replace("%", "")) / 100, 4)
+            distribution[f"{rating.lower()}_percentage"] = percentage
         
         return distribution
 
