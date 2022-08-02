@@ -218,7 +218,7 @@ class TipranksStockReader:
                         ),
                         "price_target": rating["priceTarget"],
                         "news_url": rating["url"],
-                        "news_title": rating["quote"]["title"]
+                        "news_title": None if rating["quote"] is None else rating["quote"]["title"]
                     } for rating in item["ratings"]
                 ],
                 "analyst_ranking": {
