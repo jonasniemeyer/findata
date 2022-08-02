@@ -88,13 +88,13 @@ class TipranksAnalystReader:
         total_analysts = int(total_analysts.replace(",", ""))
         image_url = personal.find("img").get("src")
 
-        positive_recommendations, total_recommendations = re.findall(
+        successful_recommendations, total_recommendations = re.findall(
             "([0-9]+) out of ([0-9]+) Profitable Transactions",
             performance.find_all("div", recursive=False)[0].find_all("div", recursive=False)[2].text
         )[0]
-        positive_recommendations = int(positive_recommendations)
+        successful_recommendations = int(successful_recommendations)
         total_recommendations = int(total_recommendations)
-        success_rate = round(positive_recommendations/total_recommendations, 4)
+        success_rate = round(successful_recommendations/total_recommendations, 4)
         average_rating_return = performance.find_all("div", recursive=False)[2].find_all("div", recursive=False)[1].find("span").text
         average_rating_return = round(float(average_rating_return.replace("%", "")) / 100, 4)
         
@@ -104,7 +104,7 @@ class TipranksAnalystReader:
             "image_url": image_url,
             "rank": analyst_rank,
             "total_analysts": total_analysts,
-            "positive_recommendations": positive_recommendations,
+            "successful_recommendations": successful_recommendations,
             "total_recommendations": total_recommendations,
             "success_rate": success_rate,
             "average_rating_return": average_rating_return
@@ -182,14 +182,15 @@ class TipranksStockReader:
         sort_variables = (
             "name",
             "company",
-            "stock_success_rate",
+            "success_rate_stock",
             "average_rating_return_stock",
             "total_recommendations_stock",
-            "positive_recommendations_stock",
+            "successful_recommendations_stock",
             "price_target",
             "rank",
             "successful_recommendations",
             "total_recommendations",
+            "success_rate",
             "average_rating_return",
             "stars",
         )
@@ -205,10 +206,10 @@ class TipranksStockReader:
                     None if item['expertImg'] is None 
                     else f"https://cdn.tipranks.com/expert-pictures/{item['expertImg']}_tsqr.jpg"
                 ),
-                "stock_success_rate": round(item["stockSuccessRate"], 4),
+                "success_rate_stock": round(item["stockSuccessRate"], 4),
                 "average_rating_return_stock": round(item["stockAverageReturn"], 4),
                 "total_recommendations_stock": item["stockTotalRecommendations"],
-                "positive_recommendations_stock": item["stockGoodRecommendations"],
+                "successful_recommendations_stock": item["stockGoodRecommendations"],
                 "consensus_analyst": item["includedInConsensus"],
                 "ratings": [
                     {
@@ -225,7 +226,7 @@ class TipranksStockReader:
                     "rank": item["rankings"][0]["lRank"],
                     "successful_recommendations": item["rankings"][0]["gRecs"],
                     "total_recommendations": item["rankings"][0]["tRecs"],
-                    "percentage_successful_recommendations": round(item["rankings"][0]["gRecs"] / item["rankings"][0]["tRecs"], 4),
+                    "success_rate": round(item["rankings"][0]["gRecs"] / item["rankings"][0]["tRecs"], 4),
                     "average_rating_return": round(item["rankings"][0]["avgReturn"], 4),
                     "stars": round(item["rankings"][0]["originalStars"], 1)
                 }
@@ -240,7 +241,7 @@ class TipranksStockReader:
             "rank",
             "successful_recommendations",
             "total_recommendations",
-            "percentage_successful_recommendations",
+            "success_rate",
             "average_rating_return",
             "stars"
         ):
