@@ -2,7 +2,7 @@ import pandas as pd
 import requests
 import re
 from bs4 import BeautifulSoup
-from finance_data.utils import TIPRANKS_HEADERS, HEADERS
+from finance_data.utils import TIPRANKS_HEADERS, HEADERS, DatasetError
 
 class TipranksAnalystReader:
     _base_url = "https://www.tipranks.com/experts/analysts/"
@@ -26,13 +26,17 @@ class TipranksAnalystReader:
                 date = int(pd.to_datetime(date.date()).timestamp())
             else:
                 date = date.date().isoformat()
-            rating = cells[3].find("span").text
+            rating = cells[3].find("span")
+            if rating is None:
+                rating = None
+            else:
+                rating = rating.text
             change = cells[4].find("span").text
             price = cells[5].find("div")
             if price is None:
                 price = None
             else:
-                price = float(price.text.split("(")[0].replace("$", "").replace(",", "").strip())
+                price = re.findall(".+?([0-9,.]+)", price.text.split("(")[0])[0].replace(",", "").strip()
             no_ratings = int(cells[8].find("span").text)
             ratings.append(
                 {
@@ -67,8 +71,8 @@ class TipranksAnalystReader:
         
         assert information[0].find_all("span")[0].text == "Main Sector:"
         assert information[1].find_all("span")[0].text == "Geo Coverage:"
-        sector = information[0].find_all("span")[1].text
-        country = information[1].find_all("span")[1].text
+        sector = None if len(information[0].find_all("span")) == 1 else information[0].find_all("span")[1].text
+        country = None if len(information[1].find_all("span")) == 1 else information[1].find_all("span")[1].text
         
         return {"sector": sector, "country": country}
     
@@ -76,7 +80,10 @@ class TipranksAnalystReader:
         profile_divs = self._get_analyst_data().find("div", {"data-sc": "Profile"}).find_all("div", recursive=False)[1].find_all("div", recursive=False)
 
         personal = profile_divs[0]
-        performance = profile_divs[1].find_all("div", recursive=False)[1]
+        try:
+            performance = profile_divs[1].find_all("div", recursive=False)[1]
+        except IndexError:
+            raise DatasetError(f"No data found for analyst '{self.name}'")
 
         name = personal.find("h1").text
         company = personal.find("span").text
