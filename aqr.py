@@ -72,7 +72,7 @@ class AQRReader:
             skiprows=range(10),
             index_col=0
         )
-        df.index = pd.to_datetime(df.index, format="%m/%d/%Y")
+        df.index = pd.to_datetime(df.index, format="%Y/%m/%d")
         if timestamps:
             df.index = [int(date.timestamp()) for date in df.index]
         return df
