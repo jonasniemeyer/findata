@@ -73,10 +73,10 @@ class TestRatingData:
             assert isinstance(item["name"], str)
             assert isinstance(item["company"], str)
             assert (isinstance(item["image_url"], str) or item["image_url"] is None)
-            assert round(item["stock_success_rate"], 4) == item["stock_success_rate"]
+            assert round(item["success_rate_stock"], 4) == item["success_rate_stock"]
             assert round(item["average_rating_return_stock"], 4) == item["average_rating_return_stock"]
             assert isinstance(item["total_recommendations_stock"], int)
-            assert isinstance(item["positive_recommendations_stock"], int)
+            assert isinstance(item["successful_recommendations_stock"], int)
             assert isinstance(item["consensus_analyst"], bool)
             assert isinstance(item["ratings"], list)
             assert len(item["ratings"]) == 1
@@ -87,17 +87,17 @@ class TestRatingData:
             assert isinstance(item["analyst_ranking"]["rank"], int)
             assert isinstance(item["analyst_ranking"]["successful_recommendations"], int)
             assert isinstance(item["analyst_ranking"]["total_recommendations"], int)
-            assert round(item["analyst_ranking"]["percentage_successful_recommendations"], 4) == item["analyst_ranking"]["percentage_successful_recommendations"]
+            assert round(item["analyst_ranking"]["success_rate"], 4) == item["analyst_ranking"]["success_rate"]
             assert round(item["analyst_ranking"]["average_rating_return"], 4) == item["analyst_ranking"]["average_rating_return"]
             assert round(item["analyst_ranking"]["stars"], 1) == item["analyst_ranking"]["stars"]
         
         for key in (
             "name",
             "company",
-            "stock_success_rate",
+            "success_rate_stock",
             "average_rating_return_stock",
             "total_recommendations_stock",
-            "positive_recommendations_stock",
+            "successful_recommendations_stock",
             "price_target",
             "rank",
             "successful_recommendations",
