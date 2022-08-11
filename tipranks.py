@@ -12,13 +12,20 @@ class TipranksAnalystReader:
     
     def ratings(self, timestamps=False):
         table = self._get_analyst_data().find("div", {"data-sc": "StockCoverage"})
+        if table is None:
+            raise DatasetError(f"No ratings data found for analyst '{self.name}'")
+        
         rows = table.find_all("div", {"class": "rt-tr-group"})
         ratings = []
         
         for row in rows:
             cells = row.find("div", {"class": "rt-tr"}, recursive=False).find_all("div", recursive=False)
             assert len(cells) == 9
-            ticker = cells[1].find("div", recursive=False).find("div", recursive=False).find("a").text
+            ticker = cells[1].find("div", recursive=False).find("div", recursive=False).find("a")
+            if ticker is not None:
+                ticker = ticker.text
+            else:
+                ticker = cells[1].find("div", recursive=False).find("div", recursive=False).find("span", recursive=False).text.strip()
             name = cells[1].find("div", recursive=False).find("span", recursive=False).text
             date = cells[2].find("time").get("datetime")
             date = pd.to_datetime(date)
@@ -32,11 +39,14 @@ class TipranksAnalystReader:
             else:
                 rating = rating.text
             change = cells[4].find("span").text
-            price = cells[5].find("div")
-            if price is None:
-                price = None
+            price_target = cells[5].find("div")
+            if price_target is None:
+                price_target = None
             else:
-                price = re.findall(".+?([0-9,.]+)", price.text.split("(")[0])[0].replace(",", "").strip()
+                try:
+                    price_target = float(re.findall(".+?([0-9,.]+)", price_target.text.split("(")[0])[0].replace(",", "").strip())
+                except ValueError:
+                    price_target = None
             no_ratings = int(cells[8].find("span").text)
             ratings.append(
                 {
@@ -45,7 +55,7 @@ class TipranksAnalystReader:
                     "date": date,
                     "rating": rating,
                     "change": change,
-                    "price_target": price,
+                    "price_target": price_target,
                     "no_ratings": no_ratings
                 }
             )
@@ -77,13 +87,13 @@ class TipranksAnalystReader:
         return {"sector": sector, "country": country}
     
     def _get_profile(self):
-        profile_divs = self._get_analyst_data().find("div", {"data-sc": "Profile"}).find_all("div", recursive=False)[1].find_all("div", recursive=False)
+        profile_divs = self._get_analyst_data().find("div", {"data-sc": "Profile"})
+        if profile_divs is None:
+            raise DatasetError(f"No profile data found for analyst '{self.name}'")
 
+        profile_divs = profile_divs.find_all("div", recursive=False)[1].find_all("div", recursive=False)        
         personal = profile_divs[0]
-        try:
-            performance = profile_divs[1].find_all("div", recursive=False)[1]
-        except IndexError:
-            raise DatasetError(f"No data found for analyst '{self.name}'")
+        performance = profile_divs[1].find_all("div", recursive=False)[1]
 
         name = personal.find("h1").text
         company = personal.find("span").text
