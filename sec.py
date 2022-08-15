@@ -307,6 +307,8 @@ class Filing13F(_SECFiling):
         soup = BeautifulSoup(self._document, "lxml")
         if "ns1:infoTable" in self._document:
             prefix = "ns1:"
+        elif "n1:infoTable" in self._document:
+            prefix = "n1:"
         else:
             prefix = ""
         entries = soup.find_all(f"{prefix}infotable")
