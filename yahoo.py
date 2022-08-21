@@ -18,6 +18,7 @@ class YahooReader:
     _estimates_url = "https://finance.yahoo.com/quote{}/analysis"
     _options_url = "https://query1.finance.yahoo.com/v7/finance/options/{}"
     _esg_ts_url = "https://query1.finance.yahoo.com/v1/finance/esgChart"
+    quote_url = "https://finance.yahoo.com/quote/"
     
     @staticmethod
     def currencies() -> list:
@@ -42,14 +43,16 @@ class YahooReader:
         if ticker:
             self._ticker = ticker.upper()
         elif isin:
-            response = requests.get(
-                url=f"https://markets.businessinsider.com/ajax/SearchController_Suggest?max_results=1&query={isin}",
-                headers=HEADERS
-            ).text
+            self._isin = isin.upper()
+            params = {
+                "yfin-usr-qry": self.isin
+            }
+            response = requests.get(self.quote_url, params=params, headers=HEADERS)
+        
             try:
-                self._ticker = re.findall(f"\|{isin}\|([A-Z0-9]+)\|", response)[0]
+                self._ticker = re.findall(f"{self.quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response.url)[0].strip()
             except IndexError as e:
-                raise ValueError("Cannot find a ticker that belongs to the given isin")
+                raise DatasetError(f"cannot find a ticker that belongs to the isin {self.isin}")
         else:
             raise ValueError("Either ticker or isin has to be specified")
         self._stored_data = self._get_stored_data()
@@ -72,14 +75,25 @@ class YahooReader:
     @property
     def isin(self):
         if not hasattr(self, "_isin"):
-            ticker_dot = self.ticker.replace('-', '.')
-            response = requests.get(
-                url=f"https://markets.businessinsider.com/ajax/SearchController_Suggest?max_results=1&query={ticker_dot}",
-                headers=HEADERS
-            ).text
-            try:
-                self._isin = re.findall(f"{ticker_dot}\|([A-Z0-9]+)\|{ticker_dot}", response)[0]
-            except IndexError:
+            if "." not in self.ticker:
+                ticker_dot = self.ticker.replace('-', '.')
+                response = requests.get(
+                    url=f"https://markets.businessinsider.com/ajax/SearchController_Suggest?max_results=1&query={ticker_dot}",
+                    headers=HEADERS
+                ).text
+                self._isin = re.findall(f"{ticker_dot}\|([A-Z0-9]+)\|{ticker_dot}", response)
+                if self._isin is not None:
+                    self._isin = self._isin[0]
+                    params = {
+                        "yfin-usr-qry": self._isin
+                    }
+                    response = requests.get(self.quote_url, params=params, headers=HEADERS)
+                    matching_ticker = re.findall(f"{self.quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response.url)[0].strip()
+                    try:
+                        assert self.ticker == matching_ticker
+                    except AssertionError:
+                        raise DatasetError(f"the ticker for {self.isin} is ambiguous: {self.ticker} and {matching_ticker}")
+            else:
                 self._isin = None
         return self._isin
         
