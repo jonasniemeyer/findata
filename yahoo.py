@@ -40,15 +40,18 @@ class YahooReader:
         return data
 
     def __init__(self, ticker: str = None, isin: str = None) -> None:
+        if ticker and isin:
+            raise ValueError("YahooReader should only be called with yahoo ticker or isin")
         if ticker:
             self._ticker = ticker.upper()
         elif isin:
             self._isin = isin.upper()
+
             params = {
                 "yfin-usr-qry": self.isin
             }
             response = requests.get(self.quote_url, params=params, headers=HEADERS)
-        
+
             try:
                 self._ticker = re.findall(f"{self.quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response.url)[0].strip()
             except IndexError as e:
@@ -924,3 +927,6 @@ class YahooReader:
         data = data["quoteSummary"]["result"][0]
 
         return data
+    
+    def __repr__(self):
+        return f"YahooReader ({self.security_type} {self.ticker})"
