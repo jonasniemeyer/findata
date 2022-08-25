@@ -8,13 +8,18 @@ from .fred import FREDReader
 from .msci import MSCIReader
 from .rss import RSSReader
 from .sec import (
-    _SECFiling,
+    sec_companies,
+    sec_mutualfunds,
+    Filing3,
+    Filing4,
+    Filing5,
     Filing13D,
     Filing13G,
-    Filing13F
+    Filing13F,
+    FilingNPORT
 )
 from .tipranks import TipranksAnalystReader, TipranksStockReader
-from .functions import margin_debt, shiller_cape
+from .functions import finra_margin_debt, shiller_cape
 from .utils import DatasetError, TickerError
 
 __all__ = [
@@ -27,11 +32,16 @@ __all__ = [
     "FinvizReader",
     "FREDReader",
     "RSSReader",
-    "_SECFiling",
+    "sec_companies",
+    "sec_mutualfunds",
+    "Filing3",
+    "Filing4",
+    "Filing5",
     "Filing13D",
     "Filing13G",
     "Filing13F",
-    "margin_debt",
+    "FilingNPORT",
+    "finra_margin_debt",
     "shiller_cape",
     "DatasetError",
     "TickerError",

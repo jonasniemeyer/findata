@@ -1,7 +1,7 @@
 import requests
 from finance_data.utils import HEADERS
 
-def get_companies() -> list:
+def sec_companies() -> list:
     items = requests.get("https://www.sec.gov/files/company_tickers.json", headers=HEADERS).json()
     items = [
         {
@@ -13,7 +13,7 @@ def get_companies() -> list:
     ]
     return items
 
-def get_mutualfunds() -> list:
+def sec_mutualfunds() -> list:
     items = requests.get("https://www.sec.gov/files/company_tickers_mf.json", headers=HEADERS).json()["data"]
     items = [
         {
@@ -25,3 +25,28 @@ def get_mutualfunds() -> list:
         for item in items
     ]
     return items
+
+
+class _SECFiling:
+    pass
+
+class Filing3(_SECFiling):
+    pass
+
+class Filing4(Filing3):
+    pass
+
+class Filing5(Filing4):
+    pass
+
+class Filing13G(_SECFiling):
+    pass
+
+class Filing13D(Filing13G):
+    pass
+
+class Filing13F(_SECFiling):
+    pass
+
+class FilingNPORT(_SECFiling):
+    pass
