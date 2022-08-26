@@ -291,44 +291,39 @@ class _SECFiling:
         return business_address, mail_address
     
     def _parse_single_address(self, section) -> dict:
-        street1 = re.findall("STREET 1:\t{2}(.+)", section)
-        if len(street1) == 0:
+        if "STREET 1:" in section:
+            street1 = re.findall("STREET 1:\t{2}(.+)", section)[0]
+        else:
             street1 = None
-        else:
-            street1 = street1[0]
         
-        street2 = re.findall("STREET 2:\t{2}(.+)", section)
-        if len(street2) == 0:
+        if "STREET 2:" in section:
+            street2 = re.findall("STREET 2:\t{2}(.+)", section)[0]
+        else:
             street2 = None
-        else:
-            street2 = street2[0]
         
-        city = re.findall("CITY:\t{3}(.+)", section)
-        if len(city) == 0:
+        if "CITY:" in section:
+            city = re.findall("CITY:\t{3}(.+)", section)[0]
+        else:
             city = None
-        else:
-            city = city[0]
         
-        state = re.findall("STATE:\t{3}(.+)", section)
-        if len(state) == 0:
+        if "STATE:" in section:
+            state = re.findall("STATE:\t{3}(.+)", section)[0]
+        else:
             state = None
-        else:
-            state = state[0]
         
-        zip_ = re.findall("ZIP:\t{3}(.+)", section)
-        if len(zip_) == 0:
-            zip_ = None
-        else:
+        if "ZIP:" in section:
+            zip_ = re.findall("ZIP:\t{3}(.+)", section)[0]
             try:
                 zip_ = int(zip_[0])
             except ValueError:
                 zip_ = None
-        
-        phone = re.findall("BUSINESS PHONE:\t{2}(.+)", section)
-        if len(phone) == 0:
-            phone = None
         else:
-            phone = phone[0]
+            zip_ = None
+        
+        if "BUSINESS PHONE:" in section:
+            phone = re.findall("BUSINESS PHONE:\t{2}(.+)", section)[0]
+        else:
+            phone = None
 
         address = {
             "street1": street1,
