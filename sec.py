@@ -68,6 +68,8 @@ class _SECFiling:
             header_open, header_close = "<SEC-HEADER>", "</SEC-HEADER>"
         elif "<IMS-HEADER>" in self.file:
             header_open, header_close = "<IMS-HEADER>", "</IMS-HEADER>"
+        else:
+            raise DatasetError(f"Could not find a header section")
         self._header = self._file[self.file.find(header_open):self.file.find(header_close)] + header_close
         self._document = self.file[self.file.find("<DOCUMENT>"):self.file.find("</SEC-DOCUMENT>")]
         
