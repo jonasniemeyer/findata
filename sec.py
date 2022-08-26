@@ -62,9 +62,13 @@ class _SECFiling:
     """
     
     def __init__(self, file: str) -> None:
-        self._file = file.replace("&nbsp;", " ")        
-        self._header = self._file[self._file.find("<SEC-HEADER>"):self._file.find("</SEC-HEADER>")] + "</SEC-HEADER>"
-        self._document = self._file[self._file.find("<DOCUMENT>"):self._file.find("</SEC-DOCUMENT>")]
+        self._file = file.replace("&nbsp;", " ")
+        if "<SEC-HEADER>" in self.file:
+            header_open, header_close = "<SEC-HEADER>", "</SEC-HEADER>"
+        elif "<IMS-HEADER>" in self.file:
+            header_open, header_close = "<IMS-HEADER>", "</IMS-HEADER>"
+        self._header = self._file[self.file.find(header_open):self.file.find(header_close)] + header_close
+        self._document = self.file[self.file.find("<DOCUMENT>"):self.file.find("</SEC-DOCUMENT>")]
         
         self._is_html = True if ("<html>" in self._file or "<HTML>" in self._file) else False
         self._is_xml = True if ("<xml>" in self._file or "<XML>" in self._file) else False
@@ -105,13 +109,17 @@ class _SECFiling:
             ).isoformat()
             self._date_of_period = date_of_period
 
-        date_of_change = re.findall("DATE AS OF CHANGE:\t{2}([0-9]{8})", self.header)[0]
-        date_of_change = dt.date(
-            year=int(date_of_change[:4]),
-            month=int(date_of_change[4:6]),
-            day=int(date_of_change[6:8])
-        ).isoformat()
-        self._date_of_change = date_of_change
+        date_of_change = re.findall("DATE AS OF CHANGE:\t{2}([0-9]{8})", self.header)
+        if len(date_of_change) == 0:
+            date_of_change = None
+        else:
+            date_of_change = date_of_change[0]
+            date_of_change = dt.date(
+                year=int(date_of_change[:4]),
+                month=int(date_of_change[4:6]),
+                day=int(date_of_change[6:8])
+            ).isoformat()
+            self._date_of_change = date_of_change
 
         effectiveness_date = re.findall("EFFECTIVENESS DATE:\t{2}([0-9]{8})", self.header)
         if len(effectiveness_date) == 0:
@@ -127,12 +135,12 @@ class _SECFiling:
         
         indices = []
         
-        filer_index = self.header.find("FILER:")
-        if filer_index == -1:
-            filer_index = self.header.find("FILED BY:")
+        filer_indices = [item.start() for item in re.finditer("FILER:", self.header)]
+        if len(filer_indices) == 0:
+            filer_indices = [item.start() for item in re.finditer("FILED BY:", self.header)]
         
-        if filer_index != -1:
-            indices.append(filer_index)
+        for index in filer_indices:
+            indices.append(index)
         
         subject_index = self.header.find("SUBJECT COMPANY:") 
         if subject_index != -1:
@@ -148,7 +156,7 @@ class _SECFiling:
         
         indices = sorted(indices)
         
-        self._filer = self._parse_header_subsection(filer_index, indices)
+        self._filer = self._parse_header_subsection(filer_indices, indices)
         self._subject_company = self._parse_header_subsection(subject_index, indices)
         self._reporting_owner = self._parse_header_subsection(reporting_owner_indices, indices)
         self._issuer = self._parse_header_subsection(issuer_index, indices)
@@ -283,15 +291,39 @@ class _SECFiling:
         return business_address, mail_address
     
     def _parse_single_address(self, section) -> dict:
-        street1 = re.findall("STREET 1:\t{2}(.+)", section)[0]
+        street1 = re.findall("STREET 1:\t{2}(.+)", section)
+        if len(street1) == 0:
+            street1 = None
+        else:
+            street1 = street1[0]
+        
         street2 = re.findall("STREET 2:\t{2}(.+)", section)
         if len(street2) == 0:
             street2 = None
         else:
             street2 = street2[0]
-        city = re.findall("CITY:\t{3}(.+)", section)[0]
-        state = re.findall("STATE:\t{3}(.+)", section)[0]
-        zip_ = int(re.findall("ZIP:\t{3}(.+)", section)[0])
+        
+        city = re.findall("CITY:\t{3}(.+)", section)
+        if len(city) == 0:
+            city = None
+        else:
+            city = city[0]
+        
+        state = re.findall("STATE:\t{3}(.+)", section)
+        if len(state) == 0:
+            state = None
+        else:
+            state = state[0]
+        
+        zip_ = re.findall("ZIP:\t{3}(.+)", section)
+        if len(zip_) == 0:
+            zip_ = None
+        else:
+            try:
+                zip_ = int(zip_[0])
+            except ValueError:
+                zip_ = None
+        
         phone = re.findall("BUSINESS PHONE:\t{2}(.+)", section)
         if len(phone) == 0:
             phone = None
