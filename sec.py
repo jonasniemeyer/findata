@@ -1,7 +1,7 @@
 import requests
 import re
 import datetime as dt
-from finance_data.utils import HEADERS
+from finance_data.utils import HEADERS, DatasetError
 from typing import Union
 
 def sec_companies() -> list:
@@ -395,11 +395,14 @@ class _SECFiling:
     
     @classmethod
     def from_url(cls, url: str):
-        txt = requests.get(
+        file = requests.get(
             url=url,
             headers=HEADERS
         ).text
-        return cls(txt)
+        
+        if "<Message>The specified key does not exist.</Message>" in file:
+            raise DatasetError(f"There is no filing for url '{url}'")
+        return cls(file)
 
 
 class Filing3(_SECFiling):
