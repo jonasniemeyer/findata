@@ -438,11 +438,11 @@ class Filing13F(_SECFiling):
     
     def _parse_holdings_from_xml(self) -> list:       
         soup = BeautifulSoup(self._document, "lxml")
-        
-        if "ns1:infoTable" in self._document:
-            prefix = "ns1:"
-        elif "n1:infoTable" in self._document:
+
+        if "n1:infoTable" in self._document:
             prefix = "n1:"
+        elif "ns1:infoTable" in self._document:
+            prefix = "ns1:"
         else:
             prefix = ""
         
@@ -453,24 +453,29 @@ class Filing13F(_SECFiling):
             name = entry.find(f"{prefix}nameofissuer").text
             title = entry.find(f"{prefix}titleofclass").text
             cusip = entry.find(f"{prefix}cusip").text
-            market_value = float(entry.find(f"{prefix}value").text)
-            amount = int(entry.find(f"{prefix}sshprnamt").text)
+            market_value = int(entry.find(f"{prefix}value").text)
+            amount = int(float(entry.find(f"{prefix}sshprnamt").text))
             security_type = entry.find(f"{prefix}sshprnamttype").text
             quantity = {
                 "amount": amount,
                 "type": security_type
             }
-            try:
-                option = entry.find(f"{prefix}putcall").text
-            except:
-                option = None
-            investment_discretion = entry.find("investmentdiscretion").text
-            sharing_managers = entry.find("othermanager").text
-            sharing_managers = [int(index) for index in sharing_managers.split(",")]
+            option = entry.find(f"{prefix}putcall")
+            if option is not None:
+                option = option.text
+            investment_discretion = entry.find(f"{prefix}investmentdiscretion").text
+            sharing_managers = entry.find(f"{prefix}othermanager")
+            if sharing_managers is not None:
+                sharing_managers = sharing_managers.text.strip().upper()
+                if sharing_managers in ("", "NONE"):
+                    sharing_managers = None
+                else:
+                    sharing_managers = re.findall("([0-9]+)", sharing_managers)
+                    sharing_managers = [int(index[0]) for index in sharing_managers]
             voting_authority = {
-                "sole" : int(entry.find("sole").text),
-                "shared": int(entry.find("shared").text),
-                "none": int(entry.find("none").text)
+                "sole" : int(float(entry.find(f"{prefix}sole").text)),
+                "shared": int(float(entry.find(f"{prefix}shared").text)),
+                "none": int(float(entry.find(f"{prefix}none").text))
             }
         
             securities.append(
