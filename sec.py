@@ -396,7 +396,7 @@ class _SECFiling:
         ).text
         
         if "<Message>The specified key does not exist.</Message>" in file:
-            raise DatasetError(f"There is no filing for url '{url}'")
+            raise DatasetError(f"No filing exists for url '{url}'")
         return cls(file)
 
 
