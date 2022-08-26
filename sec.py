@@ -3,6 +3,7 @@ import re
 import datetime as dt
 from finance_data.utils import HEADERS, DatasetError
 from typing import Union
+from bs4 import BeautifulSoup
 
 def sec_companies() -> list:
     items = requests.get("https://www.sec.gov/files/company_tickers.json", headers=HEADERS).json()
@@ -403,20 +404,162 @@ class _SECFiling:
 class Filing3(_SECFiling):
     pass
 
+
 class Filing4(Filing3):
     pass
+
 
 class Filing5(Filing4):
     pass
 
+
 class Filing13G(_SECFiling):
     pass
+
 
 class Filing13D(Filing13G):
     pass
 
+
 class Filing13F(_SECFiling):
-    pass
+    def __init__(self, file: str):
+        super().__init__(file)
+        
+        assert self.filer is not None
+        self._investments = self._parse_holdings()
+    
+    def _parse_holdings(self, ordered="percentage") -> dict:
+        if self.is_xml:
+            securities = self._parse_holdings_from_xml()
+        else:
+            raise NotImplementedError
+        
+        return securities
+    
+    def _parse_holdings_from_xml(self) -> list:       
+        soup = BeautifulSoup(self._document, "lxml")
+        
+        if "ns1:infoTable" in self._document:
+            prefix = "ns1:"
+        elif "n1:infoTable" in self._document:
+            prefix = "n1:"
+        else:
+            prefix = ""
+        
+        securities = []
+        
+        entries = soup.find_all(f"{prefix}infotable")
+        for entry in entries:
+            name = entry.find(f"{prefix}nameofissuer").text
+            title = entry.find(f"{prefix}titleofclass").text
+            cusip = entry.find(f"{prefix}cusip").text
+            market_value = float(entry.find(f"{prefix}value").text)
+            amount = int(entry.find(f"{prefix}sshprnamt").text)
+            security_type = entry.find(f"{prefix}sshprnamttype").text
+            quantity = {
+                "amount": amount,
+                "type": security_type
+            }
+            try:
+                option = entry.find(f"{prefix}putcall").text
+            except:
+                option = None
+            investment_discretion = entry.find("investmentdiscretion").text
+            sharing_managers = entry.find("othermanager").text
+            sharing_managers = [int(index) for index in sharing_managers.split(",")]
+            voting_authority = {
+                "sole" : int(entry.find("sole").text),
+                "shared": int(entry.find("shared").text),
+                "none": int(entry.find("none").text)
+            }
+        
+            securities.append(
+                {
+                    "name": name,
+                    "title": title,
+                    "cusip": cusip,
+                    "market_value": market_value,
+                    "quantity": quantity,
+                    "option": option,
+                    "investment_discretion": investment_discretion,
+                    "sharing_managers": sharing_managers,
+                    "voting_authority": voting_authority
+                }
+            )
+        
+        return securities
+        
+    def _parse_holdings_from_text(self) -> dict:
+        return  
+    
+    def aggregate_portfolio(self, sorted_by=None) -> list:
+        sort_variables = (
+            None,
+            "name",
+            "title",
+            "cusip",
+            "market_value",
+            "amount",
+            "percentage",
+            "investment_discretion"
+        )
+        if sorted_by not in (sort_variables):
+            raise ValueError(f"sorting variable has to be in {sort_variables}")
+            
+        portfolio = {}
+        for security in self.investments:
+            name = security["name"]
+            title = security["title"]
+            cusip = security["cusip"]
+            option = security["option"]
+            if (name, title, cusip, option) in portfolio:
+                portfolio[(name, title, cusip, option)]["market_value"] += security["market_value"]
+                portfolio[(name, title, cusip, option)]["quantity"]["amount"] += security["quantity"]["amount"]
+                portfolio[(name, title, cusip, option)]["voting_authority"]["sole"] += security["voting_authority"]["sole"]
+                portfolio[(name, title, cusip, option)]["voting_authority"]["shared"] += security["voting_authority"]["shared"]
+                portfolio[(name, title, cusip, option)]["voting_authority"]["none"] += security["voting_authority"]["none"]
+            else:
+                portfolio[(name, title, cusip, option)] = {
+                    "market_value": security["market_value"],
+                    "quantity": security["quantity"],
+                    "investment_discretion": security["investment_discretion"],
+                    "voting_authority": security["voting_authority"]
+                }
+        
+        portfolio_value = sum([security["market_value"] for security in portfolio.values()])
+        
+        portfolio = [
+            {
+                "name": name,
+                "title": title,
+                "cusip": cusip,
+                "option": option,
+                "percentage": round(float(values["market_value"] / portfolio_value), 4),
+                "market_value": values["market_value"],
+                "quantity": values["quantity"],
+                "voting_authority": values["voting_authority"]
+            }
+            for (name, title, cusip, option), values in portfolio.items()
+        ]
+        
+        desc = True if sorted_by in ("market_value", "amount", "percentage") else False
+        
+        if sorted_by is not None:
+            if sorted_by == "amount":
+                portfolio = sorted(portfolio, key=lambda x: x["quantity"][sorted_by], reverse=desc)
+            else:
+                portfolio = sorted(portfolio, key=lambda x: x[sorted_by], reverse=desc)
+        
+        return portfolio
+    
+    @property
+    def investments(self) -> list:
+        return self._investments
+    
+    @property
+    def filer(self) -> dict:
+        return self._filer
+
 
 class FilingNPORT(_SECFiling):
     pass

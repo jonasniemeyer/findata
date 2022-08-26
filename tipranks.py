@@ -211,7 +211,7 @@ class TipranksStockReader:
             "average_rating_return",
             "stars",
         )
-        if sorted_by not in (sort_variables):
+        if sorted_by not in sort_variables:
             raise ValueError(f"sorting variable has to be in {sort_variables}")
 
         data = self._get_ratings_data()["experts"]
