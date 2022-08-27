@@ -44,22 +44,21 @@ class _SECFiling:
     and parsing is solely governed by the respective subclass.
     
     Each SEC filing, irrespective of the type, has the following attributes:
-        is_html: bool
-        is_xml: bool
-        
+        accession_number: str        
+        date_filed: str
+        date_of_period: str
+        date_of_change: str
+        document: str
+        document_count: int
+        effectiveness_date: str
         file: str
         header: str
-        document: str
-        
-        accession_number: str
+        is_amendment: bool
+        is_html: bool
+        is_xml: bool
         submission_type: str
-        date_filed: str
-        date_period: str
-        
-        filer: dict or None
-        subject_company: dict or None
-        reporting_owner: list or None
-        issuer: dict or None
+    
+    If only the url is available and not the string, the classmethod from_url can be called.
     """
     
     def __init__(self, file: str) -> None:
@@ -315,7 +314,7 @@ class _SECFiling:
             state = None
         
         if "ZIP:" in section:
-            zip_ = re.findall("ZIP:\t{3}(.+)", section)[0]
+            zip_ = re.findall("ZIP:\t{3}(.+)", section)
             try:
                 zip_ = int(zip_[0])
             except ValueError:
@@ -344,40 +343,28 @@ class _SECFiling:
         return self._accession_number
     
     @property
-    def submission_type(self) -> str:
-        return self._submission_type
-    
-    @property
-    def is_amendment(self) -> bool:
-        return self._is_amendment
-    
-    @property
-    def document_count(self) -> int:
-        return self._document_count
-    
-    @property
     def date_filed(self) -> str:
         return self._date_filed
+
+    @property
+    def date_of_change(self) -> str:
+        return self._date_of_change
     
     @property
     def date_of_period(self) -> str:
         return self._date_of_period
-    
+
     @property
-    def date_of_change(self) -> str:
-        return self._date_of_change
+    def document(self) -> str:
+        return self._document
+
+    @property
+    def document_count(self) -> int:
+        return self._document_count
 
     @property
     def effectiveness_date(self) -> str:
         return self._effectiveness_date
-    
-    @property
-    def is_html(self) -> bool:
-        return self._is_html
-    
-    @property
-    def is_xml(self) -> bool:
-        return self._is_xml
     
     @property
     def file(self) -> str:
@@ -386,10 +373,22 @@ class _SECFiling:
     @property
     def header(self) -> str:
         return self._header
+
+    @property
+    def is_amendment(self) -> bool:
+        return self._is_amendment
+
+    @property
+    def is_html(self) -> bool:
+        return self._is_html
     
     @property
-    def document(self) -> str:
-        return self._document
+    def is_xml(self) -> bool:
+        return self._is_xml
+
+    @property
+    def submission_type(self) -> str:
+        return self._submission_type
     
     @classmethod
     def from_url(cls, url: str):
