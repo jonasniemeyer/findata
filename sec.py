@@ -454,9 +454,34 @@ class Filing13F(_SECFiling):
         self._soup = BeautifulSoup(self._document, "lxml")
 
         if self.is_xml:
+            if self.is_amendment:
+                amendment_type = self._soup.find("amendmenttype").text
+                amendment_number = int(self._soup.find("amendmentno").text)
+                self._amendment_information = {
+                    "type": amendment_type,
+                    "number": amendment_number
+                }
+            else:
+                self._amendment_information = None
+            self._report_type = self._soup.find("reporttype").text
+            
+            self._other_reporting_managers = []
+            other_reporting_managers = self._soup.find("othermanagersinfo")
+            if other_reporting_managers is not None:
+                other_reporting_managers = other_reporting_managers.find_all("othermanager")
+                for manager in other_reporting_managers:
+                    name = manager.find("name").text
+                    file_number = manager.find("form13ffilenumber")
+                    if file_number is not None:
+                        file_number = file_number.text
+                    dct = {
+                        "name": name,
+                        "file_number": file_number
+                    }
+                    self._other_reporting_managers.append(dct)
+            
             self._investments = self._parse_holdings_from_xml()
             self._other_managers = self._parse_other_managers_from_xml()
-            self._report_type = self._soup.find("reporttype").text
             self._signature = self._parse_signature_from_xml()
             self._summary = self._parse_summary_from_xml()
         else:
@@ -486,10 +511,13 @@ class Filing13F(_SECFiling):
             "date": date
         }
     
-    def _parse_summary_from_xml(self) -> dict:
+    def _parse_summary_from_xml(self) -> Union[dict, None]:
+        if self.submission_type == "13F-NT":
+            return None
+        
         summary = self._soup.find("summarypage")
         number_of_investments = int(summary.find("tableentrytotal").text)
-        portfolio_value = int(summary.find("tablevaluetotal").text)
+        portfolio_value = int(summary.find("tablevaluetotal").text) * 1000
         confidential_omitted = summary.find("isconfidentialomitted")
         if confidential_omitted is not None:
             confidential_omitted = confidential_omitted.text.lower()
@@ -499,10 +527,10 @@ class Filing13F(_SECFiling):
                 confidential_omitted = False
             else:
                 raise ValueError("ambiguous confidential_ommitted bool")
-        sharing_managers = {}
+        included_managers = {}
         managers = summary.find("othermanagers2info")
         if managers is None:
-            sharing_managers = None
+            included_managers = None
         else:
             managers = managers.find_all("othermanager2")
             for manager in managers:
@@ -511,7 +539,7 @@ class Filing13F(_SECFiling):
                 file_number = manager.find("form13ffilenumber")
                 if file_number is not None:
                     file_number = file_number.text
-                sharing_managers[index] = {
+                included_managers[index] = {
                     "name": name,
                     "file_number": file_number
                 }
@@ -520,7 +548,7 @@ class Filing13F(_SECFiling):
             "number_of_investments": number_of_investments,
             "portfolio_value": portfolio_value,
             "confidential_investments_omitted": confidential_omitted,
-            "sharing_managers": sharing_managers
+            "included_managers": included_managers
         }
     
     def _parse_holdings_from_xml(self) -> list:       
@@ -549,14 +577,14 @@ class Filing13F(_SECFiling):
             if option is not None:
                 option = option.text
             investment_discretion = entry.find(f"{prefix}investmentdiscretion").text
-            sharing_managers = entry.find(f"{prefix}othermanager")
-            if sharing_managers is not None:
-                sharing_managers = sharing_managers.text.strip().upper()
-                if sharing_managers in ("", "NONE"):
-                    sharing_managers = None
+            included_managers = entry.find(f"{prefix}othermanager")
+            if included_managers is not None:
+                included_managers = included_managers.text.strip().upper()
+                if included_managers in ("", "NONE"):
+                    included_managers = None
                 else:
-                    sharing_managers = re.findall("([0-9]+)", sharing_managers)
-                    sharing_managers = [int(index[0]) for index in sharing_managers]
+                    included_managers = re.findall("([0-9]+)", included_managers)
+                    included_managers = [int(index[0]) for index in included_managers]
             voting_authority = {
                 "sole" : int(float(entry.find(f"{prefix}sole").text)),
                 "shared": int(float(entry.find(f"{prefix}shared").text)),
@@ -572,7 +600,7 @@ class Filing13F(_SECFiling):
                     "quantity": quantity,
                     "option": option,
                     "investment_discretion": investment_discretion,
-                    "sharing_managers": sharing_managers,
+                    "included_managers": included_managers,
                     "voting_authority": voting_authority
                 }
             )
@@ -580,7 +608,7 @@ class Filing13F(_SECFiling):
         return securities
         
     def _parse_holdings_from_text(self) -> dict:
-        return  
+        return
     
     def aggregate_portfolio(self, sorted_by=None) -> list:
         sort_variables = (
@@ -644,6 +672,10 @@ class Filing13F(_SECFiling):
         return portfolio
     
     @property
+    def amendment_information(self) -> dict:
+        return self._amendment_information
+    
+    @property
     def filer(self) -> dict:
         return self._filer
     
@@ -652,8 +684,8 @@ class Filing13F(_SECFiling):
         return self._investments
     
     @property
-    def other_managers(self) -> list:
-        return self._other_managers
+    def other_reporting_managers(self) -> list:
+        return self._other_reporting_managers
     
     @property
     def report_type(self) -> str:
