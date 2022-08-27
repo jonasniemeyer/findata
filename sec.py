@@ -40,8 +40,7 @@ class _SECFiling:
     Assertion that the entity exists (e.g. issuer in Form 4 Filings) is done by the respective subclass.
     The header also holds entity-specific information (e.g. the name and the CIK) whose parsing is also done in the _SECFiling parent class.
     
-    The document section holds the file-specific data (e.g. fund holdings in Form 13F filings)
-    and parsing is solely governed by the respective subclass.
+    The document section holds the file-specific data (e.g. fund holdings in Form 13F filings) and parsing is solely governed by the respective subclass.
     
     Each SEC filing, irrespective of the type, has the following attributes:
         accession_number: str        
@@ -52,13 +51,15 @@ class _SECFiling:
         document_count: int
         effectiveness_date: str
         file: str
+        file_number: str
+        film_number: int
         header: str
         is_amendment: bool
         is_html: bool
         is_xml: bool
         submission_type: str
     
-    If only the url is available and not the string, the classmethod from_url can be called.
+    If only the url is available and not the file string, the classmethod from_url can be called to pull the data from the web first.
     """
     
     def __init__(self, file: str) -> None:
@@ -72,12 +73,24 @@ class _SECFiling:
         self._header = self._file[self.file.find(header_open):self.file.find(header_close)] + header_close
         self._document = self.file[self.file.find("<DOCUMENT>"):self.file.find("</SEC-DOCUMENT>")]
         
-        self._is_html = True if ("<html>" in self._file or "<HTML>" in self._file) else False
-        self._is_xml = True if ("<xml>" in self._file or "<XML>" in self._file) else False
+        self._is_html = True if ("<html>" in self.file or "<HTML>" in self.file) else False
+        self._is_xml = True if ("<xml>" in self.file or "<XML>" in self.file) else False
         
-        self._parse_header()
+        file_number = re.findall("SEC FILE NUMBER:\t([0-9\-]+)", self.header)
+        if len(file_number) == 0:
+            file_number = None
+        else:
+            self._file_number = file_number[0]
         
-    def _parse_header(self) -> None:
+        film_number = re.findall("FILM NUMBER:\t{2}([0-9\-]+)", self.header)
+        if len(film_number) == 0:
+            film_number = None
+        else:
+            self._film_number = int(film_number[0])
+        
+        self._parse_header_entities()
+        
+    def _parse_header_entities(self) -> None:
         """
         There are 4 different possible header entities: Filer, Subject Company, Reporting Owner, Issuer
         Some documents only have a filer entity (e.g. Form 10-K), some documents have filer and subject entities (e.g. Form 13D) and some have
@@ -369,6 +382,14 @@ class _SECFiling:
     @property
     def file(self) -> str:
         return self._file
+    
+    @property
+    def file_number(self) -> str:
+        return self._file_number
+    
+    @property
+    def film_number(self) -> int:
+        return self._film_number
     
     @property
     def header(self) -> str:
