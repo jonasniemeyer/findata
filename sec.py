@@ -427,19 +427,82 @@ class Filing13F(_SECFiling):
         super().__init__(file)
         
         assert self.filer is not None
-        self._investments = self._parse_holdings()
+        self._parse_document()
     
-    def _parse_holdings(self, ordered="percentage") -> dict:
+    def _parse_document(self) -> None:
+        self._soup = BeautifulSoup(self._document, "lxml")
+
         if self.is_xml:
-            securities = self._parse_holdings_from_xml()
+            self._investments = self._parse_holdings_from_xml()
+            self._other_managers = self._parse_other_managers_from_xml()
+            self._report_type = self._soup.find("reporttype").text
+            self._signature = self._parse_signature_from_xml()
+            self._summary = self._parse_summary_from_xml()
         else:
             raise NotImplementedError
+    
+    def _parse_other_managers_from_xml(self) -> dict:
+        return
+    
+    def _parse_signature_from_xml(self) -> dict:
+        signature = self._soup.find("signatureblock")
         
-        return securities
+        name = signature.find("name").text
+        title = signature.find("title").text
+        phone = signature.find("phone").text
+        city = signature.find("city").text
+        state = signature.find("stateorcountry").text
+        date = signature.find("signaturedate").text
+        month, day, year = date.split("-")
+        date = dt.date(year=int(year), month=int(month), day=int(day)).isoformat()
+        
+        return {
+            "name": name,
+            "title": title,
+            "phone": phone,
+            "city": city,
+            "state": state,
+            "date": date
+        }
+    
+    def _parse_summary_from_xml(self) -> dict:
+        summary = self._soup.find("summarypage")
+        number_of_investments = int(summary.find("tableentrytotal").text)
+        portfolio_value = int(summary.find("tablevaluetotal").text)
+        confidential_omitted = summary.find("isconfidentialomitted")
+        if confidential_omitted is not None:
+            confidential_omitted = confidential_omitted.text.lower()
+            if confidential_omitted == "true":
+                confidential_omitted = True
+            elif confidential_omitted == "false":
+                confidential_omitted = False
+            else:
+                raise ValueError("ambiguous confidential_ommitted bool")
+        sharing_managers = {}
+        managers = summary.find("othermanagers2info")
+        if managers is None:
+            sharing_managers = None
+        else:
+            managers = managers.find_all("othermanager2")
+            for manager in managers:
+                index = int(manager.find("sequencenumber").text)
+                name = manager.find("name").text
+                file_number = manager.find("form13ffilenumber")
+                if file_number is not None:
+                    file_number = file_number.text
+                sharing_managers[index] = {
+                    "name": name,
+                    "file_number": file_number
+                }
+        
+        return {
+            "number_of_investments": number_of_investments,
+            "portfolio_value": portfolio_value,
+            "confidential_investments_omitted": confidential_omitted,
+            "sharing_managers": sharing_managers
+        }
     
     def _parse_holdings_from_xml(self) -> list:       
-        soup = BeautifulSoup(self._document, "lxml")
-
         if "n1:infoTable" in self._document:
             prefix = "n1:"
         elif "ns1:infoTable" in self._document:
@@ -449,12 +512,12 @@ class Filing13F(_SECFiling):
         
         securities = []
         
-        entries = soup.find_all(f"{prefix}infotable")
+        entries = self._soup.find_all(f"{prefix}infotable")
         for entry in entries:
             name = entry.find(f"{prefix}nameofissuer").text
             title = entry.find(f"{prefix}titleofclass").text
             cusip = entry.find(f"{prefix}cusip").text
-            market_value = int(entry.find(f"{prefix}value").text)
+            market_value = int(entry.find(f"{prefix}value").text) * 1000
             amount = int(float(entry.find(f"{prefix}sshprnamt").text))
             security_type = entry.find(f"{prefix}sshprnamttype").text
             quantity = {
@@ -533,6 +596,7 @@ class Filing13F(_SECFiling):
                 }
         
         portfolio_value = sum([security["market_value"] for security in portfolio.values()])
+        no_holdings = len(portfolio)
         
         portfolio = [
             {
@@ -540,7 +604,7 @@ class Filing13F(_SECFiling):
                 "title": title,
                 "cusip": cusip,
                 "option": option,
-                "percentage": round(float(values["market_value"] / portfolio_value), 4),
+                "percentage": round(float(values["market_value"] / portfolio_value), 4) if no_holdings != 1 else 1,
                 "market_value": values["market_value"],
                 "quantity": values["quantity"],
                 "voting_authority": values["voting_authority"]
@@ -559,12 +623,28 @@ class Filing13F(_SECFiling):
         return portfolio
     
     @property
+    def filer(self) -> dict:
+        return self._filer
+    
+    @property
     def investments(self) -> list:
         return self._investments
     
     @property
-    def filer(self) -> dict:
-        return self._filer
+    def other_managers(self) -> list:
+        return self._other_managers
+    
+    @property
+    def report_type(self) -> str:
+        return self._report_type
+
+    @property
+    def signature(self) -> dict:
+        return self._signature
+
+    @property
+    def summary(self) -> dict:
+        return self._summary
 
 
 class FilingNPORT(_SECFiling):
