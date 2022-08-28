@@ -701,4 +701,139 @@ class Filing13F(_SECFiling):
 
 
 class FilingNPORT(_SECFiling):
-    pass
+    def __init__(self, file: str) -> None:
+        super().__init__(file)
+        
+        assert self.filer is not None
+        self._parse_document()
+    
+    def _parse_document(self) -> None:
+        if self.is_xml:
+            self._soup = BeautifulSoup(self._document, "lxml")
+            self._flow_information = self._parse_flow_information_from_xml()
+            self._investments = self._parse_investments_from_xml()
+            self._return_information = self._parse_return_information_from_xml()
+            self._signature = self._parse_signature_from_xml()
+        else:
+            raise NotImplementedError
+        
+        self._has_short_positions = True if any(item["payoff_direction"] == "Short" for item in self._investments) else False
+    
+    def _parse_flow_information_from_xml(self) -> dict:
+        pass
+    
+    def _parse_investments_from_xml(self) -> list:
+        entries = self._soup.find("invstorsecs").find_all("invstorsec")
+        investments = []
+        for entry in entries:
+            name = entry.find("name").text
+            lei = entry.find("lei").text
+            title = entry.find("title").text
+            cusip = entry.find("cusip").text
+
+            identifiers = {
+                "cusip": cusip
+            }
+            other_identifiers = entry.find("identifiers")
+            isin = other_identifiers.find("isin")
+            if isin is not None:
+                value = isin.get("value")
+                if value is None:
+                    value = isin.text                
+                identifiers["isin"] = value
+        
+            other = other_identifiers.find_all("other")
+            for item in other:
+                other_name = item.get("otherdesc")
+                other_value = item.get("value")
+                identifiers[other_name] = other_value
+            
+            amount = float(entry.find("balance").text)
+            amount_type = entry.find("units").text
+            
+            currency = entry.find("curcd")
+            if currency is None:
+                currency_name = entry.find("currencyconditional").get("curcd")
+                exchange_rate = entry.find("currencyconditional").get("exchangert")
+            else:
+                currency_name = currency.text
+                exchange_rate = None
+            currency = {
+                "name": currency_name,
+                "exchange_rate": exchange_rate
+            }
+            
+            quantity = {
+                "amount": amount,
+                "type": amount_type,
+                "currency": currency
+            }
+            
+            market_value = float(entry.find("valusd").text)
+            percentage = round(float(entry.find("pctval").text) / 100, 4)
+            payoff_direction = entry.find("payoffprofile").text
+            
+            investments.append(
+                {
+                    "name": name,
+                    "lei": lei,
+                    "title": title,
+                    "identifiers": identifiers,
+                    "market_value": market_value,
+                    "quantity": quantity,
+                    "percentage": percentage,
+                    "payoff_direction": payoff_direction
+                }
+            )
+            
+        return investments
+    
+    def _parse_return_information_from_xml(self) -> list:
+        pass
+    
+    def _parse_signature_from_xml(self) -> dict:
+        pass
+
+    def portfolio(self, sorted_by=None) -> list:
+        sort_variables = (
+            None,
+            "name",
+            "market_value",
+            "amount",
+            "percentage",
+            "payoff_direction"
+        )
+        if sorted_by not in (sort_variables):
+            raise ValueError(f"sorting variable has to be in {sort_variables}")
+        
+        desc = True if sorted_by in ("market_value", "amount", "percentage") else False
+        
+        if sorted_by is not None:
+            if sorted_by == "amount":
+                portfolio = sorted(self._investments, key=lambda x: x["quantity"][sorted_by], reverse=desc)
+            else:
+                portfolio = sorted(self._investments, key=lambda x: x[sorted_by], reverse=desc)
+        else:
+            portfolio = self._investments
+        
+        return portfolio
+    
+    @property
+    def filer(self) -> list:
+        return self._filer
+
+    @property
+    def flow_information(self) -> dict:
+        return self._flow_information
+    
+    @property
+    def has_short_positions(self) -> bool:
+        return self._has_short_positions
+
+    @property
+    def return_information(self) -> dict:
+        return self._return_information
+
+    @property
+    def signature(self) -> dict:
+        return self._signature
