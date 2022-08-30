@@ -451,9 +451,8 @@ class Filing13F(_SECFiling):
         self._parse_document()
     
     def _parse_document(self) -> None:
-        self._soup = BeautifulSoup(self._document, "lxml")
-
         if self.is_xml:
+            self._soup = BeautifulSoup(self._document, "lxml")
             if self.is_amendment:
                 amendment_type = self._soup.find("amendmenttype").text
                 amendment_number = int(self._soup.find("amendmentno").text)
@@ -566,12 +565,12 @@ class Filing13F(_SECFiling):
             name = entry.find(f"{prefix}nameofissuer").text
             title = entry.find(f"{prefix}titleofclass").text
             cusip = entry.find(f"{prefix}cusip").text
-            market_value = int(entry.find(f"{prefix}value").text) * 1000
+            market_value = int(float(entry.find(f"{prefix}value").text)) * 1000
             amount = int(float(entry.find(f"{prefix}sshprnamt").text))
-            security_type = entry.find(f"{prefix}sshprnamttype").text
+            amount_type = entry.find(f"{prefix}sshprnamttype").text
             quantity = {
                 "amount": amount,
-                "type": security_type
+                "type": amount_type
             }
             option = entry.find(f"{prefix}putcall")
             if option is not None:
@@ -787,7 +786,8 @@ class FilingNPORT(_SECFiling):
             )
             
         return investments
-    
+        
+
     def _parse_return_information_from_xml(self) -> list:
         pass
     
