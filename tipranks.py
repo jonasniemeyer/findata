@@ -23,11 +23,11 @@ class TipranksAnalystReader:
             assert len(cells) == 9
             ticker = cells[1].find("div", recursive=False).find("div", recursive=False).find("a")
             if ticker is not None:
-                ticker = ticker.text
+                ticker = ticker.text.strip()
             else:
                 ticker = cells[1].find("div", recursive=False).find("div", recursive=False).find("span", recursive=False).text.strip()
-            name = cells[1].find("div", recursive=False).find("span", recursive=False).text
-            date = cells[2].find("time").get("datetime")
+            name = cells[1].find("div", recursive=False).find("span", recursive=False).text.strip()
+            date = cells[2].find("span").text
             date = pd.to_datetime(date)
             if timestamps:
                 date = int(pd.to_datetime(date.date()).timestamp())
@@ -37,7 +37,7 @@ class TipranksAnalystReader:
             if rating is None:
                 rating = None
             else:
-                rating = rating.text
+                rating = rating.text.strip()
             change = cells[4].find("span").text
             price_target = cells[5].find("div")
             if price_target is None:
@@ -96,10 +96,10 @@ class TipranksAnalystReader:
         performance = profile_divs[1].find_all("div", recursive=False)[1]
 
         name = personal.find("h1").text
-        company = personal.find("span").text
+        company = personal.find_all("div", recursive=False)[1].find("span").text
         analyst_rank, total_analysts = re.findall(
             "Ranked #([0-9,]+) out of ([0-9,]+) Analysts on TipRanks",
-            personal.find_all("div", recursive=False)[1].find_all("div", recursive=False)[1].text
+            personal.find_all("div", recursive=False)[2].find_all("div", recursive=False)[1].text
         )[0]
         analyst_rank = int(analyst_rank.replace(",", ""))
         total_analysts = int(total_analysts.replace(",", ""))
@@ -508,3 +508,7 @@ class TipranksStockReader:
                 params = {"name": self.ticker}
             ).json()
         return self._ratings_data
+
+if __name__ == "__main__":
+    data = TipranksAnalystReader("A.J. Rice").ratings()
+    print(data)
