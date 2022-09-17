@@ -23,7 +23,7 @@ class TipranksAnalystReader:
             assert len(cells) == 9
             ticker = cells[1].find("div", recursive=False).find("div", recursive=False).find("a")
             if ticker is not None:
-                ticker = ticker.text.strip()
+                ticker = ticker.text.strip().replace("~", "")
             else:
                 ticker = cells[1].find("div", recursive=False).find("div", recursive=False).find("span", recursive=False).text.strip()
             name = cells[1].find("div", recursive=False).find("span", recursive=False).text.strip()
