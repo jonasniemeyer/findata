@@ -13,6 +13,8 @@ class FinvizReader:
             url=self._base_url.format(self._ticker),
             headers=HEADERS
         ).text
+        if "This IP address has performed an unusual high number of requests and has been temporarily rate limited. If you believe this to be in error, please contact us." in self._html:
+            raise PermissionError("Requests have been rate limited")
         self._soup = BeautifulSoup(self._html, "lxml")
     
     def analyst_recommendations(self, timestamps=False) -> list:
