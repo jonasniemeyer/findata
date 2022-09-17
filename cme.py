@@ -66,7 +66,7 @@ class CMEReader:
         while not clicked:
             try:
                 button_cookies = WebDriverWait(self.driver, 1).until(
-                    EC.element_to_be_clickable((By.XPATH, f"/html/body/div[{i}]/div[2]/div/div[1]/div/div[2]/div/button[2]"))
+                    EC.element_to_be_clickable((By.XPATH, f"/html/body/div[{i}]/div[2]/div/div[1]/div/div[2]/div/button[3]"))
                 )
                 button_cookies.click()
                 clicked = True
