@@ -85,17 +85,21 @@ class YahooReader:
                     headers=HEADERS
                 ).text
                 self._isin = re.findall(f"{ticker_dot}\|([A-Z0-9]+)\|{ticker_dot}", response)
-                if self._isin is not None:
+                if len(self._isin) == 1:
                     self._isin = self._isin[0]
                     params = {
                         "yfin-usr-qry": self._isin
                     }
                     response = requests.get(self.quote_url, params=params, headers=HEADERS)
-                    matching_ticker = re.findall(f"{self.quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response.url)[0].strip()
+                    matching_ticker = re.findall(f"{self.quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response.url)
+                    if len(matching_ticker) == 1:
+                        matching_ticker = matching_ticker[0].strip()
                     try:
                         assert self.ticker == matching_ticker
                     except AssertionError:
                         raise DatasetError(f"the ticker for {self.isin} is ambiguous: {self.ticker} and {matching_ticker}")
+                else:
+                    self._isin = None
             else:
                 self._isin = None
         return self._isin
@@ -929,4 +933,4 @@ class YahooReader:
         return data
     
     def __repr__(self):
-        return f"YahooReader ({self.security_type} {self.ticker})"
+        return f"YahooReader({self.security_type}|{self.name}|{self.ticker})"
