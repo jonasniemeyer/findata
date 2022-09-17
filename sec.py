@@ -452,7 +452,7 @@ class Filing13F(_SECFiling):
     
     def _parse_document(self) -> None:
         if self.is_xml:
-            self._soup = BeautifulSoup(self._document, "lxml")
+            self._soup = BeautifulSoup(self.document, "lxml")
             if self.is_amendment:
                 amendment_type = self._soup.find("amendmenttype").text
                 amendment_number = int(self._soup.find("amendmentno").text)
@@ -708,7 +708,7 @@ class FilingNPORT(_SECFiling):
     
     def _parse_document(self) -> None:
         if self.is_xml:
-            self._soup = BeautifulSoup(self._document, "lxml")
+            self._soup = BeautifulSoup(self.document, "lxml")
             self._flow_information = self._parse_flow_information_from_xml()
             self._investments = self._parse_investments_from_xml()
             self._return_information = self._parse_return_information_from_xml()
