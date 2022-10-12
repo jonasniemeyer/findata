@@ -87,6 +87,123 @@ class MarketscreenerReader:
         
         return data
 
+    def financial_statement(self, quarterly=False) -> list:
+        if not hasattr(self, "_financial_soup"):
+            self._get_financial_information()
+        
+        if quarterly:
+            rows = self._financial_soup.find("b", text="Income Statement Evolution (Quarterly data)").find_next("tr").find("td", recursive=False).find("table").find_all("tr")
+            years = {
+                index+1: tag.find("b").text
+                for index, tag in enumerate(rows[0].find_all("td")[1:])
+            }
+        else:
+            rows = self._financial_soup.find("b", text="Income Statement Evolution (Annual data)").find_next("tr").find("td", recursive=False).find("table").find_all("tr")
+            years = {
+                index+1: int(tag.find("b").text)
+                for index, tag in enumerate(rows[0].find_all("td")[1:])
+            }
+        data = {}
+        for year in sorted(years.values(), reverse=True):
+            data[year] = {}
+
+        for row in rows[1:-3]:
+            cells = row.find_all("td")
+            name = cells[0].find(text=True)
+            if name not in ("EBITDA", "EPS"):
+                name = name.title()
+            if "(" in name:
+                name = name[:name.index(" (")]
+            for index, cell in enumerate(cells[1:]):
+                year = years[index+1]
+
+                if cell.text == "-":
+                    value = None
+                else:
+                    value = cell.text.replace(" ", "").replace(",", ".")
+                    if name in ("Operating Margin", "Net Margin"):
+                        value = float(value.replace("%", ""))  / 100
+                    elif name in ("EPS", "Dividend Per Share"):
+                        value = float(value)
+                    else:
+                        value = int(float(value) * 1e6)
+                data[year][name] = value
+
+                analysts = cell.get("title")
+                if analysts is not None:
+                    analysts = int(re.findall("Number of financial analysts who provided an estimate : ([0-9]+)", analysts)[0])
+                data[year][f"{name} Analysts"] = analysts
+        
+        # if annual data is parsed, parse also Balance Sheet and Cashflow Items
+        if not quarterly:
+            rows = self._financial_soup.find("b", text="Balance Sheet Analysis").find_next("tr").find("td", recursive=False).find("table").find_all("tr")
+            years = {
+                index+1: int(tag.find("b").text)
+                for index, tag in enumerate(rows[0].find_all("td")[1:])
+            }
+            for year in sorted(years.values(), reverse=True):
+                if year not in data:
+                    data[year] = {}
+            
+            for row in rows[1:-3]:
+                cells = row.find_all("td")
+                name = cells[0].find(text=True).title()
+                if name not in (
+                    "Free Cash Flow",
+                    "Shareholders' Equity",
+                    "Assets",
+                    "Book Value Per Share",
+                    "Cash Flow Per Share",
+                    "Capex"
+                ):
+                    continue
+                for index, cell in enumerate(cells[1:]):
+                    year = years[index+1]
+                    if cell.text == "-":
+                        value = None
+                    else:
+                        value = cell.text.replace(" ", "").replace(",", ".")
+                        if name in ("Book Value Per Share", "Cash Flow Per Share"):
+                            value = float(value)
+                        else:
+                            value = int(float(value) * 1e6)
+                    data[year][name] = value
+
+                    analysts = cell.get("title")
+                    if analysts is not None:
+                        analysts = int(re.findall("Number of financial analysts who provided an estimate : ([0-9]+)", analysts)[0])
+                    data[year][f"{name} Analysts"] = analysts
+            
+            header = self._financial_soup.find("b", text="Valuation")
+            if header is None:
+                for year in data:
+                    data[year]["Shares Outstanding"] = None
+            else:
+                rows = header.find_next("tr").find("td", recursive=False).find("table").find_all("tr")
+                years = {
+                    index+1: int(tag.find("b").text)
+                    for index, tag in enumerate(rows[0].find_all("td")[1:])
+                }
+                for year in sorted(years.values(), reverse=True):
+                    if year not in data:
+                        data[year] = {}
+
+                for row in rows[1:-3]:
+                    cells = row.find_all("td")
+                    name = cells[0].find(text=True)
+                    if name != "Nbr of stocks (in thousands)":
+                        continue
+                    name = "Shares Outstanding"
+                    for index, cell in enumerate(cells[1:]):
+                        year = years[index+1]
+                        if cell.text == "-":
+                            value = None
+                        else:
+                            value = int(float(cell.text.replace(" ", "").replace(",", ".")) * 1e3)
+                        data[year][name] = value
+        
+        return data
+
     def industry_information(self) -> list:
         if not hasattr(self, "_company_soup"):
             self._get_company_information()
