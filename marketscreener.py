@@ -87,6 +87,10 @@ class MarketscreenerReader:
         
         return data
 
+    def currency(self) -> str:
+        self._parse_header()
+        return self._currency
+
     def financial_statement(self, quarterly=False) -> list:
         if not hasattr(self, "_financial_soup"):
             self._get_financial_information()
@@ -217,7 +221,15 @@ class MarketscreenerReader:
         self._industry = industries[-1]
         
         return industries
-    
+
+    def isin(self) -> str:
+        self._parse_header()
+        return self._isin
+
+    def latest_price(self) -> float:
+        self._parse_header()
+        return self._price
+
     def managers(self) -> list:
         if not hasattr(self, "_company_soup"):
             self._get_company_information()
@@ -249,6 +261,10 @@ class MarketscreenerReader:
             )
         
         return managers
+
+    def name(self) -> str:
+        self._parse_header()
+        return self._name
 
     def news(
         self,
@@ -399,6 +415,10 @@ class MarketscreenerReader:
             )
         
         return shareholders
+
+    def ticker(self) -> str:
+        self._parse_header()
+        return self._ticker
 
     def _get_company_information(self) -> None:
         url = f"{self._company_url}/company/"
