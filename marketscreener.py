@@ -23,6 +23,70 @@ class MarketscreenerReader:
         self._company_url = f"{self._base_url}{company_tag.get('href')}"
         self._header_parsed = False
 
+    def country_information(self) -> dict:
+        if not hasattr(self, "_company_soup"):
+            self._get_company_information()
+
+        header = self._company_soup.find("b", text="Sales per region")
+        if header is None:
+            raise DatasetError(f"no country data found for stock '{self.name}'")
+        else:
+            rows = header.find_next("tr").find("td", recursive=False).find("table").find_all("tr")
+        
+        if rows[0].find_all("td")[-1].text == "Delta":
+            years = {
+                index+1: int(tag.find("b").text)
+                for index, tag in enumerate(rows[0].find_all("td")[1:-1])
+            }
+        else:
+            years = {
+                index+1: int(tag.find("b").text)
+                for index, tag in enumerate(rows[0].find_all("td")[1:])
+            }
+        data = {}
+        for year in sorted(years.values(), reverse=True):
+            data[year] = {}
+
+        for row in rows[1:-1]:
+            cells = row.find_all("td")
+            name = cells[0].text.title()
+            for index, cell in enumerate(cells[1:-1:2]):
+                data[years[index+1]][name] = float(cell.text.replace(" ", "")) * 1e6 if cell.text != "-" else None
+        
+        return data
+
+    def segment_information(self) -> dict:
+        if not hasattr(self, "_company_soup"):
+            self._get_company_information()
+        
+        header = self._company_soup.find("b", text="Sales per Business")
+        if header is None:
+            raise DatasetError(f"no segment data found for stock '{self.name}'")
+        else:
+            rows = header.find_next("tr").find("td", recursive=False).find("table").find_all("tr")
+        
+        if rows[0].find_all("td")[-1].text == "Delta":
+            years = {
+                index+1: int(tag.find("b").text)
+                for index, tag in enumerate(rows[0].find_all("td")[1:-1])
+            }
+        else:
+            years = {
+                index+1: int(tag.find("b").text)
+                for index, tag in enumerate(rows[0].find_all("td")[1:])
+            }
+        data = {}
+        for year in sorted(years.values(), reverse=True):
+            data[year] = {}
+
+        for row in rows[1:-1]:
+            cells = row.find_all("td")
+            name = cells[0].text
+            for index, cell in enumerate(cells[1:-1:2]):
+                data[years[index+1]][name] = float(cell.text.replace(" ", "")) * 1e6 if cell.text != "-" else None
+        
+        return data
+
     def _get_company_information(self) -> None:
         url = f"{self._company_url}/company/"
         html = requests.get(url=url, headers=HEADERS).text
