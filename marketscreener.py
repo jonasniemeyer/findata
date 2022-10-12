@@ -133,6 +133,102 @@ class MarketscreenerReader:
         
         return managers
 
+    def news(
+        self,
+        news_type="all",
+        start=pd.to_datetime("today").date().isoformat(),
+        timestamps=False
+    ) -> list:
+        news_types = {
+            "most_relevant": ("news-quality", "Most relevant news about"),
+            "all": ("news-history", "All news about"),
+            "analysts": ("news-broker-research", "Analyst Recommendations on"),
+            "other_languages": ("news-other-languages", "News in other languages on"),
+            "press_releases": ("news-communiques", "Communiqués de presse de la société"),
+            "official_publications": ("news-publications", "Official Publications"),
+            "sector": ("news-sector", "Sector news")
+        }
+        if news_type not in news_types:
+            raise ValueError(f"news_type has be one of the following: {tuple(news_types.keys())}")
+        
+        if isinstance(start, str):
+            start = pd.to_datetime(start).timestamp()
+        elif not isinstance(start, (int, float)):
+            raise ValueError("start parameter has to be of type str, float or int")        
+        
+        source = news_types[news_type][0]
+        if news_type == "sector":
+            if not hasattr(self, "_industry"):
+                self.industry_information()
+            header = f"{news_types[news_type][1]} {self._industry}"
+        elif news_type == "official_publications":
+            header = news_types[news_type][1]
+        else:
+            header = f"{news_types[news_type][1]} {self.name()}"
+        
+        articles = []
+        start_reached = False
+        page_counter = 0
+        
+        while start_reached is False:
+            page_counter+=1
+            url = f"{self._company_url}/{source}/fpage={page_counter}"
+            html = requests.get(url=url, headers=HEADERS).text
+            soup = BeautifulSoup(html, "lxml")
+            
+            rows = soup.find("b", text=header).find_next("tr").find("td", recursive=False).find("table").find_all("tr")
+            for row in rows:
+                cells = row.find_all("td")
+                date = cells[0].text
+                if ":" in date:
+                    date =  pd.to_datetime("today")
+                elif "/" in date:
+                    current_year = pd.to_datetime("today").year
+                    date =  pd.to_datetime(f"{date}/{current_year}")
+                else:
+                    date = pd.to_datetime(f"{date}-01-01")
+
+                if date.timestamp() < start:
+                    start_reached = True
+                    break
+                
+                if timestamps:
+                    date = int(date.timestamp())
+                else:
+                    date = date.date().isoformat()
+                
+                url = cells[1].find("a").get("href")
+                url = f"{self._base_url}{url}"
+                title = cells[1].find("a").text
+                if cells[1].find("a").find("b") is not None:
+                    title = title.replace(" :", ":")
+                news_source = cells[2].find("div")
+                if news_source is None:
+                    news_source = None
+                    news_source_abbr = None
+                else:
+                    news_source_abbr = news_source.text
+                    news_source = news_source.get("title").replace("©", "")
+                
+                articles.append(
+                    {
+                        "title": title,
+                        "date": date,
+                        "source": {
+                            "name": news_source,
+                            "abbreviation": news_source_abbr
+                        },
+                        "url": url
+                    }
+                )
+            
+            
+            pages_nav = soup.find("span", {"class": "nPageTable"})
+            if (pages_nav is None) or (pages_nav.find("a", {"class": "nPageEndTab"}) is None):
+                start_reached = True
+            
+        return articles
+
     def segment_information(self) -> dict:
         if not hasattr(self, "_company_soup"):
             self._get_company_information()
