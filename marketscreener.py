@@ -55,6 +55,20 @@ class MarketscreenerReader:
         
         return data
 
+    def industry_information(self) -> list:
+        if not hasattr(self, "_company_soup"):
+            self._get_company_information()
+
+        industries = []
+        rows = self._company_soup.find("b", text="Sector").find_next("div").find("table").find_all("tr")
+        for row in rows:
+            industry = row.find_all("td")[-1].find("a").text
+            industries.append(industry)
+        
+        self._industry = industries[-1]
+        
+        return industries
+    
     def segment_information(self) -> dict:
         if not hasattr(self, "_company_soup"):
             self._get_company_information()
