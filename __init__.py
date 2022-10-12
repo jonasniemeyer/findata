@@ -2,6 +2,7 @@ from .aqr import AQRReader
 from .cme import CMEReader
 from .yahoo import YahooReader
 from .macrotrends import MacrotrendsReader
+from .marketscreener import MarketscreenerReader
 from .finviz import FinvizReader
 from .french import FrenchReader
 from .fred import FREDReader
@@ -27,6 +28,7 @@ __all__ = [
     "CMEReader",
     "YahooReader",
     "MacrotrendsReader",
+    "MarketscreenerReader"
     "FrenchReader",
     "MSCIReader",
     "FinvizReader",
