@@ -132,7 +132,7 @@ class YahooReader:
             "longBusinessSummary"
         ):
             if key in data.keys():
-                data[key] = data[key].encode("utf-8").decode().replace("\n ", "\n")
+                data[key] = data[key].encode("latin-1").decode("cp1252").replace("\n ", "\n")
         
         if "fullTimeEmployees" in data.keys():
             data["employees"] = data.pop("fullTimeEmployees")
