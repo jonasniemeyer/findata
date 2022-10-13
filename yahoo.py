@@ -7,7 +7,6 @@ from finance_data.utils import (
     TickerError,
     DatasetError,
     HEADERS,
-    CAMEL_TO_SPACE,
     PLACEHOLDER_LOGO,
     SERVER_ERROR_MESSAGE
 )
