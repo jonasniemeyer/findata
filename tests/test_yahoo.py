@@ -35,7 +35,7 @@ class TestEquity:
         assert self.reader.name == "Apple Inc."
     
     def test_isin(self):
-        assert self.reader.isin == "US0378331005"
+        assert self.reader.isin() == "US0378331005"
     
     def test_security_type(self):
         assert self.reader.security_type == "EQUITY"
@@ -234,12 +234,11 @@ class TestEquity:
             "balance_sheet": balance,
             "cashflow_statement": cashflow
         }
-
-        assert income.keys() == balance.keys()
-        assert balance.keys() == cashflow.keys()
+        
+        assert income.keys() == cashflow.keys()
         assert cashflow.keys() == statement_merged.keys()
 
-        key = list(income)[0]
+        key = list(income)[-1]
         total_variables = 0
         for item in (income, balance, cashflow):
             total_variables += len(item[key])
@@ -247,37 +246,42 @@ class TestEquity:
 
         for date in income:
             for var in income[date]:
-                assert isinstance(income[date][var], (int, float))
+                assert income[date][var] is None or isinstance(income[date][var], (int, float))
         for date in balance:
             for var in balance[date]:
-                assert isinstance(balance[date][var], (int, float))
+                assert balance[date][var] is None or isinstance(balance[date][var], (int, float))
         for date in cashflow:
             for var in cashflow[date]:
-                assert isinstance(cashflow[date][var], (int, float))
+                assert cashflow[date][var] is None or isinstance(cashflow[date][var], (int, float))
+        
         for type_ in ("income_statement", "balance_sheet", "cashflow_statement"):
             for date in statement[type_]:
                 for var in statement[type_][date]:
-                    assert isinstance(statement[type_][date][var], (int, float))
+                    assert statement[type_][date][var] is None or isinstance(statement[type_][date][var], (int, float))
         for date in statement_merged:
             for var in statement_merged[date]:
-                assert isinstance(statement_merged[date][var], (int, float))
+                assert statement_merged[date][var] is None or isinstance(statement_merged[date][var], (int, float))
 
         income = self.reader.income_statement(timestamps=True)
         for date in income:
-            assert isinstance(date, int)
+            if date != "TTM":
+                assert isinstance(date, int)
         balance = self.reader.balance_sheet(timestamps=True)
         for date in balance:
             assert isinstance(date, int)
         cashflow = self.reader.cashflow_statement(timestamps=True)
         for date in cashflow:
-            assert isinstance(date, int)
+            if date != "TTM":
+                assert isinstance(date, int)
         statement = self.reader.financial_statement(timestamps=True)
         for type_ in ("income_statement", "balance_sheet", "cashflow_statement"):
             for date in statement[type_]:
-                assert isinstance(date, int)
+                if date != "TTM":
+                    assert isinstance(date, int)
         statement_merged = self.reader.financial_statement(merged=True, timestamps=True)
         for date in statement_merged:
-            assert isinstance(date, int)
+            if date != "TTM":
+                assert isinstance(date, int)
 
     def test_fund_statistics(self):
         with pytest.raises(DatasetError) as exception:
@@ -371,7 +375,7 @@ class TestETF:
         cls.reader = YahooReader("SPY")
     
     def test_isin(self):
-        assert self.reader.isin is None
+        assert self.reader.isin() is None
     
     def test_security_type(self):
         assert self.reader.security_type == "ETF"
