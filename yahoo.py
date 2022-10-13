@@ -789,7 +789,81 @@ class YahooReader:
         data["sector_weights"]["real_estate"] = round(data["sector_weights"].pop("realestate"), 4)
 
         return data
-     
+
+    def earnings_history(self, timestamps=False) -> list:
+        
+        last_page_reached = False
+        offset = 0
+        earnings = []
+        
+        while not last_page_reached:
+            params = {
+                "symbol": self.ticker,
+                "offset": offset,
+                "size": 100
+            }
+            html = requests.get(
+                url=f"https://finance.yahoo.com/calendar/earnings",
+                params=params,
+                headers=HEADERS
+            ).text
+            soup = BeautifulSoup(html)
+            tables = soup.find_all("table")
+            try:
+                assert len(tables) == 1
+            except AssertionError:
+                raise DatasetError(f"no earnings history for ticker {self.ticker}")
+            table = tables[0]
+
+            rows = table.find("tbody").find_all("tr")
+            for row in rows:
+                cells = row.find_all("td")
+
+                date = cells[2].find_all("span")[0].text
+                date = pd.to_datetime(date)
+
+                if timestamps:
+                    date = int(date.timestamp())
+                else:
+                    date = date.date().isoformat()
+
+                estimate = cells[3].text
+                if estimate == "-":
+                    estimate = None
+                else:
+                    estimate = float(estimate)
+
+                actual = cells[4].text
+                if actual == "-":
+                    actual = None
+                else:
+                    actual = float(actual)
+
+                if estimate is not None and actual is not None:
+                    absolute_diff = actual - estimate
+                    relative_diff = round(absolute_diff/abs(estimate), 4)
+                else:
+                    absolute_diff = None
+                    relative_diff = None
+
+                earnings.append(
+                    {
+                        "date": date,
+                        "estimate": estimate,
+                        "actual": actual,
+                        "absolute_difference": absolute_diff,
+                        "relative_difference": relative_diff
+                    }
+                )
+            
+            next_page_button_disabled = row.find_all("td")[-1].find_next("div").find_all("button")[-1].get("disabled")
+            if next_page_button_disabled == "":
+                last_page_reached = True
+            elif next_page_button_disabled is None:
+                offset += 100
+        
+        return earnings
+
     def financial_statement(
         self,
         quarterly=False,
