@@ -117,7 +117,7 @@ class YahooReader:
             self._isin = None
         
         return self._isin
-        
+    
     def profile(self) -> dict:        
         try:
             data = self._stored_data["assetProfile"].copy()
@@ -193,7 +193,6 @@ class YahooReader:
         returns=True,
         timestamps=False
     ) -> dict:
-
         """
         frequency : str
             1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo
@@ -418,7 +417,7 @@ class YahooReader:
             }
         }
     
-    def analyst_recommendations(self, timestamps = False) -> list:
+    def analyst_recommendations(self, timestamps=False) -> list:
         try:
             data = self._stored_data["upgradeDowngradeHistory"]["history"]
         except:
@@ -789,7 +788,7 @@ class YahooReader:
         data["sector_weights"]["real_estate"] = round(data["sector_weights"].pop("realestate"), 4)
 
         return data
-
+    
     def earnings_history(self, timestamps=False) -> list:
         
         last_page_reached = False
@@ -863,7 +862,7 @@ class YahooReader:
                 offset += 100
         
         return earnings
-
+    
     def financial_statement(
         self,
         quarterly=False,
@@ -934,38 +933,383 @@ class YahooReader:
         statement_type,
         quarterly=False,
         timestamps=False,
-    ) -> dict:       
+    ) -> dict:
+        # parse json data
         try:
             if statement_type == "income_statement":
+                suffix = "financials"
                 if quarterly:
                     raw_data = self._stored_data["incomeStatementHistoryQuarterly"]["incomeStatementHistory"]
                 else:
                     raw_data = self._stored_data["incomeStatementHistory"]["incomeStatementHistory"]
             elif statement_type == "balance_sheet":
+                suffix = "balance-sheet"
                 if quarterly:
                     raw_data = self._stored_data["balanceSheetHistoryQuarterly"]["balanceSheetStatements"]
                 else:
                     raw_data = self._stored_data["balanceSheetHistory"]["balanceSheetStatements"]
             elif statement_type == "cashflow_statement":
+                suffix = "cash-flow"
                 if quarterly:
                     raw_data = self._stored_data["cashflowStatementHistoryQuarterly"]["cashflowStatements"]
                 else:
                     raw_data = self._stored_data["cashflowStatementHistory"]["cashflowStatements"]
         except:
             raise DatasetError(f"no {statement_type} data found for ticker {self.ticker}")
+
+        json_name_conversion = {
+            "income_statement": {
+                "totalRevenue": "Total Revenue",
+                "costOfRevenue": "Cost of Goods Sold",
+                "grossProfit": "Gross Profit",
+                "researchDevelopment": "Research & Development Expenses",
+                "sellingGeneralAdministrative": "Selling, General & Administrative Expenses",
+                "nonRecurring": "Non-Recurring Expenses",
+                "otherOperatingExpenses": "Other Operating Expenses",
+                "totalOperatingExpenses": "Total Operating Expenses",
+                "operatingIncome": "Operating Income",
+                "totalOtherIncomeExpenseNet": "Other Income/Expense, Net",
+                "ebit": "EBIT",
+                "interestExpense": "Interest Expenses",
+                "incomeBeforeTax": "Income Before Taxes",
+                "incomeTaxExpense": "Income Tax Expenses",
+                "minorityInterest": "Minority Interest",
+                "netIncomeFromContinuingOps": "Net Income from Continouing Operations",
+                "discontinuedOperations": "Discontinued Operations",
+                "extraordinaryItems": "Extraordinary Items",
+                "effectOfAccountingCharges": "Accounting Charges",
+                "otherItems": "Other Items",
+                "netIncome": "Net Income",
+                "netIncomeApplicableToCommonShares": "Net Income Applicable to Common Shares"
+            },
+            "balance_sheet": {
+                "cash": "Cash and Cash Equivalents",
+                "shortTermInvestments": "Short-Term Marketable Securities",
+                "netReceivables": "Receivables",
+                "inventory": "Inventories",
+                "otherCurrentAssets": "Other Current Assets",
+                "totalCurrentAssets": "Total Current Assets",
+                "longTermInvestments": "Long-Term Marketable Securities",
+                "propertyPlantEquipment": "Property, Plant & Equipment",
+                "goodWill": "Goodwill",
+                "intangibleAssets": "Intangible Assets",
+                "otherAssets": "Other Assets",
+                "totalAssets": "Total Assets",
+
+                "accountsPayable": "Accounts Payable",
+                "shortLongTermDebt": "Current Debt",
+                "otherCurrentLiab": "Other Current Liabilities",
+                "totalCurrentLiabilities": "Total Current Liabilities",
+
+                "longTermDebt": "Non-Current Debt",
+                "deferredLongTermAssetCharges": "Deferred Long-Term Asset Charges",
+                "deferredLongTermLiab": "Deferred Long-Term Liabilities",
+                "minorityInterest": "Minority Interest",
+                "otherLiab": "Other Liabilities",
+                "totalLiab": "Total Liabilities",
+
+                "commonStock": "Common Stock",
+                "retainedEarnings": "Retained Earnings",
+                "treasuryStock": "Treasury Stock",
+                "capitalSurplus":"Capital Surplus",
+                "otherStockholderEquity": "Other Shareholders Equity",
+                "totalStockholderEquity": "Total Shareholders Equity",
+                "netTangibleAssets": "Tangible Book-Value"
+            },
+            "cashflow_statement": {
+                "netIncome": "Net Income",
+                "depreciation": "Depreciation & Amortization",
+                "changeToNetincome": "Other Non-Cash Items",
+                "changeToAccountReceivables": "Change in Acounts Receivable",
+                "changeToLiabilities": "Change in Liabilities",
+                "changeToInventory": "Change in Inventories",
+                "changeToOperatingActivities": "Other Operating Activities",
+                "effectOfExchangeRate": "Gains/Losses on Currency Changes",
+                "totalCashFromOperatingActivities": "Total Cashflow From Operating Activities",
+                "capitalExpenditures": "Capital Expenditures",
+                "investments": "Change in Total Investments",
+                "otherCashflowsFromInvestingActivities": "Other Investing Activities",
+                "totalCashflowsFromInvestingActivities": "Total Cashflow From Investing Activities",
+                "dividendsPaid": "Total Dividends Paid",
+                "netBorrowings": "Total Debt Issued",
+                "otherCashflowsFromFinancingActivities": "Other Financing Activities",
+                "totalCashFromFinancingActivities": "Total Cashflow From Financing Activities",
+                "changeInCash": "Change in Cash and Cash Equivalents",
+                "repurchaseOfStock": "Repurchases of Common Stock",
+                "issuanceOfStock": "Issuance of Common Stock"  
+            }
+        }
         
-        data = {}
+        json_data = {}
         for entry in raw_data:
-            date = (entry["endDate"]["raw"] if timestamps else entry["endDate"]["fmt"])
-            points = {CAMEL_TO_SPACE.sub(" ", key).lower():(value["raw"] if "raw" in value else np.NaN) 
-                      for key,value in entry.items() 
-                      if key not in ("maxAge", "endDate")}
-            data[date] = points
+            date = pd.to_datetime(entry["endDate"]["fmt"])
+            last_day = calendar.monthrange(date.year, date.month)[1]
+            if timestamps:
+                date = int(pd.to_datetime(f"{date.year}-{date.month}-{last_day}").timestamp()) # date matching questionable
+            else:
+                date = f"{date.year}-{date.month:02d}-{last_day:02d}"
+            
+            data_points = {}
+            for key, value in entry.items():
+                if key not in ("maxAge", "endDate"):
+                    data_points[json_name_conversion[statement_type][key]] = value["raw"] if "raw" in value else None
+            
+            json_data[date] = data_points
+        
+        if quarterly:
+            data = json_data
+        else:
+            # parse html data
+            html = requests.get(f"https://finance.yahoo.com/quote/{self.ticker}/{suffix}", headers=HEADERS).text
+            soup = BeautifulSoup(html)
+
+            html_data = {}
+            dates = {}
+            header = soup.find_all("div", {"class": "D(tbr) C($primaryColor)"})
+            assert len(header) == 1
+            
+            header = header[0].find_all("div", recursive=False)
+            for index, tag in enumerate(header[1:]):
+                date = tag.find("span").text.upper()
+                if date != "TTM":
+                    date = pd.to_datetime(date).date()
+                    last_day = calendar.monthrange(date.year, date.month)[1]
+                    date = pd.to_datetime(f"{date.year}-{date.month}-{last_day}")
+                    if timestamps:
+                        date = int(date.timestamp())
+                    else:
+                        date = date.date().isoformat()
+                html_data[date] = {}
+                dates[index] = date
+
+            rows = soup.find_all("div", {"data-test": "fin-row"})
+            for row in rows:
+                row = row.find("div")
+                cells = row.find_all("div", recursive=False)
+                name = cells[0].find("div").find("span").text
+                for index, cell in enumerate(cells[1:]):
+                    value = cell.find("span")
+                    if value is None:
+                        value = cell.text.replace(",", "")
+                    else:
+                        value = value.text.replace(",", "")
+                    if value == "-":
+                        value = None
+                    elif "." in value:
+                        if "k" in value:
+                            value = float(value.replace("k", "")) * 1000
+                        else:
+                            value = float(value)
+                    else:
+                        value = int(value) * 1000
+                    date = dates[index]
+                    html_data[date][name] = value
+            
+            # merge json with html data
+            html_name_conversion = {
+                "income_statement": {
+                    "Total Revenue": "Total Revenue",
+                    "Cost of Revenue": "Cost of Goods Sold",
+                    "Gross Profit": "Gross Profit",
+                    "Reconciled Depreciation": "Reconciled Depreciation",
+                    "EBITDA": "EBITDA",
+                    "EBTI": "EBIT",
+                    "Operating Expense": "Total Operating Expenses",
+                    "Operating Income": "Operating Income",
+                    "Interest Expense": "Interest Expenses",
+                    "Interest Income": "Interest Income",
+                    "Pretax Income": "Income Before Taxes",
+                    "Tax Provision": "Income Tax Expenses",
+                    "Net Income from Continuing Operations": "Net Income from Continuing Operations",
+                    "Net Income Common Stockholders": "Net Income Applicable to Common Shares",
+                    "Basic EPS": "Basic EPS",
+                    "Diluted EPS": "Diluted EPS",
+                    "Basic Average Shares": "Basic Shares Outstanding",
+                    "Diluted Average Shares": "Diluted Shares Outstanding"
+                },
+                "balance_sheet" : {
+                    "Total Assets": "Total Assets",
+                    "Total Liabilities Net Minority Interest": "Total Liabilities",
+                    "Total Equity Gross Minority Interest": "Total Shareholders Equity",
+                },
+                "cashflow_statement": {
+                    "Operating Cash Flow": "Total Cashflow From Operating Activities",
+                    "Investing Cash Flow": "Total Cashflow From Investing Activities",
+                    "Financing Cash Flow": "Total Cashflow From Financing Activities",
+                    "End Cash Position": "Cash and Cash Equivalents End of Period",
+                    "Income Tax Paid Supplemental": "Income Tax Paid",
+                    "Interest Paid Supplemental Data": "Interest Paid",
+                    "Capital Expenditure": "Capital Expenditures",
+                    "Issuance of Capital Stock": "Issuance of Common Stock",
+                    "Issuance of Debt": "Issuance of Debt",
+                    "Repayment of Debt": "Repayment of Debt",
+                    "Repurchase of Capital Stock": "Repurchases of Common Stock",
+                    "Free Cash Flow": "Free Cashflow"
+                }
+            }
+            for date in html_data:
+                converted = {}
+                for key in html_name_conversion[statement_type]:
+                    if key not in html_data[date].keys():
+                        converted[key] = None
+                    elif key in html_name_conversion[statement_type]:
+                        converted[html_name_conversion[statement_type][key]] = html_data[date][key]
+                    else:
+                        converted[key] = html_data[date][key]
+
+                html_data[date] = converted
+            
+            if statement_type == "income_statement":
+                data = self._merge_income_statements(json_data, html_data)
+            elif statement_type == "balance_sheet":
+                data = self._merge_balance_sheets(json_data, html_data)
+            elif statement_type == "cashflow_statement":
+                data = self._merge_cashflow_statements(json_data, html_data)
         
         return data
     
+    def _merge_income_statements(self, json_data, html_data) -> dict:
+        variables = (
+            "Total Revenue",
+            "Cost of Goods Sold",
+            "Gross Profit",
+            "Research & Development Expenses",
+            "Selling, General & Development Expenses",
+            "EBITDA",
+            "Reconciled Depreciation",
+
+            "Non-Recurring Expenses",
+            "Other Operating Expenses",
+            "Total Operating Expenses",
+            "Operating Income",
+
+            "Total Other Income Expense, Net",
+            "EBIT",
+
+            "Interest Expenses",
+            "Interest Income",
+            "Net Non Operating Interest Income Expense",
+            "Income Before Taxes",
+
+            "Tax Provision",
+            "Minority Interest",
+            "Net Income from Continouing Operations",
+
+            "Discontinued Operations",
+            "Extraordinary Items",
+            "Accounting Charges",
+            "Other Items",
+            "Net Income",
+            "Net Income applicable to Common Shares",
+
+            "Basic EPS",
+            "Diluted EPS",
+
+            "Basic Shares Outstanding",
+            "Diluted Shares Outstanding"
+        )
+        ordered_data = {}
+        for date in html_data:
+            ordered_data[date] = {}
+            for var in variables:
+                if date != "TTM" and var in json_data[date].keys():
+                    ordered_data[date][var] = json_data[date][var]
+                elif var in html_data[date].keys():
+                    ordered_data[date][var] = html_data[date][var]
+                else:
+                    ordered_data[date][var] = None
+        return ordered_data
+    
+    def _merge_balance_sheets(self, json_data, html_data) -> dict:
+        variables = (
+            "Cash and Cash Equivalents",
+            "Short-Term Marketable Securities",
+            "Accounts Receivable",
+            "Inventories",
+            "Other Current Assets",
+            "Total Current Assets",
+
+            "Long-Term Marketable Securities",
+            "Property, Plant & Equipment",
+            "Goodwill",
+            "Intangible Assets",
+            "Other Assets",
+            
+            "Total Assets",
+
+            "Accounts Payable",
+            "Current Debt",
+            "Other Current Liabilities",
+            "Total Current Liabilities",
+
+            "Non-Current Debt",
+            "Deferred Long-Term Asset Charges",
+            "Deferred Long-Term Liabilities",
+            "Other Liabilities",
+            "Total Non-Current liabilities",
+            
+            "Total Liabilities",
+
+            "Common Stock",
+            "Retained Earnings",
+            "Treasury Stock",
+            "Other Shareholders Equity",
+            "Total Shareholders Equity"
+        )
+        ordered_data = {}
+        for date in html_data:
+            ordered_data[date] = {}
+            for var in variables:
+                if var in html_data[date].keys():
+                    ordered_data[date][var] = html_data[date][var]
+                elif date != "TTM" and var in json_data[date].keys():
+                    ordered_data[date][var] = json_data[date][var]
+                else:
+                    ordered_data[date][var] = None
+        return ordered_data
+    
+    def _merge_cashflow_statements(self, json_data, html_data) -> dict:
+        variables = (
+            "Net Income",
+            "Depreciation & Amortization",
+            "Change in Acounts Receivable",
+            "Change in Inventories",
+            "Change in Liabilities",
+            "Other Operating Activities",
+            "Gains/Losses on Currency Changes",
+            "Total Cashflow From Operating Activities",
+
+            "Capital Expenditures",
+            "Change in Total Investments",
+            "Other Investing Activities",
+            "Total Cashflow From Investing Activities",
+
+            "Free Cashflow",
+
+            "Issuance of Debt",
+            "Repayment of Debt",
+            "Total Debt Issued", # wrong data => Net Debt Issued
+            "Issuance of Common Stock",
+            "Repurchases of Common Stock", # wrong data => repurchase of capital stock
+            "Total Dividends Paid",
+            "Other Financing Activities",
+            "Total Cashflow From Financing Activities",
+
+            "Change in Cash and Cash Equivalents"
+        )
+        ordered_data = {}
+        for date in html_data:
+            ordered_data[date] = {}
+            for var in variables:
+                if var in html_data[date].keys():
+                    ordered_data[date][var] = html_data[date][var]
+                elif date != "TTM" and var in json_data[date].keys():
+                    ordered_data[date][var] = json_data[date][var]
+                else:
+                    ordered_data[date][var] = None
+        return ordered_data
+    
     def _get_stored_data(self) -> dict:
-        
         parameters = {
             "modules": ",".join(
                 (
@@ -1008,16 +1352,16 @@ class YahooReader:
             ),
             "formatted": False
         }
+        
         data = requests.get(
             url=self._main_url.format(self.ticker),
             params=parameters,
             headers=HEADERS
         ).json()
-
+        
         if data["quoteSummary"]["error"] is not None:
             raise TickerError(f"no data found for ticker {self.ticker}")
         data = data["quoteSummary"]["result"][0]
-
         return data
     
     def __repr__(self):
