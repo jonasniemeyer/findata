@@ -39,25 +39,35 @@ class YahooReader:
         
         return data
 
-    def __init__(self, ticker: str = None, isin: str = None) -> None:
-        if ticker and isin:
-            raise ValueError("YahooReader should only be called with yahoo ticker or isin")
+    def __init__(
+        self,
+        ticker=None,
+        isin=None,
+        other_identifier=None
+    ) -> None:
+        """
+        """
         if ticker:
             self._ticker = ticker.upper()
-        elif isin:
-            self._isin = isin.upper()
+        else:
+            if isin:
+                self._isin = isin.upper()
+                search_input = self._isin
+            elif other_identifier:
+                search_input = other_identifier
+            else:
+                raise ValueError("YahooReader has to be called with ticker, isin or other_identifier")
 
             params = {
-                "yfin-usr-qry": self.isin
+                "yfin-usr-qry": search_input
             }
             response = requests.get(self.quote_url, params=params, headers=HEADERS)
 
             try:
                 self._ticker = re.findall(f"{self.quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response.url)[0].strip()
             except IndexError as e:
-                raise DatasetError(f"cannot find a ticker that belongs to the isin {self.isin}")
-        else:
-            raise ValueError("Either ticker or isin has to be specified")
+                raise DatasetError(f"cannot find a ticker that belongs to the isin {self.isin}")            
+        
         self._stored_data = self._get_stored_data()
         
         self._security_type = self._stored_data["quoteType"]["quoteType"]
