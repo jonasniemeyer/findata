@@ -1,8 +1,10 @@
+import calendar
 import datetime as dt
 import pandas as pd
 import numpy as np
 import requests
 import re
+from bs4 import BeautifulSoup
 from finance_data.utils import (
     TickerError,
     DatasetError,
@@ -131,7 +133,10 @@ class YahooReader:
             "longBusinessSummary"
         ):
             if key in data.keys():
-                data[key] = data[key].encode("latin-1").decode("cp1252").replace("\n ", "\n")
+                try:
+                    data[key] = data[key].encode("latin-1").decode("cp1252").replace("\n ", "\n")
+                except:
+                    pass
         
         if "fullTimeEmployees" in data.keys():
             data["employees"] = data.pop("fullTimeEmployees")
@@ -805,7 +810,7 @@ class YahooReader:
                 params=params,
                 headers=HEADERS
             ).text
-            soup = BeautifulSoup(html)
+            soup = BeautifulSoup(html, "lxml")
             tables = soup.find_all("table")
             try:
                 assert len(tables) == 1
@@ -876,17 +881,20 @@ class YahooReader:
             default : False
         
         """
-        data = self.income_statement(quarterly=quarterly, timestamps=timestamps)        
+        income_data = self.income_statement(quarterly=quarterly, timestamps=timestamps)
         balance_sheet_data = self.balance_sheet(quarterly=quarterly, timestamps=timestamps)
         cashflow_data = self.cashflow_statement(quarterly=quarterly, timestamps=timestamps)
+
         if merged:
-            for key in data:
-                data[key].update(balance_sheet_data[key])
-                data[key].update(cashflow_data[key])
-            return data
+            for key in income_data:
+                if key in balance_sheet_data:
+                    income_data[key].update(balance_sheet_data[key])
+                if key in cashflow_data:
+                    income_data[key].update(cashflow_data[key])
+            return income_data
         else:
             return {
-                "income_statement": data,
+                "income_statement": income_data,
                 "balance_sheet": balance_sheet_data,
                 "cashflow_statement": cashflow_data
             }
@@ -1060,7 +1068,7 @@ class YahooReader:
         else:
             # parse html data
             html = requests.get(f"https://finance.yahoo.com/quote/{self.ticker}/{suffix}", headers=HEADERS).text
-            soup = BeautifulSoup(html)
+            soup = BeautifulSoup(html, "lxml")
 
             html_data = {}
             dates = {}
