@@ -1,9 +1,9 @@
-from finance_data import margin_debt, shiller_cape
+from finance_data import finra_margin_debt, shiller_cape
 import pandas as pd
 import numpy as np
 
-def test_margin_debt():
-    data = margin_debt()
+def test_finra_margin_debt():
+    data = finra_margin_debt()
     assert all(key in ("combined full", "combined new", "combined old", "finra old", "nyse old") for key in data)
     for key in data:
         df = data[key]
@@ -17,7 +17,7 @@ def test_margin_debt():
 
     assert all(pd.concat([data["combined old"], data["combined new"]])["debit"] == data["combined full"]["debit"])
 
-    data = margin_debt(timestamps=True)
+    data = finra_margin_debt(timestamps=True)
     for key in data:
         assert all(isinstance(item, int) for item in data[key].index)
 
