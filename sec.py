@@ -337,6 +337,7 @@ class _SECFiling:
         
         if "BUSINESS PHONE:" in section:
             phone = re.findall("BUSINESS PHONE:\t{2}(.+)", section)[0]
+            phone = int(re.sub("[() \-]", "", phone))
         else:
             phone = None
 
