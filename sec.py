@@ -336,8 +336,10 @@ class _SECFiling:
             zip_ = None
         
         if "BUSINESS PHONE:" in section:
-            phone = re.findall("BUSINESS PHONE:\t{2}(.+)", section)[0]
-            phone = int(re.sub("[() \-]", "", phone))
+            phone = re.findall("BUSINESS PHONE:\t{2}(.+)", section)[0].upper()
+            phone = re.sub("[()\-\. ]", "", phone)
+            if "EXT" in phone:
+                phone = int(re.findall("(?i)([0-9a-z]+?)ext.+", phone)[0])
         else:
             phone = None
 
