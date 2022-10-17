@@ -13,7 +13,7 @@ class MarketscreenerReader:
             "q": identifier
         }
         html = requests.get(url=f"{self._base_url}/search/", params=params, headers=HEADERS).text
-        soup = BeautifulSoup(html)
+        soup = BeautifulSoup(html, "lxml")
         
         try:
             company_tag = soup.find("table", {"class": "table table--small table--hover table--centered table--bordered"}).find("tbody").find_all("tr")[0].find("td").find("a")
@@ -423,12 +423,12 @@ class MarketscreenerReader:
     def _get_company_information(self) -> None:
         url = f"{self._company_url}/company/"
         html = requests.get(url=url, headers=HEADERS).text
-        self._company_soup = BeautifulSoup(html)
+        self._company_soup = BeautifulSoup(html, "lxml")
 
     def _get_financial_information(self) -> None:
         url = f"{self._company_url}/financials/"
         html = requests.get(url=url, headers=HEADERS).text
-        self._financial_soup = BeautifulSoup(html)
+        self._financial_soup = BeautifulSoup(html, "lxml")
     
     def _parse_header(self) -> None:
         if self._header_parsed:

@@ -28,7 +28,7 @@ __all__ = [
     "CMEReader",
     "YahooReader",
     "MacrotrendsReader",
-    "MarketscreenerReader"
+    "MarketscreenerReader",
     "FrenchReader",
     "MSCIReader",
     "FinvizReader",
