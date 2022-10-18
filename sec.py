@@ -761,7 +761,8 @@ class FilingNPORT(_SECFiling):
     def __init__(self, file: str) -> None:
         super().__init__(file)
         
-        assert self.filer is not None
+        self._filer = self._filer[0]
+        assert len(self.filer) != 0
         self._parse_document()
     
     def _parse_document(self) -> None:
@@ -772,7 +773,7 @@ class FilingNPORT(_SECFiling):
             self._return_information = self._parse_return_information_from_xml()
             self._signature = self._parse_signature_from_xml()
         else:
-            raise NotImplementedError
+            raise NotImplementedError("NPORT Filing classes can only be called on XML-compliant files")
         
         self._has_short_positions = True if any(item["payoff_direction"] == "Short" for item in self._investments) else False
     
