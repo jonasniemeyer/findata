@@ -769,6 +769,7 @@ class FilingNPORT(_SECFiling):
         if self.is_xml:
             self._soup = BeautifulSoup(self.document, "lxml")
             self._general_information = self._parse_general_information()
+            self._fund_information = self._parse_fund_information()
             self._flow_information = self._parse_flow_information()
             self._investments = self._parse_investments()
             self._return_information = self._parse_return_information()
@@ -904,6 +905,269 @@ class FilingNPORT(_SECFiling):
             "is_final_filing": is_final_filing
         }
 
+    def _parse_fund_information(self) -> dict:
+        # series data
+        header_soup = BeautifulSoup(self._header, "lxml")
+        series_section = header_soup.find("series-and-classes-contracts-data")
+        
+        if series_section is None:
+            form_data = self._soup.find("formdata")
+            if form_data is None:
+                form_data = self._soup.find("nport:formdata")
+            general_info = form_data.find("geninfo")
+            series_id = None
+            series_name = general_info.find("seriesname").text
+            lei = general_info.find("serieslei").text
+            classes = None
+        else:
+            series_section = series_section.find("existing-series-and-classes-contracts").find("series")
+            series_id = series_section.find("series-id").find(text=True).strip()
+            series_name = series_section.find("series-name").find(text=True).strip()
+
+            form_data = self._soup.find("formdata")
+            if form_data is None:
+                form_data = self._soup.find("nport:formdata")
+            lei = form_data.find("geninfo").find("serieslei").text
+
+            # class data
+            classes = []
+            class_tags = series_section.find_all("class-contract")
+            for tag in class_tags:
+                id_ = tag.find("class-contract-id").find(text=True).strip()
+                name = tag.find("class-contract-name").find(text=True).strip()
+                ticker = tag.find("class-contract-ticker-symbol")
+                if ticker is not None:
+                    ticker = ticker.find(text=True).strip()
+                classes.append(
+                    {
+                        "id": id_,
+                        "name": name,
+                        "ticker": ticker
+                    }
+                )
+        
+        series = {
+            "name": series_name,
+            "id": series_id,
+            "lei": lei
+        }
+        
+        fund_section = form_data.find("fundinfo")
+        
+        # assets and liabilities
+        total_assets = float(fund_section.find("totassets").text)
+        total_liabilities = float(fund_section.find("totliabs").text)
+        net_assets = float(fund_section.find("netassets").text)
+        
+        # certain assets and liabilities
+        miscellaneous_securities = float(fund_section.find("assetsattrmiscsec").text)
+        assets_foreign_controlled_company = float(fund_section.find("assetsinvested").text)
+        
+        banks_1yr = float(fund_section.find("amtpayoneyrbanksborr").text)
+        controlled_1yr = float(fund_section.find("amtpayoneyrctrldcomp").text)
+        affiliates_1yr = float(fund_section.find("amtpayoneyrothaffil").text)
+        other_1yr = float(fund_section.find("amtpayoneyrother").text)
+        
+        banks_longer = float(fund_section.find("amtpayaftoneyrbanksborr").text)
+        controlled_longer = float(fund_section.find("amtpayaftoneyrctrldcomp").text)
+        affiliates_longer = float(fund_section.find("amtpayaftoneyrothaffil").text)
+        other_longer = float(fund_section.find("amtpayaftoneyrother").text)
+        
+        delayed_delivery = float(fund_section.find("delaydeliv").text)
+        standby_commitment = float(fund_section.find("standbycommit").text)
+        liquiditation_preference = float(fund_section.find("liquidpref").text)
+        cash = float(fund_section.find("cshnotrptdincord").text)
+
+        accounts_payable = {
+            "1-year": {
+                "banks": banks_1yr,
+                "controlled_companies": controlled_1yr,
+                "other_affiliates": affiliates_1yr,
+                "other": other_1yr
+            },
+            "long_term": {
+                "banks": banks_longer,
+                "controlled_companies": controlled_longer,
+                "other_affiliates": affiliates_longer,
+                "other": other_longer
+            },
+            "delayed_delivery": delayed_delivery,
+            "standby_commitment": standby_commitment
+        }
+        
+        certain_assets = {
+            "miscellaneous_securities": miscellaneous_securities,
+            "assets_foreign_controlled_company": assets_foreign_controlled_company,
+            "accounts_payable": accounts_payable,
+            "liquiditation_preference": liquiditation_preference,
+            "cash": cash
+        }
+        
+        # lending information
+        borrowers_tag = fund_section.find("borrowers")
+        if borrowers_tag is None:
+            borrowers = None
+        else:
+            borrowers = []
+            for tag in borrowers_tag.find_all("borrower"):
+                value = float(tag.get("aggrval"))
+                lei = tag.get("lei")
+                name = tag.get("name")
+                borrowers.append(
+                    {
+                        "name": name,
+                        "lei": lei,
+                        "value": value
+                    }
+                )
+        
+        non_cash_collateral = fund_section.find("isnoncashcollateral")
+        if non_cash_collateral is None or non_cash_collateral.text == "N":
+            non_cash_collateral = None
+        else:
+            assert fund_section.find("aggregatecondition").get("isnoncashcollateral") == "Y"
+            non_cash_collateral = []
+            for tag in fund_section.find("aggregatecondition").find("aggregateinfos").find_all("aggregateinfo"):
+                principal_amount = float(tag.get("amt"))
+                collateral = float(tag.get("collatrl"))
+                category_abbr = tag.find("invstcat").text
+                asset_category = {
+                    "name": self._asset_types[category_abbr],
+                    "abbreviation": category_abbr
+                }
+                non_cash_collateral.append(
+                    {
+                        "principal_amount": principal_amount,
+                        "collateral": collateral,
+                        "asset_category": asset_category
+                    }
+                )
+        
+        securities_lending = {
+            "borrowers": borrowers,
+            "non_cash_collateral": non_cash_collateral
+        }
+        
+        # return information
+        return_section = fund_section.find("returninfo")
+        class_return_tags = return_section.find("monthlytotreturns").find_all("monthlytotreturn")
+        class_returns = {}
+        for tag in class_return_tags:
+            class_id = tag.get("classid")
+            return1 = tag.get("rtn1")
+            return1 = None if return1 == "N/A" else round(float(return1) / 100, 4)
+            return2 = tag.get("rtn2")
+            return2 = None if return2 == "N/A" else round(float(return2) / 100, 4)
+            return3 = tag.get("rtn3")
+            return3 = None if return3 == "N/A" else round(float(return3) / 100, 4)
+            class_returns[class_id] = {
+                1: return1,
+                2: return2,
+                3: return3
+            }
+        
+        # category returns fehlen
+        tag_contract_category_match = {
+            "commoditycontracts": "Commodity Contracts",
+            "creditcontracts": "Credit Contracts",
+            "equitycontracts": "Equity Contracts",
+            "foreignexchgcontracts": "Foreign Exchange Contracts",
+            "interestrtcontracts": "Interest Rate Contracts",
+            "othercontracts": "Other Contracts"
+        }
+        tag_derivative_instrument_match = {
+            "forwardcategory": "Forward",
+            "futurecategory": "Future",
+            "optioncategory": "Option",
+            "othercategory": "Other",
+            "swapcategory": "Swap",
+            "swaptioncategory": "Swaption",
+            "warrantcategory": "Warrant"
+        }
+        
+        derivative_return_tags = return_section.find("monthlyreturncats")
+        if derivative_return_tags is None:
+            derivative_gains = None
+        else:
+            derivative_gains = {}
+            for contract_tag in derivative_return_tags.children:
+                if contract_tag == "\n":
+                    continue
+                contract_name = tag_contract_category_match[contract_tag.name]
+                derivative_gains[contract_name] = {}
+                for instrument_tag in contract_tag.children:
+                    if instrument_tag == "\n":
+                        continue
+                    elif instrument_tag.name in ("mon1", "mon2", "mon3"):
+                        month = int(instrument_tag.name.replace("mon", ""))
+                        realized_gain = instrument_tag.get("netrealizedgain")
+                        realized_gain = None if realized_gain == "N/A" else float(realized_gain)
+                        unrealized_appreciation = instrument_tag.get("netunrealizedappr")
+                        unrealized_appreciation = None if unrealized_appreciation == "N/A" else float(unrealized_appreciation)
+                        derivative_gains[contract_name][month] = {
+                            "realized_gain": realized_gain,
+                            "unrealized_appreciation": unrealized_appreciation
+                        }
+                    else:
+                        instrument_name = tag_derivative_instrument_match[instrument_tag.name]
+                        derivative_gains[contract_name][instrument_name] = {}
+                        for month in range(1, 4):
+                            month_tag = instrument_tag.find(f"instrmon{month}")
+                            realized_gain = month_tag.get("netrealizedgain")
+                            realized_gain = None if realized_gain == "N/A" else float(realized_gain)
+                            unrealized_appreciation = month_tag.get("netunrealizedappr")
+                            unrealized_appreciation = None if unrealized_appreciation == "N/A" else float(unrealized_appreciation)
+                            derivative_gains[contract_name][instrument_name][month] = {
+                                "realized_gain": realized_gain,
+                                "unrealized_appreciation": unrealized_appreciation
+                            }
+        
+        non_derivative_gains = {}
+        for month in range(1,4):
+            tag = return_section.find(f"othmon{month}")
+            realized_gain = tag.get("netrealizedgain")
+            realized_gain = None if realized_gain == "N/A" else float(realized_gain)
+            unrealized_appreciation = tag.get("netunrealizedappr")
+            unrealized_appreciation = None if unrealized_appreciation == "N/A" else float(unrealized_appreciation)
+            non_derivative_gains[month] = {
+                "realized_gain": realized_gain,
+                "unrealized_appreciation": unrealized_appreciation
+            }
+        
+        return_information = {
+            "class_returns": class_returns,
+            "derivative_gains": derivative_gains,
+            "non-derivative_gains": non_derivative_gains
+        }
+        
+        # flow information
+        flow_information = {}
+        for month in range(1,4):
+            flow = fund_section.find(f"mon{month}flow")
+            redemption = flow.get("redemption")
+            redemption = None if redemption == "N/A" else float(redemption)
+            reinvestment = flow.get("reinvestment")
+            reinvestment = None if reinvestment == "N/A" else float(reinvestment)
+            sales = flow.get("sales")
+            sales = None if sales == "N/A" else float(sales)
+            flow_information[month] = {
+                "redemption": redemption,
+                "reinvestment": reinvestment,
+                "sales": sales
+            }
+        
+        return {
+            "series": series,
+            "classes": classes,
+            "total_assets": total_assets,
+            "total_liabilities": total_liabilities,
+            "net_assets": net_assets,
+            "certain_assets": certain_assets,
+            "securities_lending": securities_lending,
+            "return_information": return_information,
+            "flow_information": flow_information
+        }
+
     def portfolio(self, sorted_by=None) -> list:
         sort_variables = (
             None,
@@ -946,6 +1210,10 @@ class FilingNPORT(_SECFiling):
     @property
     def general_information(self) -> dict:
         return self._general_information
+
+    @property
+    def fund_information(self) -> dict:
+        return self._fund_information
 
     @property
     def return_information(self) -> dict:
