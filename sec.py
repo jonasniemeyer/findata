@@ -703,6 +703,61 @@ class Filing13F(_SECFiling):
 
 
 class FilingNPORT(_SECFiling):
+    _asset_types = {
+        "AMBS": "Agency mortgage-backed securities",
+        "ABS-APCP": "ABS-asset backed commercial paper",
+        "ABS-CBDO": "ABS-collateralized bond/debt obligation",
+        "ABS-MBS": "ABS-mortgage backed security",
+        "ABS-O": "ABS-other",
+        "ADR": "American Repository Receipt",
+        "COMM": "Commodity",
+        "DBT": "Debt",
+        "DCO": "Derivative-commodity",
+        "DCR": "Derivative-credit",
+        "DE": "Derivative-equity",
+        "DFE": "Derivative-foreign exchange",
+        "DIR": "Derivative-interest rate",
+        "DO": "Derivative-other",
+        "EC": "Equity-common",
+        "EDR": "Equity-Depositary Receipt",
+        "EP": "Equity-preferred",
+        "ETF": "Exchange Traded Fund",
+        "GDR": "Global depositary receipt",
+        "LON": "Loan",
+        "RA": "Repurchase agreement",
+        "RE": "Real estate",
+        "SN": "Structured note",
+        "STIV": "Short-term investment vehicle (e.g., money market fund, liquidity pool, or other cash management vehicle)",
+        "UST": "U.S. Treasuries (including strips)"
+    }
+    
+    _derivative_types = {
+        "FWD": "Forward",
+        "FUT": "Future",
+        "OPT": "Option",
+        "SWO": "Swaption",
+        "SWP": "Swap",
+        "WAR": "Warrant"
+    }
+    
+    _issuer_types = {
+        "CORP": "Corporate",
+        "MUN": "Municipal",
+        "NUSS": "Non-U.S. sovereign",
+        "PF": "Private fund",
+        "RF": "Registered fund",
+        "USGA": "U.S. government agency",
+        "USGSE": "U.S. government sponsored entity",
+        "UST": "U.S. Treasury"
+    }
+
+    _quantity_types = {
+        "NC": "Number of contracts",
+        "NS": "Number of shares",
+        "OU": "Other units",
+        "PA": "Principal amount"
+    }
+    
     def __init__(self, file: str) -> None:
         super().__init__(file)
         
