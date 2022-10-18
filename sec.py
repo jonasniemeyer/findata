@@ -1115,6 +1115,41 @@ class FilingNPORT(_SECFiling):
         }
         return derivative_information
 
+    def _parse_forward_information(self, derivative_section) -> dict:
+        abbr = derivative_section.find("fwdderiv").get("derivcat")
+        derivative_type = {"name": self._derivative_types[abbr], "abbreviation": abbr}
+
+        counterparty = derivative_section.find("counterparties")
+        counterparty_name = counterparty.find("counterpartyname").text
+        counterparty_lei = counterparty.find("counterpartylei").text
+
+        amount_currency_short = float(derivative_section.find("amtcursold").text)
+        currency_short = derivative_section.find("cursold").text
+        amount_currency_long = float(derivative_section.find("amtcurpur").text)
+        currency_long = derivative_section.find("curpur").text
+
+        settlement_date = derivative_section.find("settlementdt").text
+        unrealized_appreciation = float(derivative_section.find("unrealizedappr").text)
+
+        derivative_information = {
+            "type": derivative_type,
+            "counterparty": {
+                "name": counterparty_name,
+                "lei": counterparty_lei
+            },
+            "long": {
+                "amount": amount_currency_long,
+                "currency": currency_long
+            },
+            "short": {
+                "amount": amount_currency_short,
+                "currency": currency_short
+            },
+            "settlement": settlement_date,
+            "unrealized_appreciation": unrealized_appreciation
+        }
+        return derivative_information
+
     def _parse_explanatory_notes(self) -> dict:
         note_section = self._soup.find("explntrnotes")
         if note_section is None:
