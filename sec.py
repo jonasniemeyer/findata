@@ -779,69 +779,150 @@ class FilingNPORT(_SECFiling):
         self._has_short_positions = True if any(item["amount"]["quantity"] < 0 for item in self._investments if item["amount"]["quantity"] is not None) else False
     
     def _parse_investments(self) -> list:
-        entries = self._soup.find("invstorsecs").find_all("invstorsec")
+        entries = self._soup.find("invstorsecs")
+        if entries is None:
+            return []
+        else:
+            entries = entries.find_all("invstorsec")
         investments = []
         for entry in entries:
-            name = entry.find("name").text
-            lei = entry.find("lei").text
-            title = entry.find("title").text
-            cusip = entry.find("cusip").text
-
-            identifiers = {
-                "cusip": cusip
+            issuer_name = entry.find("name").text
+            if issuer_name == "N/A":
+                issuer_name = None
+            issuer_lei = entry.find("lei").text
+            if issuer_lei == "N/A":
+                issuer_lei = None
+            issuer = {
+                "name": issuer_name,
+                "lei": issuer_lei
             }
-            other_identifiers = entry.find("identifiers")
-            isin = other_identifiers.find("isin")
+            
+            title = entry.find("title").text
+            if title == "N/A":
+                title = None
+
+            identifier = {}
+            cusip = entry.find("cusip").text
+            if cusip != "N/A" and cusip != "0"*9:
+                identifier["cusip"] = cusip
+            other_identifier = entry.find("identifiers")
+            isin = other_identifier.find("isin")
             if isin is not None:
-                value = isin.get("value")
-                if value is None:
-                    value = isin.text                
-                identifiers["isin"] = value
-        
-            other = other_identifiers.find_all("other")
+                isin_value = isin.get("value")
+                if isin_value is None:
+                    isin_value = isin.text                
+                identifier["isin"] = isin_value
+            ticker = other_identifier.find("ticker")
+            if ticker is not None:
+                ticker_value = ticker.get("value")
+                if ticker_value is None:
+                    ticker_value = ticker.text                
+                identifier["ticker"] = ticker_value
+            other = other_identifier.find_all("other")
             for item in other:
                 other_name = item.get("otherdesc")
                 other_value = item.get("value")
-                identifiers[other_name] = other_value
-            
-            amount = float(entry.find("balance").text)
-            amount_type = entry.find("units").text
+                identifier[other_name] = other_value
+
+            percentage = entry.find("pctval").text
+            percentage = None if percentage == "N/A" else round(float(percentage) / 100, 6)
+            market_value = float(entry.find("valusd").text)
+            quantity = entry.find("balance").text
+            quantity = None if quantity == "N/A" else float(quantity)
+            quantity_type_abbr = entry.find("units").text
+            if quantity_type_abbr == "N/A" or quantity_type_abbr is None:
+                raise ValueError
+            quantity_type = {"name": self._quantity_types[quantity_type_abbr], "abbreviation": quantity_type_abbr}            
             
             currency = entry.find("curcd")
             if currency is None:
-                currency_name = entry.find("currencyconditional").get("curcd")
-                exchange_rate = entry.find("currencyconditional").get("exchangert")
+                currency = entry.find("currencyconditional")
+                currency_name = currency.get("curcd")
+                exchange_rate = currency.get("exchangert")
+                exchange_rate = None if exchange_rate == "N/A" else float(exchange_rate)
             else:
                 currency_name = currency.text
                 exchange_rate = None
+            if currency_name == "N/A":
+                currency_name = None
             currency = {
                 "name": currency_name,
                 "exchange_rate": exchange_rate
             }
             
-            quantity = {
-                "amount": amount,
-                "type": amount_type,
+            amount = {
+                "percentage": percentage,
+                "market_value": market_value,
+                "quantity": quantity,
+                "quantity_type": quantity_type,
                 "currency": currency
             }
             
-            market_value = float(entry.find("valusd").text)
-            percentage = round(float(entry.find("pctval").text) / 100, 4)
             payoff_direction = entry.find("payoffprofile").text
+            if payoff_direction == "N/A":
+                payoff_direction = None
+            
+            # asset and issuer type
+            asset_type = entry.find("assetcat")
+            if asset_type is not None:
+                asset_type_abbr = asset_type.text
+                asset_type = {"name": self._asset_types[asset_type_abbr], "abbreviation": asset_type_abbr}
+            else:
+                asset_type_name = entry.find("assetconditional").get("desc")
+                asset_type = {"name": asset_type_name, "abbreviation": "OTH"}
+            
+            
+            issuer_type = entry.find("issuercat")
+            if issuer_type is None:
+                issuer["type"] = {
+                    "name": entry.find("issuerconditional").get("desc"),
+                    "abbreviation": "O"
+                }
+            else:
+                issuer["type"] = {
+                    "name": self._issuer_types[issuer_type.text],
+                    "abbreviation": issuer_type.text
+                }
+            country = entry.find("invcountry").text
+            if country == "N/A":
+                country = None
+            issuer["country"] = country
+            
+            restricted_security = entry.find("isrestrictedsec").text
+            if restricted_security == "Y":
+                restricted_security = True
+            elif restricted_security == "N":
+                restricted_security = False
+            assert isinstance(restricted_security, bool)
+            
+            liquidity_classification = None
+            
+            fair_value_level = entry.find("fairvallevel").text
+            fair_value_level = None if fair_value_level == "N/A" else int(fair_value_level)
+            
+            debt_information = self._get_debt_information(entry)
+            repurchase_information = None
+            derivative_information = None #self._get_derivative_information(entry)
+            securities_lending = self._get_lending_information(entry)
             
             investments.append(
                 {
-                    "name": name,
-                    "lei": lei,
+                    "issuer": issuer,
                     "title": title,
-                    "identifiers": identifiers,
-                    "market_value": market_value,
-                    "quantity": quantity,
-                    "percentage": percentage,
-                    "payoff_direction": payoff_direction
+                    "identifier": identifier,
+                    "amount": amount,
+                    "payoff_direction": payoff_direction,
+                    "asset_type": asset_type,
+                    "restricted_security": restricted_security,
+                    "liquidity_classification": liquidity_classification,
+                    "us_gaap_fair_value_hierarchy": fair_value_level,
+                    "debt_information": debt_information,
+                    "repurchase_information": repurchase_information,
+                    "derivative_information": derivative_information,
+                    "securities_lending": securities_lending
                 }
             )
-            
+        
         return investments
     
     def _parse_explanatory_notes(self) -> dict:
