@@ -772,6 +772,7 @@ class FilingNPORT(_SECFiling):
             self._flow_information = self._parse_flow_information()
             self._investments = self._parse_investments()
             self._return_information = self._parse_return_information()
+            self._explanatory_notes = self._parse_explanatory_notes()
             self._signature = self._parse_signature()
         else:
             raise NotImplementedError("NPORT Filing classes can only be called on XML-compliant files")
@@ -850,6 +851,20 @@ class FilingNPORT(_SECFiling):
 
     def _parse_return_information(self) -> list:
         pass
+
+    def _parse_explanatory_notes(self) -> dict:
+        note_section = self._soup.find("explntrnotes")
+        if note_section is None:
+            return None
+        
+        notes = {}
+        note_tags = note_section.find_all("explntrnote")
+        for tag in note_tags:
+            note = tag.get("note").strip()
+            item = tag.get("noteitem")
+            notes[item] = note
+        
+        return notes
     
     def _parse_signature(self) -> dict:
         signature_section = self._soup.find("signature")
@@ -924,6 +939,10 @@ class FilingNPORT(_SECFiling):
     @property
     def has_short_positions(self) -> bool:
         return self._has_short_positions
+
+    @property
+    def explanatory_notes(self) -> dict:
+        return self._explanatory_notes
 
     @property
     def general_information(self) -> dict:
