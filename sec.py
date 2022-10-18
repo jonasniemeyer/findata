@@ -782,6 +782,7 @@ class FilingNPORT(_SECFiling):
     def _parse_document(self) -> None:
         if self.is_xml:
             self._soup = BeautifulSoup(self.document, "lxml")
+            self._general_information = self._parse_general_information()
             self._flow_information = self._parse_flow_information()
             self._investments = self._parse_investments()
             self._explanatory_notes = self._parse_explanatory_notes()
@@ -884,6 +885,28 @@ class FilingNPORT(_SECFiling):
         
         return signature
 
+    def _parse_general_information(self) -> dict:
+        general_info = self._soup.find("formdata").find("geninfo")
+        
+        filer_lei = general_info.find("reglei").text
+        fiscal_year_end = general_info.find("reppdend").text
+        reporting_date = general_info.find("reppddate").text
+        is_final_filing = general_info.find("isfinalfiling").text
+        if is_final_filing == "Y":
+            is_final_filing = True
+        elif is_final_filing == "N":
+            is_final_filing = False
+        assert isinstance(is_final_filing, bool)
+        
+        general_information = {
+            "filer_lei": filer_lei,
+            "fiscal_year_end": fiscal_year_end,
+            "reporting_date": reporting_date,
+            "is_final_filing": is_final_filing
+        }
+        
+        return general_information
+
     def portfolio(self, sorted_by=None) -> list:
         sort_variables = (
             None,
@@ -922,6 +945,10 @@ class FilingNPORT(_SECFiling):
     @property
     def explanatory_notes(self) -> dict:
         return self._explanatory_notes
+
+    @property
+    def general_information(self) -> dict:
+        return self._general_information
 
     @property
     def return_information(self) -> dict:
