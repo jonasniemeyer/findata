@@ -1796,12 +1796,8 @@ class FilingNPORT(_SECFiling):
         return portfolio
     
     @property
-    def filer(self) -> list:
+    def filer(self) -> dict:
         return self._filer
-
-    @property
-    def flow_information(self) -> dict:
-        return self._flow_information
     
     @property
     def has_short_positions(self) -> bool:
@@ -1814,14 +1810,22 @@ class FilingNPORT(_SECFiling):
     @property
     def general_information(self) -> dict:
         return self._general_information
-
+    
     @property
     def fund_information(self) -> dict:
         return self._fund_information
-
+    
+    @property
+    def flow_information(self) -> dict:
+        return self.fund_information["flow_information"]
+    
     @property
     def return_information(self) -> dict:
-        return self._return_information
+        return self.fund_information["return_information"]
+    
+    @property
+    def securities_lending(self) -> dict:
+        return self.fund_information["securities_lending"]
 
     @property
     def signature(self) -> dict:
