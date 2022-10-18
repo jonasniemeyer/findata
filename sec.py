@@ -909,22 +909,21 @@ class FilingNPORT(_SECFiling):
             None,
             "name",
             "market_value",
-            "amount",
+            "quantity",
             "percentage",
             "payoff_direction"
         )
         if sorted_by not in (sort_variables):
             raise ValueError(f"sorting variable has to be in {sort_variables}")
         
-        desc = True if sorted_by in ("market_value", "amount", "percentage") else False
-        
-        if sorted_by is not None:
-            if sorted_by == "amount":
-                portfolio = sorted(self._investments, key=lambda x: x["quantity"][sorted_by], reverse=desc)
+        if sorted_by is None:
+            portfolio = self._investments
+        else:
+            desc = True if sorted_by in ("market_value", "quantity", "percentage") else False
+            if sorted_by in ("quantity", "market_value", "percentage"):
+                portfolio = sorted(self._investments, key=lambda x: x["amount"][sorted_by], reverse=desc)
             else:
                 portfolio = sorted(self._investments, key=lambda x: x[sorted_by], reverse=desc)
-        else:
-            portfolio = self._investments
         
         return portfolio
     
