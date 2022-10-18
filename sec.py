@@ -1032,6 +1032,25 @@ class FilingNPORT(_SECFiling):
         
         return debt_information
 
+    def _get_derivative_information(self, entry) -> Union[dict, None]:
+        derivative_section = entry.find("derivativeinfo")
+        
+        if derivative_section is None:
+            return None
+        
+        if derivative_section.find("fwdderiv") is not None:
+            derivative_information = self._parse_forward_information(derivative_section)
+        elif derivative_section.find("futrderiv") is not None:
+            derivative_information = self._parse_future_information(derivative_section)
+        elif derivative_section.find("swapderiv") is not None:
+            derivative_information = self._parse_swap_information(derivative_section)
+        elif derivative_section.find("optionswaptionwarrantderiv") is not None:
+            derivative_information = self._parse_option_information(derivative_section)
+        elif derivative_section.find("othderiv") is not None:
+            derivative_information = self._parse_other_derivative_information(derivative_section)
+        
+        return derivative_information
+
     def _parse_explanatory_notes(self) -> dict:
         note_section = self._soup.find("explntrnotes")
         if note_section is None:
