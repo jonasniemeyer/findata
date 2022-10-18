@@ -482,17 +482,17 @@ class Filing13F(_SECFiling):
                     }
                     self._other_reporting_managers.append(dct)
             
-            self._investments = self._parse_holdings()
-            self._other_managers = self._parse_other_managers()
-            self._signature = self._parse_signature()
-            self._summary = self._parse_summary()
+            self._investments = self._parse_holdings_from_xml()
+            self._other_managers = self._parse_other_managers_from_xml()
+            self._signature = self._parse_signature_from_xml()
+            self._summary = self._parse_summary_from_xml()
         else:
             raise NotImplementedError
     
-    def _parse_other_managers(self) -> dict:
+    def _parse_other_managers_from_xml(self) -> dict:
         return
     
-    def _parse_signature(self) -> dict:
+    def _parse_signature_from_xml(self) -> dict:
         signature = self._soup.find("signatureblock")
         
         name = signature.find("name").text
@@ -512,22 +512,8 @@ class Filing13F(_SECFiling):
             "state": state,
             "date": date
         }
-
-    def _parse_explanatory_notes(self) -> dict:
-        note_section = self._soup.find("explntrnotes")
-        if note_section is None:
-            return None
-        
-        notes = {}
-        note_tags = note_section.find_all("explntrnote")
-        for tag in note_tags:
-            note = tag.get("note").strip()
-            item = tag.get("noteitem")
-            notes[item] = note
-        
-        return notes
     
-    def _parse_summary(self) -> Union[dict, None]:
+    def _parse_summary_from_xml(self) -> Union[dict, None]:
         if self.submission_type == "13F-NT":
             return None
         
@@ -567,7 +553,7 @@ class Filing13F(_SECFiling):
             "included_managers": included_managers
         }
     
-    def _parse_holdings(self) -> list:       
+    def _parse_holdings_from_xml(self) -> list:       
         if "n1:infoTable" in self._document:
             prefix = "n1:"
         elif "ns1:infoTable" in self._document:
@@ -717,86 +703,28 @@ class Filing13F(_SECFiling):
 
 
 class FilingNPORT(_SECFiling):
-    _asset_types = {
-        "AMBS": "Agency mortgage-backed securities",
-        "ABS-APCP": "ABS-asset backed commercial paper",
-        "ABS-CBDO": "ABS-collateralized bond/debt obligation",
-        "ABS-MBS": "ABS-mortgage backed security",
-        "ABS-O": "ABS-other",
-        "ADR": "American Repository Receipt",
-        "COMM": "Commodity",
-        "DBT": "Debt",
-        "DCO": "Derivative-commodity",
-        "DCR": "Derivative-credit",
-        "DE": "Derivative-equity",
-        "DFE": "Derivative-foreign exchange",
-        "DIR": "Derivative-interest rate",
-        "DO": "Derivative-other",
-        "EC": "Equity-common",
-        "EDR": "Equity-Depositary Receipt",
-        "EP": "Equity-preferred",
-        "ETF": "Exchange Traded Fund",
-        "GDR": "Global depositary receipt",
-        "LON": "Loan",
-        "RA": "Repurchase agreement",
-        "RE": "Real estate",
-        "SN": "Structured note",
-        "STIV": "Short-term investment vehicle (e.g., money market fund, liquidity pool, or other cash management vehicle)",
-        "UST": "U.S. Treasuries (including strips)"
-    }
-    
-    _derivative_types = {
-        "FWD": "Forward",
-        "FUT": "Future",
-        "OPT": "Option",
-        "SWO": "Swaption",
-        "SWP": "Swap",
-        "WAR": "Warrant"
-    }
-    
-    _issuer_types = {
-        "CORP": "Corporate",
-        "MUN": "Municipal",
-        "NUSS": "Non-U.S. sovereign",
-        "PF": "Private fund",
-        "RF": "Registered fund",
-        "USGA": "U.S. government agency",
-        "USGSE": "U.S. government sponsored entity",
-        "UST": "U.S. Treasury"
-    }
-
-    _quantity_types = {
-        "NC": "Number of contracts",
-        "NS": "Number of shares",
-        "OU": "Other units",
-        "PA": "Principal amount"
-    }
-
     def __init__(self, file: str) -> None:
         super().__init__(file)
         
-        self._filer = self._filer[0]
-        assert len(self.filer) != 0
+        assert self.filer is not None
         self._parse_document()
     
     def _parse_document(self) -> None:
         if self.is_xml:
             self._soup = BeautifulSoup(self.document, "lxml")
-            self._general_information = self._parse_general_information()
-            self._flow_information = self._parse_flow_information()
-            self._investments = self._parse_investments()
-            self._explanatory_notes = self._parse_explanatory_notes()
-            self._return_information = self._parse_return_information()
-            self._signature = self._parse_signature()
+            self._flow_information = self._parse_flow_information_from_xml()
+            self._investments = self._parse_investments_from_xml()
+            self._return_information = self._parse_return_information_from_xml()
+            self._signature = self._parse_signature_from_xml()
         else:
-            raise NotImplementedError("NPORT Filing classes can only be called on XML-compliant files")
+            raise NotImplementedError
         
         self._has_short_positions = True if any(item["payoff_direction"] == "Short" for item in self._investments) else False
     
-    def _parse_flow_information(self) -> dict:
+    def _parse_flow_information_from_xml(self) -> dict:
         pass
     
-    def _parse_investments(self) -> list:
+    def _parse_investments_from_xml(self) -> list:
         entries = self._soup.find("invstorsecs").find_all("invstorsec")
         investments = []
         for entry in entries:
@@ -862,71 +790,34 @@ class FilingNPORT(_SECFiling):
             
         return investments
         
-    def _parse_return_information(self) -> list:
+
+    def _parse_return_information_from_xml(self) -> list:
         pass
     
-    def _parse_signature(self) -> dict:
-        signature_section = self._soup.find("signature")
-        prefix = "" if signature_section.find("ncom:datesigned") is None else "ncom:"
-        
-        date = signature_section.find(f"{prefix}datesigned").text
-        company = signature_section.find(f"{prefix}nameofapplicant").text
-        name = signature_section.find(f"{prefix}signername").text
-        title = signature_section.find(f"{prefix}title").text
-        signature = signature_section.find(f"{prefix}signature").text
-        
-        signature = {
-            "date": date,
-            "name": name,
-            "title": title,
-            "company": company,
-            "signature": signature
-        }
-        
-        return signature
-
-    def _parse_general_information(self) -> dict:
-        general_info = self._soup.find("formdata").find("geninfo")
-        
-        filer_lei = general_info.find("reglei").text
-        fiscal_year_end = general_info.find("reppdend").text
-        reporting_date = general_info.find("reppddate").text
-        is_final_filing = general_info.find("isfinalfiling").text
-        if is_final_filing == "Y":
-            is_final_filing = True
-        elif is_final_filing == "N":
-            is_final_filing = False
-        assert isinstance(is_final_filing, bool)
-        
-        general_information = {
-            "filer_lei": filer_lei,
-            "fiscal_year_end": fiscal_year_end,
-            "reporting_date": reporting_date,
-            "is_final_filing": is_final_filing
-        }
-        
-        return general_information
+    def _parse_signature_from_xml(self) -> dict:
+        pass
 
     def portfolio(self, sorted_by=None) -> list:
         sort_variables = (
             None,
             "name",
             "market_value",
-            "quantity",
+            "amount",
             "percentage",
             "payoff_direction"
         )
         if sorted_by not in (sort_variables):
             raise ValueError(f"sorting variable has to be in {sort_variables}")
         
-        if sorted_by is None:
-            portfolio = self._investments
-        else:
-            desc = True if sorted_by in ("market_value", "quantity", "percentage") else False
-            if sorted_by in ("quantity", "market_value", "percentage"):
-                portfolio = sorted(self._investments, key=lambda x: x["amount"][sorted_by], reverse=desc)
+        desc = True if sorted_by in ("market_value", "amount", "percentage") else False
+        
+        if sorted_by is not None:
+            if sorted_by == "amount":
+                portfolio = sorted(self._investments, key=lambda x: x["quantity"][sorted_by], reverse=desc)
             else:
                 portfolio = sorted(self._investments, key=lambda x: x[sorted_by], reverse=desc)
+        else:
+            portfolio = self._investments
         
         return portfolio
     
@@ -941,14 +832,6 @@ class FilingNPORT(_SECFiling):
     @property
     def has_short_positions(self) -> bool:
         return self._has_short_positions
-
-    @property
-    def explanatory_notes(self) -> dict:
-        return self._explanatory_notes
-
-    @property
-    def general_information(self) -> dict:
-        return self._general_information
 
     @property
     def return_information(self) -> dict:
