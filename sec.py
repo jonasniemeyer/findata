@@ -850,7 +850,24 @@ class FilingNPORT(_SECFiling):
         pass
     
     def _parse_signature(self) -> dict:
-        pass
+        signature_section = self._soup.find("signature")
+        prefix = "" if signature_section.find("ncom:datesigned") is None else "ncom:"
+        
+        date = signature_section.find(f"{prefix}datesigned").text
+        company = signature_section.find(f"{prefix}nameofapplicant").text
+        name = signature_section.find(f"{prefix}signername").text
+        title = signature_section.find(f"{prefix}title").text
+        signature = signature_section.find(f"{prefix}signature").text
+        
+        signature = {
+            "date": date,
+            "name": name,
+            "title": title,
+            "company": company,
+            "signature": signature
+        }
+        
+        return signature
 
     def portfolio(self, sorted_by=None) -> list:
         sort_variables = (
