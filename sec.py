@@ -770,18 +770,13 @@ class FilingNPORT(_SECFiling):
             self._soup = BeautifulSoup(self.document, "lxml")
             self._general_information = self._parse_general_information()
             self._fund_information = self._parse_fund_information()
-            self._flow_information = self._parse_flow_information()
             self._investments = self._parse_investments()
-            self._return_information = self._parse_return_information()
             self._explanatory_notes = self._parse_explanatory_notes()
             self._signature = self._parse_signature()
         else:
             raise NotImplementedError("NPORT Filing classes can only be called on XML-compliant files")
         
         self._has_short_positions = True if any(item["payoff_direction"] == "Short" for item in self._investments) else False
-    
-    def _parse_flow_information(self) -> dict:
-        pass
     
     def _parse_investments(self) -> list:
         entries = self._soup.find("invstorsecs").find_all("invstorsec")
@@ -848,11 +843,7 @@ class FilingNPORT(_SECFiling):
             )
             
         return investments
-        
-
-    def _parse_return_information(self) -> list:
-        pass
-
+    
     def _parse_explanatory_notes(self) -> dict:
         note_section = self._soup.find("explntrnotes")
         if note_section is None:
