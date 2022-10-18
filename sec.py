@@ -1359,6 +1359,71 @@ class FilingNPORT(_SECFiling):
         }
         return derivative_information
 
+    def _parse_other_derivative_information(self, derivative_section) -> dict:
+        name = derivative_section.find("othderiv").get("othdesc")
+        derivative_type = {"name": name, "abbreviation": None}
+
+        counterparty = derivative_section.find("counterparties")
+        counterparty_name = counterparty.find("counterpartyname").text
+        counterparty_lei = counterparty.find("counterpartylei").text
+        
+        reference_section = derivative_section.find("descrefinstrmnt").find("otherrefinst")
+        reference_asset_name = reference_section.find("issuername").text
+        if reference_asset_name == "N/A":
+            reference_asset_name = None
+        reference_asset_title = reference_section.find("issuetitle").text
+        identifier = {}
+        identifier_section = reference_section.find("identifiers")
+        cusip = identifier_section.find("cusip")
+        if cusip is not None:
+            cusip = cusip.get("value")               
+            identifier["cusip"] = cusip
+        isin = identifier_section.find("isin")
+        if isin is not None:
+            isin = isin.get("value")               
+            identifier["isin"] = isin
+        ticker = identifier_section.find("ticker")
+        if ticker is not None:
+            ticker = ticker.get("value")               
+            identifier["ticker"] = ticker
+        other = identifier_section.find_all("other")
+        for item in other:
+            other_name = item.get("otherdesc")
+            other_value = item.get("value")
+            identifier[other_name] = other_value
+        
+        termination_date = derivative_section.find("terminationdt").text
+        notional_amounts = derivative_section.find("notionalamts")
+        if notional_amounts is None:
+            notional_amount = float(derivative_section.find("notionalamt").text)
+        else:
+            notional_amount = float(notional_amounts.find("notionalamt").get("amt"))
+            notional_amount_currency = notional_amounts.find("notionalamt").get("curcd")
+            notional_amount = {"amount": notional_amount, "currency": notional_amount_currency}
+        
+        delta = derivative_section.find("delta").text
+        delta = None if delta == "XXXX" else float(delta)
+        
+        unrealized_appreciation = float(derivative_section.find("unrealizedappr").text)
+        
+        derivative_information = {
+            "derivative_type": derivative_type,
+            "counterparty": {
+                "name": counterparty_name,
+                "lei": counterparty_lei
+            },
+            "reference_asset": {
+                "name": reference_asset_name,
+                "title": reference_asset_title,
+                "identifier": identifier
+            },
+            "termination_date": termination_date,
+            "notional_amount": notional_amount,
+            "delta": delta,
+            "unrealized_appreciation": unrealized_appreciation
+        }
+        return derivative_information
+
     def _parse_explanatory_notes(self) -> dict:
         note_section = self._soup.find("explntrnotes")
         if note_section is None:
