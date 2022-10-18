@@ -1424,6 +1424,39 @@ class FilingNPORT(_SECFiling):
         }
         return derivative_information
 
+    def _get_lending_information(self, entry):
+        security_lending_section = entry.find("securitylending")
+        cash_collateral = security_lending_section.find("iscashcollateral")
+        if cash_collateral is not None:
+            assert cash_collateral.text == "N"
+            cash_collateral = False
+        else:
+            assert security_lending_section.find("cashcollateralcondition").get("iscashcollateral") == "Y"
+            loaned = float(security_lending_section.find("cashcollateralcondition").get("cashcollateralval")) * 1000
+        non_cash_collateral = security_lending_section.find("isnoncashcollateral")
+        if non_cash_collateral is not None:
+            assert non_cash_collateral.text == "N"
+            non_cash_collateral = False
+        else:
+            assert security_lending_section.find("noncashcollateralcondition").get("isnoncashcollateral") == "Y"
+            non_cash_collateral = float(security_lending_section.find("noncashcollateralcondition").get("noncashcollateralval")) * 1000
+            
+        loaned = security_lending_section.find("isloanbyfund")
+        if loaned is not None:
+            assert loaned.text == "N"
+            loaned = False
+        else:
+            assert security_lending_section.find("loanbyfundcondition").get("isloanbyfund") == "Y"
+            loaned = float(security_lending_section.find("loanbyfundcondition").get("loanval")) * 1000
+
+        securities_lending = {
+            "cash_collateral": cash_collateral,
+            "non_cash_collateral": non_cash_collateral,
+            "loaned": loaned
+        }
+        
+        return securities_lending
+
     def _parse_explanatory_notes(self) -> dict:
         note_section = self._soup.find("explntrnotes")
         if note_section is None:
