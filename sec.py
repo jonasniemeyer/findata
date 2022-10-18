@@ -702,7 +702,7 @@ class Filing13F(_SECFiling):
         return self._summary
 
 
-class FilingNPORT(_SECFiling):
+class FilingNPORT(_SECFiling):    
     _asset_types = {
         "AMBS": "Agency mortgage-backed securities",
         "ABS-APCP": "ABS-asset backed commercial paper",
@@ -757,7 +757,7 @@ class FilingNPORT(_SECFiling):
         "OU": "Other units",
         "PA": "Principal amount"
     }
-
+    
     def __init__(self, file: str) -> None:
         super().__init__(file)
         
@@ -767,6 +767,65 @@ class FilingNPORT(_SECFiling):
 
     def __repr__(self) -> str:
         return f"{self.submission_type} Filing({self.fund_information['series']['name']}|{self.date_filed})"
+
+    def portfolio(self, sorted_by=None) -> list:
+        sort_variables = (
+            None,
+            "name",
+            "market_value",
+            "quantity",
+            "percentage",
+            "payoff_direction"
+        )
+        if sorted_by not in (sort_variables):
+            raise ValueError(f"sorting variable has to be in {sort_variables}")
+        
+        if sorted_by is None:
+            portfolio = self._investments
+        else:
+            desc = True if sorted_by in ("market_value", "quantity", "percentage") else False
+            if sorted_by in ("quantity", "market_value", "percentage"):
+                portfolio = sorted(self._investments, key=lambda x: x["amount"][sorted_by], reverse=desc)
+            else:
+                portfolio = sorted(self._investments, key=lambda x: x[sorted_by], reverse=desc)
+        
+        return portfolio
+    
+    @property
+    def filer(self) -> dict:
+        return self._filer
+    
+    @property
+    def has_short_positions(self) -> bool:
+        return self._has_short_positions
+
+    @property
+    def explanatory_notes(self) -> dict:
+        return self._explanatory_notes
+
+    @property
+    def general_information(self) -> dict:
+        return self._general_information
+    
+    @property
+    def fund_information(self) -> dict:
+        return self._fund_information
+    
+    @property
+    def flow_information(self) -> dict:
+        return self.fund_information["flow_information"]
+    
+    @property
+    def return_information(self) -> dict:
+        return self.fund_information["return_information"]
+    
+    @property
+    def securities_lending(self) -> dict:
+        return self.fund_information["securities_lending"]
+
+    @property
+    def signature(self) -> dict:
+        return self._signature
 
     def _parse_document(self) -> None:
         if self.is_xml:
@@ -937,7 +996,6 @@ class FilingNPORT(_SECFiling):
         coupon_type = debt_section.find("couponkind").text
         if coupon_type == "N/A" or coupon_type is None:
             raise ValueError
-        # if coupon_type == "None": coupon_type = None?
         coupon_rate = debt_section.find("annualizedrt").text
         coupon_rate = None if coupon_rate == "N/A" else float(coupon_rate) / 100
 
@@ -1034,7 +1092,7 @@ class FilingNPORT(_SECFiling):
         }
         
         return debt_information
-
+    
     def _get_derivative_information(self, entry) -> Union[dict, None]:
         derivative_section = entry.find("derivativeinfo")
         
@@ -1117,7 +1175,7 @@ class FilingNPORT(_SECFiling):
             "unrealized_appreciation": unrealized_appreciation
         }
         return derivative_information
-
+    
     def _parse_forward_information(self, derivative_section) -> dict:
         abbr = derivative_section.find("fwdderiv").get("derivcat")
         derivative_type = {"name": self._derivative_types[abbr], "abbreviation": abbr}
@@ -1152,7 +1210,7 @@ class FilingNPORT(_SECFiling):
             "unrealized_appreciation": unrealized_appreciation
         }
         return derivative_information
-
+    
     def _parse_swap_information(self, derivative_section) -> dict:
         abbr = derivative_section.find("swapderiv").get("derivcat")
         derivative_type = {"name": self._derivative_types[abbr], "abbreviation": abbr}
@@ -1286,7 +1344,7 @@ class FilingNPORT(_SECFiling):
             "unrealized_appreciation": unrealized_appreciation
         }
         return derivative_information
-
+    
     def _parse_option_information(self, derivative_section) -> dict:
         abbr = derivative_section.find("optionswaptionwarrantderiv").get("derivcat")
         derivative_type = {"name": self._derivative_types[abbr], "abbreviation": abbr}
@@ -1361,7 +1419,8 @@ class FilingNPORT(_SECFiling):
             "unrealized_appreciation": unrealized_appreciation
         }
         return derivative_information
-
+        
+    
     def _parse_other_derivative_information(self, derivative_section) -> dict:
         name = derivative_section.find("othderiv").get("othdesc")
         derivative_type = {"name": name, "abbreviation": None}
@@ -1426,7 +1485,7 @@ class FilingNPORT(_SECFiling):
             "unrealized_appreciation": unrealized_appreciation
         }
         return derivative_information
-
+        
     def _get_lending_information(self, entry):
         security_lending_section = entry.find("securitylending")
         cash_collateral = security_lending_section.find("iscashcollateral")
@@ -1459,7 +1518,7 @@ class FilingNPORT(_SECFiling):
         }
         
         return securities_lending
-
+    
     def _parse_explanatory_notes(self) -> dict:
         note_section = self._soup.find("explntrnotes")
         if note_section is None:
@@ -1491,7 +1550,7 @@ class FilingNPORT(_SECFiling):
             "company": company,
             "signature": signature
         }
-
+    
     def _parse_general_information(self) -> dict:
         general_info = self._soup.find("formdata").find("geninfo")
         
@@ -1511,7 +1570,7 @@ class FilingNPORT(_SECFiling):
             "reporting_date": reporting_date,
             "is_final_filing": is_final_filing
         }
-
+    
     def _parse_fund_information(self) -> dict:
         # series data
         header_soup = BeautifulSoup(self._header, "lxml")
@@ -1774,62 +1833,3 @@ class FilingNPORT(_SECFiling):
             "return_information": return_information,
             "flow_information": flow_information
         }
-
-    def portfolio(self, sorted_by=None) -> list:
-        sort_variables = (
-            None,
-            "name",
-            "market_value",
-            "quantity",
-            "percentage",
-            "payoff_direction"
-        )
-        if sorted_by not in (sort_variables):
-            raise ValueError(f"sorting variable has to be in {sort_variables}")
-        
-        if sorted_by is None:
-            portfolio = self._investments
-        else:
-            desc = True if sorted_by in ("market_value", "quantity", "percentage") else False
-            if sorted_by in ("quantity", "market_value", "percentage"):
-                portfolio = sorted(self._investments, key=lambda x: x["amount"][sorted_by], reverse=desc)
-            else:
-                portfolio = sorted(self._investments, key=lambda x: x[sorted_by], reverse=desc)
-        
-        return portfolio
-    
-    @property
-    def filer(self) -> dict:
-        return self._filer
-    
-    @property
-    def has_short_positions(self) -> bool:
-        return self._has_short_positions
-
-    @property
-    def explanatory_notes(self) -> dict:
-        return self._explanatory_notes
-
-    @property
-    def general_information(self) -> dict:
-        return self._general_information
-    
-    @property
-    def fund_information(self) -> dict:
-        return self._fund_information
-    
-    @property
-    def flow_information(self) -> dict:
-        return self.fund_information["flow_information"]
-    
-    @property
-    def return_information(self) -> dict:
-        return self.fund_information["return_information"]
-    
-    @property
-    def securities_lending(self) -> dict:
-        return self.fund_information["securities_lending"]
-
-    @property
-    def signature(self) -> dict:
-        return self._signature
