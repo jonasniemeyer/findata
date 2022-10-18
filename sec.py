@@ -776,7 +776,7 @@ class FilingNPORT(_SECFiling):
         else:
             raise NotImplementedError("NPORT Filing classes can only be called on XML-compliant files")
         
-        self._has_short_positions = True if any(item["payoff_direction"] == "Short" for item in self._investments) else False
+        self._has_short_positions = True if any(item["amount"]["quantity"] < 0 for item in self._investments if item["amount"]["quantity"] is not None) else False
     
     def _parse_investments(self) -> list:
         entries = self._soup.find("invstorsecs").find_all("invstorsec")
