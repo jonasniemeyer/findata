@@ -482,17 +482,17 @@ class Filing13F(_SECFiling):
                     }
                     self._other_reporting_managers.append(dct)
             
-            self._investments = self._parse_holdings_from_xml()
-            self._other_managers = self._parse_other_managers_from_xml()
-            self._signature = self._parse_signature_from_xml()
-            self._summary = self._parse_summary_from_xml()
+            self._investments = self._parse_holdings()
+            self._other_managers = self._parse_other_managers()
+            self._signature = self._parse_signature()
+            self._summary = self._parse_summary()
         else:
             raise NotImplementedError
     
-    def _parse_other_managers_from_xml(self) -> dict:
+    def _parse_other_managers(self) -> dict:
         return
     
-    def _parse_signature_from_xml(self) -> dict:
+    def _parse_signature(self) -> dict:
         signature = self._soup.find("signatureblock")
         
         name = signature.find("name").text
@@ -513,7 +513,7 @@ class Filing13F(_SECFiling):
             "date": date
         }
     
-    def _parse_summary_from_xml(self) -> Union[dict, None]:
+    def _parse_summary(self) -> Union[dict, None]:
         if self.submission_type == "13F-NT":
             return None
         
@@ -553,7 +553,7 @@ class Filing13F(_SECFiling):
             "included_managers": included_managers
         }
     
-    def _parse_holdings_from_xml(self) -> list:       
+    def _parse_holdings(self) -> list:       
         if "n1:infoTable" in self._document:
             prefix = "n1:"
         elif "ns1:infoTable" in self._document:
@@ -706,25 +706,26 @@ class FilingNPORT(_SECFiling):
     def __init__(self, file: str) -> None:
         super().__init__(file)
         
-        assert self.filer is not None
+        self._filer = self._filer[0]
+        assert len(self.filer) != 0
         self._parse_document()
     
     def _parse_document(self) -> None:
         if self.is_xml:
             self._soup = BeautifulSoup(self.document, "lxml")
-            self._flow_information = self._parse_flow_information_from_xml()
-            self._investments = self._parse_investments_from_xml()
-            self._return_information = self._parse_return_information_from_xml()
-            self._signature = self._parse_signature_from_xml()
+            self._flow_information = self._parse_flow_information()
+            self._investments = self._parse_investments()
+            self._return_information = self._parse_return_information()
+            self._signature = self._parse_signature()
         else:
-            raise NotImplementedError
+            raise NotImplementedError("NPORT Filing classes can only be called on XML-compliant files")
         
         self._has_short_positions = True if any(item["payoff_direction"] == "Short" for item in self._investments) else False
     
-    def _parse_flow_information_from_xml(self) -> dict:
+    def _parse_flow_information(self) -> dict:
         pass
     
-    def _parse_investments_from_xml(self) -> list:
+    def _parse_investments(self) -> list:
         entries = self._soup.find("invstorsecs").find_all("invstorsec")
         investments = []
         for entry in entries:
@@ -791,10 +792,10 @@ class FilingNPORT(_SECFiling):
         return investments
         
 
-    def _parse_return_information_from_xml(self) -> list:
+    def _parse_return_information(self) -> list:
         pass
     
-    def _parse_signature_from_xml(self) -> dict:
+    def _parse_signature(self) -> dict:
         pass
 
     def portfolio(self, sorted_by=None) -> list:
