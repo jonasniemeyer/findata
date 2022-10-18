@@ -1150,6 +1150,140 @@ class FilingNPORT(_SECFiling):
         }
         return derivative_information
 
+    def _parse_swap_information(self, derivative_section) -> dict:
+        abbr = derivative_section.find("swapderiv").get("derivcat")
+        derivative_type = {"name": self._derivative_types[abbr], "abbreviation": abbr}
+
+        counterparty = derivative_section.find("counterparties")
+        counterparty_name = counterparty.find("counterpartyname").text
+        counterparty_lei = counterparty.find("counterpartylei").text
+
+        reference_section = derivative_section.find("descrefinstrmnt").find("otherrefinst")
+        if reference_section is not None:
+            reference_asset_name = reference_section.find("issuername").text
+            if reference_asset_name == "N/A":
+                reference_asset_name = None
+            reference_asset_title = reference_section.find("issuetitle").text
+            identifier = {}
+            identifier_section = reference_section.find("identifiers")
+            cusip = identifier_section.find("cusip")
+            if cusip is not None:
+                cusip = cusip.get("value")               
+                identifier["cusip"] = cusip
+            isin = identifier_section.find("isin")
+            if isin is not None:
+                isin = isin.get("value")               
+                identifier["isin"] = isin
+            ticker = identifier_section.find("ticker")
+            if ticker is not None:
+                ticker = ticker.get("value")               
+                identifier["ticker"] = ticker
+            other = identifier_section.find_all("other")
+            for item in other:
+                other_name = item.get("otherdesc")
+                other_value = item.get("value")
+                identifier[other_name] = other_value
+        else:
+            reference_section = derivative_section.find("descrefinstrmnt").find("indexbasketinfo")
+            reference_asset_name = reference_section.find("indexname").text
+            reference_asset_title = None
+            identifier = {"isin": reference_section.find("indexidentifier").text}
+            
+        if derivative_section.find("floatingrecdesc") is not None:
+            receiving_section = derivative_section.find("floatingrecdesc")
+            receiving_currency = receiving_section.get("curcd")
+            receiving_fixed_or_floating = receiving_section.get("fixedorfloating")
+            receiving_index = receiving_section.get("floatingrtindex")
+            receiving_spread = float(receiving_section.get("floatingrtspread"))
+            receiving_amount = float(receiving_section.get("pmntamt"))
+            receive_leg = {
+                "currency": receiving_currency,
+                "type": receiving_fixed_or_floating,
+                "index": receiving_index,
+                "spread": receiving_spread,
+                "amount": receiving_amount
+            }
+        elif derivative_section.find("fixedrecdesc") is not None:
+            receiving_section = derivative_section.find("fixedrecdesc")
+            receiving_amount = float(receiving_section.get("amount"))
+            receiving_currency = receiving_section.get("curcd")
+            receiving_fixed_or_floating = receiving_section.get("fixedorfloating")
+            receiving_rate = float(receiving_section.get("fixedrt"))
+            receive_leg = {
+                "amount": receiving_amount,
+                "currency": receiving_currency,
+                "type": receiving_fixed_or_floating,
+                "rate": receiving_rate
+            }
+        elif derivative_section.find("otherrecdesc") is not None:
+            receiving_section = derivative_section.find("otherrecdesc")
+            receiving_fixed_or_floating = receiving_section.get("fixedorfloating")
+            receiving_tenor = receiving_section.text
+            receive_leg = {
+                "type": receiving_fixed_or_floating,
+                "tenor": receiving_tenor
+            }
+
+        if derivative_section.find("floatingpmntdesc") is not None:
+            payment_section = derivative_section.find("floatingpmntdesc")
+            payment_currency = payment_section.get("curcd")
+            payment_fixed_or_floating = payment_section.get("fixedorfloating")
+            payment_index = payment_section.get("floatingrtindex")
+            payment_spread = float(payment_section.get("floatingrtspread"))
+            payment_amount = float(payment_section.get("pmntamt"))
+            pay_leg = {
+                "currency": payment_currency,
+                "type": payment_fixed_or_floating,
+                "index": payment_index,
+                "spread": payment_spread,
+                "amount": payment_amount
+            }
+        elif derivative_section.find("fixedpmntdesc") is not None:
+            payment_section = derivative_section.find("fixedpmntdesc")
+            payment_amount = float(payment_section.get("amount"))
+            payment_currency = payment_section.get("curcd")
+            payment_fixed_or_floating = payment_section.get("fixedorfloating")
+            payment_rate = float(payment_section.get("fixedrt"))
+            pay_leg = {
+                "amount": payment_amount,
+                "currency": payment_currency,
+                "type": payment_fixed_or_floating,
+                "rate": payment_rate
+            }
+        elif derivative_section.find("otherpmntdesc") is not None:
+            payment_section = derivative_section.find("otherpmntdesc")
+            payment_fixed_or_floating = payment_section.get("fixedorfloating")
+            payment_tenor = payment_section.text
+            pay_leg = {
+                "type": payment_fixed_or_floating,
+                "tenor": payment_tenor
+            }
+
+        termination_date = derivative_section.find("terminationdt").text
+        notional_amount = float(derivative_section.find("notionalamt").text)
+        currency = derivative_section.find("curcd").text
+        unrealized_appreciation = float(derivative_section.find("unrealizedappr").text)
+
+        derivative_information = {
+            "type": derivative_type,
+            "counterparty": {
+                "name": counterparty_name,
+                "lei": counterparty_lei
+            },
+            "reference_asset": {
+                "name": reference_asset_name,
+                "title": reference_asset_title,
+                "identifier": identifier
+            },
+            "receive_leg": receive_leg,
+            "pay_leg": pay_leg,
+            "termination_date": termination_date,
+            "notional_amount": notional_amount,
+            "currency": currency,
+            "unrealized_appreciation": unrealized_appreciation
+        }
+        return derivative_information
+
     def _parse_explanatory_notes(self) -> dict:
         note_section = self._soup.find("explntrnotes")
         if note_section is None:
