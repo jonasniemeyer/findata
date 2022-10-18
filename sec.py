@@ -764,7 +764,10 @@ class FilingNPORT(_SECFiling):
         self._filer = self._filer[0]
         assert len(self.filer) != 0
         self._parse_document()
-    
+
+    def __repr__(self) -> str:
+        return f"{self.submission_type} Filing({self.fund_information['series']['name']}|{self.date_filed})"
+
     def _parse_document(self) -> None:
         if self.is_xml:
             self._soup = BeautifulSoup(self.document, "lxml")
