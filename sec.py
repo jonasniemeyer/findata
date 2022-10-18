@@ -925,6 +925,113 @@ class FilingNPORT(_SECFiling):
         
         return investments
     
+    def _get_debt_information(self, entry) -> Union[dict, None]:
+        debt_section = entry.find("debtsec")
+        if debt_section is None:
+            return None
+        
+        maturity = debt_section.find("maturitydt").text
+        coupon_type = debt_section.find("couponkind").text
+        if coupon_type == "N/A" or coupon_type is None:
+            raise ValueError
+        # if coupon_type == "None": coupon_type = None?
+        coupon_rate = debt_section.find("annualizedrt").text
+        coupon_rate = None if coupon_rate == "N/A" else float(coupon_rate) / 100
+
+        default = debt_section.find("isdefault").text
+        if default == "Y":
+            default = True
+        elif default == "N":
+             default = False
+        assert isinstance(default, bool)
+
+        coupon_payments_deferred = debt_section.find("areintrstpmntsinarrs").text
+        if coupon_payments_deferred == "Y":
+            coupon_payments_deferred = True
+        elif coupon_payments_deferred == "N":
+             coupon_payments_deferred = False
+        assert isinstance(coupon_payments_deferred, bool)
+
+        paid_in_kind = debt_section.find("ispaidkind").text
+        if paid_in_kind == "Y":
+            paid_in_kind = True
+        elif paid_in_kind == "N":
+             paid_in_kind = False
+        assert isinstance(paid_in_kind, bool)
+
+        if debt_section.find("ismandatoryconvrtbl") is None:
+            convertible_information = None
+        else:                
+            mandatory_convertible = debt_section.find("ismandatoryconvrtbl").text
+            if mandatory_convertible == "Y":
+                mandatory_convertible = True
+            elif mandatory_convertible == "N":
+                 mandatory_convertible = False
+            assert isinstance(mandatory_convertible, bool)
+
+            contingent_convertible = debt_section.find("iscontngtconvrtbl").text
+            if contingent_convertible == "Y":
+                contingent_convertible = True
+            elif contingent_convertible == "N":
+                 contingent_convertible = False
+            assert isinstance(contingent_convertible, bool)
+
+            conversion_asset_section = debt_section.find("dbtsecrefinstruments").find("dbtsecrefinstrument")
+            conversion_asset_name = conversion_asset_section.find("name").text
+            conversion_asset_title = conversion_asset_section.find("title").text
+            conversion_asset_currency = conversion_asset_section.find("curcd").text
+            conversion_asset_identifier = {}
+            conversion_asset_cusip = conversion_asset_section.find("cusip")
+            if conversion_asset_cusip is not None:
+                conversion_asset_identifier["cusip"] = conversion_asset_cusip.get("value")
+            conversion_asset_isin = conversion_asset_section.find("isin")
+            if conversion_asset_isin is not None:           
+                conversion_asset_identifier["isin"] = conversion_asset_isin.get("value")
+            other = conversion_asset_section.find_all("other")
+            for item in other:
+                other_name = item.get("otherdesc")
+                other_value = item.get("value")
+                conversion_asset_identifier[other_name] = other_value
+
+            conversion_asset = {
+                "name": conversion_asset_name,
+                "title": conversion_asset_title,
+                "currency": conversion_asset_currency,
+                "identifier": conversion_asset_identifier
+            }
+
+            conversion_information = debt_section.find("currencyinfos").find("currencyinfo")
+            conversion_ratio = conversion_information.get("convratio")
+            conversion_ratio = None if conversion_ratio == "N/A" else float(conversion_ratio)                
+            conversion_currency = conversion_information.get("curcd")
+            conversion_information = {
+                "ratio": conversion_ratio,
+                "currency": conversion_currency
+            }
+
+            delta = debt_section.find("delta").text
+            delta = None if delta == "XXXX" else float(delta)
+
+            convertible_information = {
+                "mandatory_convertible": mandatory_convertible,
+                "contingent_convertible": contingent_convertible,
+                "conversion_asset": conversion_asset,
+                "conversion_ratio": conversion_information,
+                "delta": delta
+            }
+
+        debt_information = {
+            "maturity": maturity,
+            "coupon_type": coupon_type,
+            "coupon_rate": coupon_rate,
+            "default": default,
+            "coupon_payments_deferred": coupon_payments_deferred,
+            "paid_in_kind": paid_in_kind,
+            "convertible_information": convertible_information
+        }
+        
+        return debt_information
+
     def _parse_explanatory_notes(self) -> dict:
         note_section = self._soup.find("explntrnotes")
         if note_section is None:
