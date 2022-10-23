@@ -82,7 +82,7 @@ class TestRatingData:
             assert len(item["ratings"]) == 1
             assert dt.date.fromisoformat(item["ratings"][0]["date"])
             assert isinstance(item["ratings"][0]["news_url"], str)
-            assert isinstance(item["ratings"][0]["news_title"], str)
+            assert (isinstance(item["ratings"][0]["news_title"], str) or item["ratings"][0]["news_title"] is None)
             assert isinstance(item["analyst_ranking"], dict)
             assert isinstance(item["analyst_ranking"]["rank"], int)
             assert isinstance(item["analyst_ranking"]["successful_recommendations"], int)

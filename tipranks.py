@@ -40,14 +40,9 @@ class TipranksAnalystReader:
                 rating = rating.text.strip()
             change = cells[4].find("span").text
             price_target = cells[5].find("div")
-            if price_target is None:
-                price_target = None
-            else:
-                try:
-                    price_target = float(re.findall(".+?([0-9,.]+)", price_target.text.split("(")[0])[0].replace(",", "").strip())
-                except ValueError:
-                    price_target = None
-            no_ratings = int(cells[8].find("span").text)
+            if price_target is not None:
+                price_target = float(re.findall("\.?([0-9,.]+)", price_target.text.split("(")[0])[0].replace(",", "").strip())
+            no_ratings = int(cells[6].find("span").text)
             ratings.append(
                 {
                    "ticker": ticker,
@@ -95,10 +90,10 @@ class TipranksAnalystReader:
         personal = profile_divs[0]
         performance = profile_divs[1].find_all("div", recursive=False)[1]
 
-        name = personal.find("h1").text
-        company = personal.find_all("div", recursive=False)[1].find("span").text
+        name = personal.find("h2").text
+        company = personal.find_all("div", recursive=False)[0].find("span").text
         analyst_rank, total_analysts = re.findall(
-            "Ranked #([0-9,]+) out of ([0-9,]+) Analysts on TipRanks",
+            "#([0-9,]+) out of ([0-9,]+) Wall Street Analysts",
             personal.find_all("div", recursive=False)[2].find_all("div", recursive=False)[1].text
         )[0]
         analyst_rank = int(analyst_rank.replace(",", ""))
@@ -106,7 +101,7 @@ class TipranksAnalystReader:
         image_url = personal.find("img").get("src")
 
         successful_recommendations, total_recommendations = re.findall(
-            "([0-9]+) out of ([0-9]+) Profitable Transactions",
+            "([0-9]+) out of ([0-9]+) transactions made a profit",
             performance.find_all("div", recursive=False)[0].find_all("div", recursive=False)[2].text
         )[0]
         successful_recommendations = int(successful_recommendations)
@@ -508,7 +503,3 @@ class TipranksStockReader:
                 params = {"name": self.ticker}
             ).json()
         return self._ratings_data
-
-if __name__ == "__main__":
-    data = TipranksAnalystReader("A.J. Rice").ratings()
-    print(data)
