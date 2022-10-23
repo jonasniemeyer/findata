@@ -52,8 +52,7 @@ class YahooReader:
             self._ticker = ticker.upper()
         else:
             if isin:
-                self._isin = isin.upper()
-                search_input = self._isin
+                search_input = isin.upper()
             elif other_identifier:
                 search_input = other_identifier
             else:
@@ -85,39 +84,6 @@ class YahooReader:
     @property
     def security_type(self):
         return self._security_type
-
-    def isin(self):
-        if hasattr(self, "_isin"):
-            return self._isin
-        
-        if "." not in self.ticker:
-            ticker_dot = self.ticker.replace('-', '.')
-            response = requests.get(
-                url=f"https://markets.businessinsider.com/ajax/SearchController_Suggest?max_results=1&query={ticker_dot}",
-                headers=HEADERS
-            ).text
-            match = re.findall(f"{ticker_dot}\|([A-Z0-9]+)\|{ticker_dot}", response)
-            if len(match) == 1:
-                self._isin = match[0]
-                
-                #assert that the ticker matching the isin corresponds to the yahoo ticker
-                params = {
-                    "yfin-usr-qry": self._isin
-                }
-                response = requests.get(self.quote_url, params=params, headers=HEADERS)
-                matching_ticker = re.findall(f"{self.quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response.url)
-                if len(matching_ticker) == 1:
-                    matching_ticker = matching_ticker[0].strip()
-                try:
-                    assert self.ticker == matching_ticker
-                except AssertionError:
-                    raise DatasetError(f"the ticker for {self.isin} is ambiguous: {self.ticker} and {matching_ticker}")
-            else:
-                self._isin = None
-        else:
-            self._isin = None
-        
-        return self._isin
     
     def profile(self) -> dict:        
         try:

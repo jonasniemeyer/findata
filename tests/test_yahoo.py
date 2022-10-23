@@ -34,9 +34,6 @@ class TestEquity:
     def test_name(self):
         assert self.reader.name == "Apple Inc."
     
-    def test_isin(self):
-        assert self.reader.isin() == "US0378331005"
-    
     def test_security_type(self):
         assert self.reader.security_type == "EQUITY"
     
@@ -373,9 +370,6 @@ class TestETF:
     @classmethod
     def setup_class(cls):
         cls.reader = YahooReader("SPY")
-    
-    def test_isin(self):
-        assert self.reader.isin() is None
     
     def test_security_type(self):
         assert self.reader.security_type == "ETF"
