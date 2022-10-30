@@ -1,7 +1,7 @@
 import time
 import pandas as pd
 from bs4 import BeautifulSoup
-from selenium import webdriver
+from selenium import webdriver, common
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -70,13 +70,21 @@ class CMEReader:
                 )
                 button_cookies.click()
                 clicked = True
-            except:
+            except common.exceptions.TimeoutException:
                 pass
             i += 1
-    
+        
+        try:
+            button_survey = WebDriverWait(self.driver, 2).until(
+                EC.element_to_be_clickable((By.XPATH, f"/html/body/div[13]/div[2]/div/div[1]/button"))
+            )
+            button_survey.click()
+        except common.exceptions.TimeoutException:
+            pass
+
     def _parse(self) -> dict:
         data = {}
-        
+
         html = self.driver.page_source
         soup = BeautifulSoup(html, "lxml")
         button = soup.find("select", {"class": "dropdown-toggle"})
@@ -93,8 +101,6 @@ class CMEReader:
                 continue
             date = pd.to_datetime(option.get("value"))
             button_dates = self.driver.find_element_by_xpath("/html/body/main/div/div[3]/div[2]/div/div/div/div/div/div[2]/div/div/div/div/div/div[4]/div/div/div/div/select")
-            actions = ActionChains(self.driver)
-            actions.move_to_element(button_dates).perform()
             button_dates.click()
             button_refresh = self.driver.find_element_by_xpath(f"/html/body/main/div/div[3]/div[2]/div/div/div/div/div/div[2]/div/div/div/div/div/div[4]/div/div/div/div/select/option[{index+1}]")
             button_refresh.click()
@@ -109,12 +115,14 @@ class CMEReader:
         time.sleep(1)
         try:
             button_expand = self.driver.find_element_by_xpath("/html/body/main/div/div[3]/div[2]/div/div/div/div/div/div[2]/div/div/div/div/div/div[8]/div[2]/button")
-            actions = ActionChains(self.driver)
-            actions.move_to_element(button_expand).perform()
-            self.driver.execute_script("window.scrollBy(0, 200)")
+        except common.exceptions.NoSuchElementException:
+            y_distance = 0
+        else:
+            y_distance = button_expand.location["y"] - 200
+            self.driver.execute_script(f"window.scrollBy(0, {y_distance})")
+            time.sleep(1)
             button_expand.click()
-        except:
-            pass
+        
         html = self.driver.page_source
         df = pd.read_html(html)[0]
         df = df.set_index("Month")
@@ -130,4 +138,6 @@ class CMEReader:
             df[col] = df[col].apply(lambda x: x.replace("UNCH", "0") if isinstance(x, str) else x)
             df[col] = pd.to_numeric(df[col])
         df = df.rename(columns = {"Est. Volume": "Volume", "Prior day OI": "Open Interest"})
+        self.driver.execute_script(f"window.scrollBy(0, {-y_distance})")
+        time.sleep(1)
         return df
