@@ -1552,7 +1552,11 @@ class FilingNPORT(_SECFiling):
         }
     
     def _parse_general_information(self) -> dict:
-        general_info = self._soup.find("formdata").find("geninfo")
+        form_data = self._soup.find("formdata")
+        if form_data is None:
+            form_data = self._soup.find("nport:formdata")
+        
+        general_info = form_data.find("geninfo")
         
         filer_lei = general_info.find("reglei").text
         fiscal_year_end = general_info.find("reppdend").text
@@ -1563,50 +1567,35 @@ class FilingNPORT(_SECFiling):
         elif is_final_filing == "N":
             is_final_filing = False
         assert isinstance(is_final_filing, bool)
-        
-        return {
-            "filer_lei": filer_lei,
-            "fiscal_year_end": fiscal_year_end,
-            "reporting_date": reporting_date,
-            "is_final_filing": is_final_filing
-        }
-    
-    def _parse_fund_information(self) -> dict:
+
         # series data
         header_soup = BeautifulSoup(self._header, "lxml")
         series_section = header_soup.find("series-and-classes-contracts-data")
         
         if series_section is None:
-            form_data = self._soup.find("formdata")
-            if form_data is None:
-                form_data = self._soup.find("nport:formdata")
             general_info = form_data.find("geninfo")
-            series_id = None
+            series_cik = None
             series_name = general_info.find("seriesname").text
             lei = general_info.find("serieslei").text
             classes = None
         else:
             series_section = series_section.find("existing-series-and-classes-contracts").find("series")
-            series_id = series_section.find("series-id").find(text=True).strip()
+            series_cik = series_section.find("series-id").find(text=True).strip()
             series_name = series_section.find("series-name").find(text=True).strip()
-
-            form_data = self._soup.find("formdata")
-            if form_data is None:
-                form_data = self._soup.find("nport:formdata")
             lei = form_data.find("geninfo").find("serieslei").text
 
             # class data
             classes = []
             class_tags = series_section.find_all("class-contract")
             for tag in class_tags:
-                id_ = tag.find("class-contract-id").find(text=True).strip()
+                cik = tag.find("class-contract-id").find(text=True).strip()
                 name = tag.find("class-contract-name").find(text=True).strip()
                 ticker = tag.find("class-contract-ticker-symbol")
                 if ticker is not None:
                     ticker = ticker.find(text=True).strip()
                 classes.append(
                     {
-                        "id": id_,
+                        "cik": cik,
                         "name": name,
                         "ticker": ticker
                     }
@@ -1614,10 +1603,21 @@ class FilingNPORT(_SECFiling):
         
         series = {
             "name": series_name,
-            "id": series_id,
+            "cik": series_cik,
             "lei": lei
         }
         
+        return {
+            "filer_lei": filer_lei,
+            "series": series,
+            "classes": classes,
+            "fiscal_year_end": fiscal_year_end,
+            "reporting_date": reporting_date,
+            "is_final_filing": is_final_filing
+        }
+    
+    def _parse_fund_information(self) -> dict:        
+        form_data = self._soup.find("formdata")
         fund_section = form_data.find("fundinfo")
         
         # assets and liabilities
@@ -1642,7 +1642,9 @@ class FilingNPORT(_SECFiling):
         delayed_delivery = float(fund_section.find("delaydeliv").text)
         standby_commitment = float(fund_section.find("standbycommit").text)
         liquiditation_preference = float(fund_section.find("liquidpref").text)
-        cash = float(fund_section.find("cshnotrptdincord").text)
+        cash = fund_section.find("cshnotrptdincord")
+        if cash is not None:
+            cash = float(cash.text)
 
         accounts_payable = {
             "1-year": {
@@ -1817,14 +1819,12 @@ class FilingNPORT(_SECFiling):
             sales = flow.get("sales")
             sales = None if sales == "N/A" else float(sales)
             flow_information[month] = {
-                "redemption": redemption,
-                "reinvestment": reinvestment,
-                "sales": sales
+                "sales": sales,
+                "reinvestments": reinvestment,
+                "redemption": redemption
             }
         
         return {
-            "series": series,
-            "classes": classes,
             "total_assets": total_assets,
             "total_liabilities": total_liabilities,
             "net_assets": net_assets,
