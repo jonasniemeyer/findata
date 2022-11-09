@@ -236,7 +236,14 @@ class _SECFiling:
         if len(fiscal_year_end) == 0:
             fiscal_year_end = None
         else:
-            fiscal_year_end = (int(fiscal_year_end[0][:2]), int(fiscal_year_end[0][2:]))
+            year = dt.date.fromisoformat(self.date_of_period).year
+            month = int(fiscal_year_end[0][:2])
+            day = int(fiscal_year_end[0][2:])
+            fiscal_year_end = dt.date(
+                year=year,
+                month=month,
+                day=day
+            ).isoformat()
         
         business_address, mail_address = self._parse_addresses(section)
         
@@ -259,8 +266,10 @@ class _SECFiling:
         data = {
             "name": name,
             "cik": cik,
-            "sic_name": sic_name,
-            "sic_code": sic_code,
+            "sic": {
+                "name": sic_name,
+                "code": sic_code
+            },
             "irs_number": irs,
             "state": state,
             "fiscal_year_end": fiscal_year_end,
