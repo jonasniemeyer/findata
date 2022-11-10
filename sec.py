@@ -1660,7 +1660,55 @@ class FilingNPORT(_SECFiling):
             "cash": cash
         }
         
-        portfolio_level_risk = None
+        # portfolio level risk information
+        risk_section = fund_section.find("curmetrics")
+        if risk_section is None:
+            portfolio_level_risk = None
+        else:
+            portfolio_level_risk = {
+                "interest_rate_risk": {},
+                "credit_spread_risk": {}
+            }
+
+            for tag in risk_section.find_all("curmetric"):
+                currency = tag.find("curcd").text
+                duration_tag1 = tag.find("intrstrtriskdv01")
+                duration_tag100 = tag.find("intrstrtriskdv100")
+                portfolio_level_risk["interest_rate_risk"][currency] = {
+                    "1bps": {
+                        3: float(duration_tag1.get("period3mon")),
+                        12: float(duration_tag1.get("period1yr")),
+                        60: float(duration_tag1.get("period5yr")),
+                        120: float(duration_tag1.get("period10yr")),
+                        360: float(duration_tag1.get("period30yr"))
+                    },
+                    "100bps": {
+                        3: float(duration_tag100.get("period3mon")),
+                        12: float(duration_tag100.get("period1yr")),
+                        60: float(duration_tag100.get("period5yr")),
+                        120: float(duration_tag100.get("period10yr")),
+                        360: float(duration_tag100.get("period30yr"))
+                    }
+                }
+
+            investment_grade_tag = fund_section.find("creditsprdriskinvstgrade")
+            non_investment_grade_tag = fund_section.find("creditsprdriskinvstgrade")
+            portfolio_level_risk["credit_spread_risk"] = {
+                "investment_grade": {
+                    3: float(investment_grade_tag.get("period3mon")),
+                    12: float(investment_grade_tag.get("period1yr")),
+                    60: float(investment_grade_tag.get("period5yr")),
+                    120: float(investment_grade_tag.get("period10yr")),
+                    360: float(investment_grade_tag.get("period30yr"))
+                },
+                "non_investment_grade": {
+                    3: float(non_investment_grade_tag.get("period3mon")),
+                    12: float(non_investment_grade_tag.get("period1yr")),
+                    60: float(non_investment_grade_tag.get("period5yr")),
+                    120: float(non_investment_grade_tag.get("period10yr")),
+                    360: float(non_investment_grade_tag.get("period30yr"))
+                }
+            }
 
         # lending information
         borrowers_tag = fund_section.find("borrowers")
