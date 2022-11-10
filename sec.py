@@ -911,7 +911,7 @@ class FilingNPORT(_SECFiling):
                 currency = entry.find("currencyconditional")
                 currency_name = currency.get("curcd")
                 exchange_rate = currency.get("exchangert")
-                exchange_rate = None if exchange_rate == "N/A" else float(exchange_rate)
+                exchange_rate = None if exchange_rate == "N/A" else round(float(exchange_rate), 6)
             else:
                 currency_name = currency.text
                 exchange_rate = None
@@ -974,7 +974,7 @@ class FilingNPORT(_SECFiling):
             
             debt_information = self._get_debt_information(entry)
             repurchase_information = None
-            derivative_information = None #self._get_derivative_information(entry)
+            derivative_information = self._get_derivative_information(entry)
             securities_lending = self._get_lending_information(entry)
             
             investments.append(
@@ -1108,19 +1108,44 @@ class FilingNPORT(_SECFiling):
         
         if derivative_section is None:
             return None
+
+        counterparty = derivative_section.find("counterparties")
+        counterparty_name = counterparty.find("counterpartyname").text
+        if counterparty_name == "N/A":
+            counterparty_name = None
+        counterparty_lei = counterparty.find("counterpartylei").text
+        if counterparty_lei == "N/A":
+            counterparty_lei = None
         
-        if derivative_section.find("fwdderiv") is not None:
-            derivative_information = self._parse_forward_information(derivative_section)
-        elif derivative_section.find("futrderiv") is not None:
-            derivative_information = self._parse_future_information(derivative_section)
-        elif derivative_section.find("swapderiv") is not None:
-            derivative_information = self._parse_swap_information(derivative_section)
-        elif derivative_section.find("optionswaptionwarrantderiv") is not None:
-            derivative_information = self._parse_option_information(derivative_section)
-        elif derivative_section.find("othderiv") is not None:
-            derivative_information = self._parse_other_derivative_information(derivative_section)
+        derivative_abbr = derivative_section.contents[1].get("derivcat")
+        if derivative_abbr == "OTH":
+            derivative_name = derivative_section.contents[1].get("othdesc")
+        else:
+            derivative_name = self._derivative_types[derivative_abbr]
+        derivative_type = {"name": derivative_name, "abbreviation": derivative_abbr}
         
-        return derivative_information
+        if derivative_abbr == "FWD":
+            derivative_specific_information = self._parse_currency_forward_information(derivative_section)
+        elif derivative_abbr == "FUT":
+            derivative_specific_information = self._parse_future_information(derivative_section)
+        elif derivative_abbr == "SWP":
+            derivative_specific_information = self._parse_swap_information(derivative_section)
+        elif derivative_abbr in ("OPT", "SWO", "WAR"):
+            derivative_specific_information = self._parse_option_information(derivative_section)
+        elif derivative_abbr == "OTH":
+            derivative_specific_information = self._parse_other_derivative_information(derivative_section)
+        
+        return {
+            "type": {
+                "name": derivative_type,
+                "abbreviation": derivative_abbr
+            },
+            "counterparty": {
+                "name": counterparty_name,
+                "lei": counterparty_lei
+            },
+            **derivative_specific_information
+        }
 
     def _parse_future_information(self, derivative_section) -> dict:
         abbr = derivative_section.find("futrderiv").get("derivcat")
@@ -1186,7 +1211,7 @@ class FilingNPORT(_SECFiling):
         }
         return derivative_information
     
-    def _parse_forward_information(self, derivative_section) -> dict:
+    def _parse_currency_forward_information(self, derivative_section) -> dict:
         abbr = derivative_section.find("fwdderiv").get("derivcat")
         derivative_type = {"name": self._derivative_types[abbr], "abbreviation": abbr}
 
