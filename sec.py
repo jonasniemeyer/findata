@@ -744,6 +744,7 @@ class FilingNPORT(_SECFiling):
         "FWD": "Forward",
         "FUT": "Future",
         "OPT": "Option",
+        "OTH": "Other",
         "SWO": "Swaption",
         "SWP": "Swap",
         "WAR": "Warrant"
@@ -775,7 +776,7 @@ class FilingNPORT(_SECFiling):
         self._parse_document()
 
     def __repr__(self) -> str:
-        return f"{self.submission_type} Filing({self.fund_information['series']['name']}|{self.date_filed})"
+        return f"{self.submission_type} Filing({self.general_information['series']['cik']}|{self.general_information['series']['name']}|{self.general_information['reporting_date']})"
 
     def portfolio(self, sorted_by=None) -> list:
         sort_variables = (
@@ -794,9 +795,9 @@ class FilingNPORT(_SECFiling):
         else:
             desc = True if sorted_by in ("market_value", "quantity", "percentage") else False
             if sorted_by in ("quantity", "market_value", "percentage"):
-                portfolio = sorted(self._investments, key=lambda x: x["amount"][sorted_by], reverse=desc)
+                portfolio = sorted(self._investments, key=lambda x: x["amount"][sorted_by] if x["amount"][sorted_by] is not None else 0, reverse=desc)
             else:
-                portfolio = sorted(self._investments, key=lambda x: x[sorted_by], reverse=desc)
+                portfolio = sorted(self._investments, key=lambda x: x[sorted_by] if x[sorted_by] is not None else 0, reverse=desc)
         
         return portfolio
     
