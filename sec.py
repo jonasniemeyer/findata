@@ -1092,17 +1092,17 @@ class FilingNPORT(_SECFiling):
                 "delta": delta
             }
 
-        debt_information = {
+        return {
             "maturity": maturity,
-            "coupon_type": coupon_type,
-            "coupon_rate": coupon_rate,
+            "coupon": {
+                "rate": coupon_rate,
+                "type": coupon_type
+            },
             "default": default,
             "coupon_payments_deferred": coupon_payments_deferred,
             "paid_in_kind": paid_in_kind,
             "convertible_information": convertible_information
         }
-        
-        return debt_information
     
     def _get_derivative_information(self, entry) -> Union[dict, None]:
         derivative_section = entry.find("derivativeinfo")
