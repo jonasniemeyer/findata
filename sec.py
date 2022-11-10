@@ -1148,13 +1148,6 @@ class FilingNPORT(_SECFiling):
         }
 
     def _parse_future_information(self, derivative_section) -> dict:
-        abbr = derivative_section.find("futrderiv").get("derivcat")
-        derivative_type = {"name": self._derivative_types[abbr], "abbreviation": abbr}
-
-        counterparty = derivative_section.find("counterparties")
-        counterparty_name = counterparty.find("counterpartyname").text
-        counterparty_lei = counterparty.find("counterpartylei").text
-
         reference_section = derivative_section.find("descrefinstrmnt").find("otherrefinst")
         if reference_section is not None:
             reference_asset_name = reference_section.find("issuername").text
@@ -1187,17 +1180,15 @@ class FilingNPORT(_SECFiling):
             identifier = {"isin": reference_section.find("indexidentifier").text}
 
         future_payoff_direction = derivative_section.find("payoffprof").text
+        assert future_payoff_direction != "N/A"
         expiration_date = derivative_section.find("expdate").text
+        assert expiration_date != "N/A"
         notional_amount = float(derivative_section.find("notionalamt").text)
         currency = derivative_section.find("curcd").text
+        assert currency != "N/A"
         unrealized_appreciation = float(derivative_section.find("unrealizedappr").text)
 
-        derivative_information = {
-            "type": derivative_type,
-            "counterparty": {
-                "name": counterparty_name,
-                "lei": counterparty_lei
-            },
+        return {
             "reference_asset": {
                 "name": reference_asset_name,
                 "title": reference_asset_title,
@@ -1209,30 +1200,20 @@ class FilingNPORT(_SECFiling):
             "currency": currency,
             "unrealized_appreciation": unrealized_appreciation
         }
-        return derivative_information
     
     def _parse_currency_forward_information(self, derivative_section) -> dict:
-        abbr = derivative_section.find("fwdderiv").get("derivcat")
-        derivative_type = {"name": self._derivative_types[abbr], "abbreviation": abbr}
-
-        counterparty = derivative_section.find("counterparties")
-        counterparty_name = counterparty.find("counterpartyname").text
-        counterparty_lei = counterparty.find("counterpartylei").text
-
         amount_currency_short = float(derivative_section.find("amtcursold").text)
         currency_short = derivative_section.find("cursold").text
+        assert currency_short != "N/A"
+
         amount_currency_long = float(derivative_section.find("amtcurpur").text)
         currency_long = derivative_section.find("curpur").text
+        assert currency_long != "N/A"
 
         settlement_date = derivative_section.find("settlementdt").text
         unrealized_appreciation = float(derivative_section.find("unrealizedappr").text)
 
-        derivative_information = {
-            "type": derivative_type,
-            "counterparty": {
-                "name": counterparty_name,
-                "lei": counterparty_lei
-            },
+        return {
             "long": {
                 "amount": amount_currency_long,
                 "currency": currency_long
@@ -1244,46 +1225,42 @@ class FilingNPORT(_SECFiling):
             "settlement": settlement_date,
             "unrealized_appreciation": unrealized_appreciation
         }
-        return derivative_information
     
     def _parse_swap_information(self, derivative_section) -> dict:
-        abbr = derivative_section.find("swapderiv").get("derivcat")
-        derivative_type = {"name": self._derivative_types[abbr], "abbreviation": abbr}
-
-        counterparty = derivative_section.find("counterparties")
-        counterparty_name = counterparty.find("counterpartyname").text
-        counterparty_lei = counterparty.find("counterpartylei").text
-
-        reference_section = derivative_section.find("descrefinstrmnt").find("otherrefinst")
-        if reference_section is not None:
-            reference_asset_name = reference_section.find("issuername").text
-            if reference_asset_name == "N/A":
-                reference_asset_name = None
-            reference_asset_title = reference_section.find("issuetitle").text
-            identifier = {}
-            identifier_section = reference_section.find("identifiers")
-            cusip = identifier_section.find("cusip")
-            if cusip is not None:
-                cusip = cusip.get("value")               
-                identifier["cusip"] = cusip
-            isin = identifier_section.find("isin")
-            if isin is not None:
-                isin = isin.get("value")               
-                identifier["isin"] = isin
-            ticker = identifier_section.find("ticker")
-            if ticker is not None:
-                ticker = ticker.get("value")               
-                identifier["ticker"] = ticker
-            other = identifier_section.find_all("other")
-            for item in other:
-                other_name = item.get("otherdesc")
-                other_value = item.get("value")
-                identifier[other_name] = other_value
+        reference_section = derivative_section.find("descrefinstrmnt")
+        if reference_section is None:
+            pass
         else:
-            reference_section = derivative_section.find("descrefinstrmnt").find("indexbasketinfo")
-            reference_asset_name = reference_section.find("indexname").text
-            reference_asset_title = None
-            identifier = {"isin": reference_section.find("indexidentifier").text}
+            reference_section = reference_section.find("otherrefinst")
+            if reference_section is not None:
+                reference_asset_name = reference_section.find("issuername").text
+                if reference_asset_name == "N/A":
+                    reference_asset_name = None
+                reference_asset_title = reference_section.find("issuetitle").text
+                identifier = {}
+                identifier_section = reference_section.find("identifiers")
+                cusip = identifier_section.find("cusip")
+                if cusip is not None:
+                    cusip = cusip.get("value")
+                    identifier["cusip"] = cusip
+                isin = identifier_section.find("isin")
+                if isin is not None:
+                    isin = isin.get("value")
+                    identifier["isin"] = isin
+                ticker = identifier_section.find("ticker")
+                if ticker is not None:
+                    ticker = ticker.get("value")
+                    identifier["ticker"] = ticker
+                other = identifier_section.find_all("other")
+                for item in other:
+                    other_name = item.get("otherdesc")
+                    other_value = item.get("value")
+                    identifier[other_name] = other_value
+            else:
+                reference_section = reference_section.find("indexbasketinfo")
+                reference_asset_name = reference_section.find("indexname").text
+                reference_asset_title = None
+                identifier = {"isin": reference_section.find("indexidentifier").text}
             
         if derivative_section.find("floatingrecdesc") is not None:
             receiving_section = derivative_section.find("floatingrecdesc")
@@ -1336,8 +1313,10 @@ class FilingNPORT(_SECFiling):
             }
         elif derivative_section.find("fixedpmntdesc") is not None:
             payment_section = derivative_section.find("fixedpmntdesc")
-            payment_amount = float(payment_section.get("amount"))
+            payment_amount = payment_section.get("amount")
+            payment_amount = None if payment_amount == "N/A" else float(payment_amount)
             payment_currency = payment_section.get("curcd")
+            assert payment_currency != "N/A"
             payment_fixed_or_floating = payment_section.get("fixedorfloating")
             payment_rate = float(payment_section.get("fixedrt"))
             pay_leg = {
@@ -1356,16 +1335,14 @@ class FilingNPORT(_SECFiling):
             }
 
         termination_date = derivative_section.find("terminationdt").text
+        assert termination_date != "N/A"
+        upfront_payments = float(derivative_section.find("upfrontpmnt").text)
         notional_amount = float(derivative_section.find("notionalamt").text)
         currency = derivative_section.find("curcd").text
+        assert currency != "N/A"
         unrealized_appreciation = float(derivative_section.find("unrealizedappr").text)
 
-        derivative_information = {
-            "type": derivative_type,
-            "counterparty": {
-                "name": counterparty_name,
-                "lei": counterparty_lei
-            },
+        return {
             "reference_asset": {
                 "name": reference_asset_name,
                 "title": reference_asset_title,
@@ -1374,20 +1351,13 @@ class FilingNPORT(_SECFiling):
             "receive_leg": receive_leg,
             "pay_leg": pay_leg,
             "termination_date": termination_date,
+            "upfront_payments": upfront_payments,
             "notional_amount": notional_amount,
             "currency": currency,
             "unrealized_appreciation": unrealized_appreciation
         }
-        return derivative_information
     
     def _parse_option_information(self, derivative_section) -> dict:
-        abbr = derivative_section.find("optionswaptionwarrantderiv").get("derivcat")
-        derivative_type = {"name": self._derivative_types[abbr], "abbreviation": abbr}
-
-        counterparty = derivative_section.find("counterparties")
-        counterparty_name = counterparty.find("counterpartyname").text
-        counterparty_lei = counterparty.find("counterpartylei").text
-        
         option_type = derivative_section.find("putorcall").text
         trade_direction = derivative_section.find("writtenorpur").text
         
@@ -1397,19 +1367,21 @@ class FilingNPORT(_SECFiling):
             if reference_asset_name == "N/A":
                 reference_asset_name = None
             reference_asset_title = reference_section.find("issuetitle").text
+            if reference_asset_title == "N/A":
+                reference_asset_title = None
             identifier = {}
             identifier_section = reference_section.find("identifiers")
             cusip = identifier_section.find("cusip")
             if cusip is not None:
-                cusip = cusip.get("value")               
+                cusip = cusip.get("value")
                 identifier["cusip"] = cusip
             isin = identifier_section.find("isin")
             if isin is not None:
-                isin = isin.get("value")               
+                isin = isin.get("value")
                 identifier["isin"] = isin
             ticker = identifier_section.find("ticker")
             if ticker is not None:
-                ticker = ticker.get("value")               
+                ticker = ticker.get("value")
                 identifier["ticker"] = ticker
             other = identifier_section.find_all("other")
             for item in other:
@@ -1422,23 +1394,20 @@ class FilingNPORT(_SECFiling):
             reference_asset_title = None
             identifier = {"isin": reference_section.find("indexidentifier").text}
         
-        no_shares = float(derivative_section.find("shareno").text)
-        
+        no_shares = derivative_section.find("shareno").text
+        no_shares = None if no_shares == "N/A" else float(no_shares)
         exercise_price = float(derivative_section.find("exerciseprice").text)
         currency = derivative_section.find("exercisepricecurcd").text
+        assert currency != "N/A"
         expiration_date = derivative_section.find("expdt").text
+        assert expiration_date != "N/A"
         
         delta = derivative_section.find("delta").text
         delta = None if delta == "XXXX" else float(delta)
         
         unrealized_appreciation = float(derivative_section.find("unrealizedappr").text)
         
-        derivative_information = {
-            "derivative_type": derivative_type,
-            "counterparty": {
-                "name": counterparty_name,
-                "lei": counterparty_lei
-            },
+        return {
             "option_type": option_type,
             "trade_direction": trade_direction,
             "reference_asset": {
@@ -1453,17 +1422,8 @@ class FilingNPORT(_SECFiling):
             "delta": delta,
             "unrealized_appreciation": unrealized_appreciation
         }
-        return derivative_information
-        
     
     def _parse_other_derivative_information(self, derivative_section) -> dict:
-        name = derivative_section.find("othderiv").get("othdesc")
-        derivative_type = {"name": name, "abbreviation": None}
-
-        counterparty = derivative_section.find("counterparties")
-        counterparty_name = counterparty.find("counterpartyname").text
-        counterparty_lei = counterparty.find("counterpartylei").text
-        
         reference_section = derivative_section.find("descrefinstrmnt").find("otherrefinst")
         reference_asset_name = reference_section.find("issuername").text
         if reference_asset_name == "N/A":
@@ -1490,6 +1450,7 @@ class FilingNPORT(_SECFiling):
             identifier[other_name] = other_value
         
         termination_date = derivative_section.find("terminationdt").text
+        assert termination_date != "N/A"
         notional_amounts = derivative_section.find("notionalamts")
         if notional_amounts is None:
             notional_amount = float(derivative_section.find("notionalamt").text)
@@ -1503,12 +1464,7 @@ class FilingNPORT(_SECFiling):
         
         unrealized_appreciation = float(derivative_section.find("unrealizedappr").text)
         
-        derivative_information = {
-            "derivative_type": derivative_type,
-            "counterparty": {
-                "name": counterparty_name,
-                "lei": counterparty_lei
-            },
+        return {
             "reference_asset": {
                 "name": reference_asset_name,
                 "title": reference_asset_title,
@@ -1519,7 +1475,6 @@ class FilingNPORT(_SECFiling):
             "delta": delta,
             "unrealized_appreciation": unrealized_appreciation
         }
-        return derivative_information
         
     def _get_lending_information(self, entry):
         security_lending_section = entry.find("securitylending")
