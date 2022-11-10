@@ -1501,13 +1501,11 @@ class FilingNPORT(_SECFiling):
             assert security_lending_section.find("loanbyfundcondition").get("isloanbyfund") == "Y"
             loaned = float(security_lending_section.find("loanbyfundcondition").get("loanval")) * 1000
 
-        securities_lending = {
+        return {
             "cash_collateral": cash_collateral,
             "non_cash_collateral": non_cash_collateral,
             "loaned": loaned
         }
-        
-        return securities_lending
     
     def _parse_explanatory_notes(self) -> dict:
         note_section = self._soup.find("explntrnotes")
@@ -1706,25 +1704,25 @@ class FilingNPORT(_SECFiling):
             "non_cash_collateral": non_cash_collateral
         }
         
+        reporting_date = pd.to_datetime(self.general_information["reporting_date"])
+        months = {
+            1: (reporting_date - pd.DateOffset(months=2)).date().isoformat(),
+            2: (reporting_date - pd.DateOffset(months=1)).date().isoformat(),
+            3: reporting_date.date().isoformat()
+        }
+        
         # return information
         return_section = fund_section.find("returninfo")
         class_return_tags = return_section.find("monthlytotreturns").find_all("monthlytotreturn")
         class_returns = {}
         for tag in class_return_tags:
             class_id = tag.get("classid")
-            return1 = tag.get("rtn1")
-            return1 = None if return1 == "N/A" else round(float(return1) / 100, 4)
-            return2 = tag.get("rtn2")
-            return2 = None if return2 == "N/A" else round(float(return2) / 100, 4)
-            return3 = tag.get("rtn3")
-            return3 = None if return3 == "N/A" else round(float(return3) / 100, 4)
-            class_returns[class_id] = {
-                1: return1,
-                2: return2,
-                3: return3
-            }
+            class_returns[class_id] = {}
+            for month in range(1, 4):
+                return_ = tag.get(f"rtn{month}")
+                return_ = None if return_ == "N/A" else round(float(return_) / 100, 4)
+                class_returns[class_id][months[month]] = return_
         
-        # category returns fehlen
         tag_contract_category_match = {
             "commoditycontracts": "Commodity Contracts",
             "creditcontracts": "Credit Contracts",
@@ -1737,10 +1735,10 @@ class FilingNPORT(_SECFiling):
             "forwardcategory": "Forward",
             "futurecategory": "Future",
             "optioncategory": "Option",
-            "othercategory": "Other",
             "swapcategory": "Swap",
             "swaptioncategory": "Swaption",
-            "warrantcategory": "Warrant"
+            "warrantcategory": "Warrant",
+            "othercategory": "Other"
         }
         
         derivative_return_tags = return_section.find("monthlyreturncats")
@@ -1748,6 +1746,20 @@ class FilingNPORT(_SECFiling):
             derivative_gains = None
         else:
             derivative_gains = {}
+            
+            for contract in tag_contract_category_match.values():
+                derivative_gains[contract] = {
+                    months[1]: 0.0,
+                    months[2]: 0.0,
+                    months[3]: 0.0
+                }
+                for instrument in tag_derivative_instrument_match.values():
+                    derivative_gains[contract][instrument] = {
+                        months[1]: 0.0,
+                        months[2]: 0.0,
+                        months[3]: 0.0
+                    }
+            
             for contract_tag in derivative_return_tags.children:
                 if contract_tag == "\n":
                     continue
@@ -1762,7 +1774,7 @@ class FilingNPORT(_SECFiling):
                         realized_gain = None if realized_gain == "N/A" else float(realized_gain)
                         unrealized_appreciation = instrument_tag.get("netunrealizedappr")
                         unrealized_appreciation = None if unrealized_appreciation == "N/A" else float(unrealized_appreciation)
-                        derivative_gains[contract_name][month] = {
+                        derivative_gains[contract_name][months[month]] = {
                             "realized_gain": realized_gain,
                             "unrealized_appreciation": unrealized_appreciation
                         }
@@ -1775,7 +1787,7 @@ class FilingNPORT(_SECFiling):
                             realized_gain = None if realized_gain == "N/A" else float(realized_gain)
                             unrealized_appreciation = month_tag.get("netunrealizedappr")
                             unrealized_appreciation = None if unrealized_appreciation == "N/A" else float(unrealized_appreciation)
-                            derivative_gains[contract_name][instrument_name][month] = {
+                            derivative_gains[contract_name][instrument_name][months[month]] = {
                                 "realized_gain": realized_gain,
                                 "unrealized_appreciation": unrealized_appreciation
                             }
@@ -1787,7 +1799,7 @@ class FilingNPORT(_SECFiling):
             realized_gain = None if realized_gain == "N/A" else float(realized_gain)
             unrealized_appreciation = tag.get("netunrealizedappr")
             unrealized_appreciation = None if unrealized_appreciation == "N/A" else float(unrealized_appreciation)
-            non_derivative_gains[month] = {
+            non_derivative_gains[months[month]] = {
                 "realized_gain": realized_gain,
                 "unrealized_appreciation": unrealized_appreciation
             }
@@ -1808,7 +1820,7 @@ class FilingNPORT(_SECFiling):
             reinvestment = None if reinvestment == "N/A" else float(reinvestment)
             sales = flow.get("sales")
             sales = None if sales == "N/A" else float(sales)
-            flow_information[month] = {
+            flow_information[months[month]] = {
                 "sales": sales,
                 "reinvestments": reinvestment,
                 "redemption": redemption
