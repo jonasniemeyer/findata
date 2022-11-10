@@ -1660,6 +1660,8 @@ class FilingNPORT(_SECFiling):
             "cash": cash
         }
         
+        portfolio_level_risk = None
+
         # lending information
         borrowers_tag = fund_section.find("borrowers")
         if borrowers_tag is None:
@@ -1827,12 +1829,22 @@ class FilingNPORT(_SECFiling):
                 "redemption": redemption
             }
         
+        liquid_investment_minimum_information = None
+        derivatives_transactions = None
+        derivatives_exposure = None
+        var_information = None
+
         return {
             "total_assets": total_assets,
             "total_liabilities": total_liabilities,
             "net_assets": net_assets,
             "certain_assets": certain_assets,
+            "portfolio_level_risk": portfolio_level_risk,
             "securities_lending": securities_lending,
             "return_information": return_information,
-            "flow_information": flow_information
+            "flow_information": flow_information,
+            "liquid_investment_minimum_information": liquid_investment_minimum_information,
+            "derivatives_transactions": derivatives_transactions,
+            "derivatives_exposure": derivatives_exposure,
+            "var_information": var_information
         }
