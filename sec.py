@@ -1,6 +1,7 @@
 import requests
 import re
 import datetime as dt
+import pandas as pd
 from finance_data.utils import HEADERS, DatasetError
 from typing import Union
 from bs4 import BeautifulSoup
