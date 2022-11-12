@@ -31,6 +31,67 @@ def sec_mutualfunds() -> list:
     ]
     return items
 
+def latest_sec_filings(start=pd.to_datetime("today").isoformat()) -> list:
+    filings = []
+    start_reached = False
+    page_counter = 0
+
+    while not start_reached:
+        params = {
+            "action": "getcurrent",
+            "start": page_counter,
+            "count": 100
+        }
+        html = requests.get(url="https://www.sec.gov/cgi-bin/browse-edgar", params=params, headers=HEADERS).text
+        soup = BeautifulSoup(html, "lxml")
+        tables = soup.find_all("table")
+        if len(tables) != 8:
+            break
+
+        entries = tables[-2].find_all("tr")[1:]
+        for index in range(0, len(entries), 2):
+            name = entries[index].find_all("td")[-1].text.strip()
+            name, cik = re.findall("(.+) \(([0-9]{,10})\) \([A-Za-z ]+\)", name)[0]
+            cik = int(cik)
+
+            cells = entries[index+1].find_all("td")
+            form_type = cells[0].text
+            url = cells[1].find_all("a")[-1].get("href")
+            url = f"https://www.sec.gov{url}"
+            accession_number = cells[2].text
+            accession_number = re.findall("Accession Number: ([0-9-]+)", accession_number)[0]
+            accepted = cells[3].text
+            accepted = re.sub("([0-9]{4}-[0-9]{2}-[0-9]{2})([0-9]{2}:[0-9]{2}:[0-9]{2})", r"\1T\2", accepted)
+
+            if pd.to_datetime(accepted) < pd.to_datetime(start):
+                start_reached = True
+                break
+
+            date_filed = cells[4].text
+
+            if len(cells) == 6:
+                file_number, film_number = cells[5].text.split("\n")
+            else:
+                file_number = None
+                film_number = None
+
+            filings.append(
+                {
+                    "name": name,
+                    "cik": cik,
+                    "form_type": form_type,
+                    "url": url,
+                    "accession_number": accession_number,
+                    "accepted": accepted,
+                    "date_filed": date_filed,
+                    "file_number": file_number,
+                    "film_number": film_number
+                }
+            )
+        page_counter += 100
+
+    return filings
+
 
 class _SECFiling:
     """
