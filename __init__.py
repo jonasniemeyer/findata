@@ -9,6 +9,7 @@ from .fred import FREDReader
 from .msci import MSCIReader
 from .rss import RSSReader
 from .sec import (
+    latest_sec_filings,
     sec_companies,
     sec_mutualfunds,
     Filing3,
@@ -34,6 +35,7 @@ __all__ = [
     "FinvizReader",
     "FREDReader",
     "RSSReader",
+    "latest_sec_filings",
     "sec_companies",
     "sec_mutualfunds",
     "Filing3",
