@@ -71,6 +71,7 @@ def latest_sec_filings(start=pd.to_datetime("today").isoformat()) -> list:
 
             if len(cells) == 6:
                 file_number, film_number = cells[5].text.split("\n")
+                film_number = None if film_number == "" else int(film_number)
             else:
                 file_number = None
                 film_number = None
@@ -408,9 +409,6 @@ class _SECFiling:
         
         if "BUSINESS PHONE:" in section:
             phone = re.findall("BUSINESS PHONE:\t{2}(.+)", section)[0].upper()
-            phone = re.sub("[()\-\. ]", "", phone)
-            if "EXT" in phone:
-                phone = int(re.findall("(?i)([0-9a-z]+?)ext.+", phone)[0])
         else:
             phone = None
 
