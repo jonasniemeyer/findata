@@ -5,6 +5,7 @@ import numpy as np
 import requests
 import re
 from bs4 import BeautifulSoup
+from html import unescape
 from finance_data.utils import (
     TickerError,
     DatasetError,
@@ -74,6 +75,7 @@ class YahooReader:
         self._name = self._stored_data["quoteType"]["longName"]
         if self._name is None:
             self._name =  self._stored_data["quoteType"]["shortName"]
+        self._name = unescape(self._name)
 
     @property
     def ticker(self):
@@ -109,7 +111,7 @@ class YahooReader:
         if "fullTimeEmployees" in data.keys():
             data["employees"] = data.pop("fullTimeEmployees")
         if "longBusinessSummary" in data.keys(): 
-            data["description"] = data.pop("longBusinessSummary")
+            data["description"] = unescape(data.pop("longBusinessSummary"))
         if "website" in data.keys():
             data["website"] = data["website"].replace("http:", "https:")
         data["executives"] = [
