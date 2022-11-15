@@ -14,7 +14,6 @@ class FREDReader:
         self.timestamps = timestamps
     
     def historical_data(self) -> pd.DataFrame:
-
         parameters = {"id": self.dataset}
 
         response = requests.get(

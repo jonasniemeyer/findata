@@ -101,7 +101,6 @@ class MSCIReader:
         self.timestamps = timestamps
 
     def historical_data(self) -> dict:
-
         start = int(f"{self.start.year}{self.start.month:02}{self.start.day:02}")
         if start < 19690101:
             print("Warning: start value cannot be earlier than 1969-01-01, thus it is set to 1969-01-01")

@@ -9,9 +9,7 @@ class MarketscreenerReader:
     _base_url = "https://www.marketscreener.com"
     
     def __init__(self, identifier) -> None:
-        params = {
-            "q": identifier
-        }
+        params = {"q": identifier}
         html = requests.get(url=f"{self._base_url}/search/", params=params, headers=HEADERS).text
         soup = BeautifulSoup(html, "lxml")
         
