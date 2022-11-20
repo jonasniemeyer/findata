@@ -1,11 +1,14 @@
 import time
 import pandas as pd
+from finance_data.utils import CHROMEDRIVER_PATH
 from bs4 import BeautifulSoup
 from selenium import webdriver, common
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
 
 class CMEReader:
     commodities = {
@@ -18,9 +21,9 @@ class CMEReader:
         "Natural Gas": {"sector": "energy", "group": "natural-gas", "name": "natural-gas", "sector_name": "Energy"},
         "Off-Peak Electricity": {"sector": "energy", "group": "electricity", "name": "pjm-western-hub-off-peak-calendar-month-real-time-lmp-swap-futures", "sector_name": "Energy"},
         "Global Emissions Offset": {"sector": "energy", "group": "emissions", "name": "cbl-nature-based-global-emissions-offset", "sector_name": "Energy"},
-        "Propane": {"sector": "energy", "group": "petrochemicals", "name": "mont-belvieu-propane-5-decimals", "sector_name": "Energy"},
-        "Butane": {"sector": "energy", "group": "petrochemicals", "name": "mont-belvieu-normal-butane-5-decimals", "sector_name": "Energy"},
-        "Ethane": {"sector": "energy", "group": "petrochemicals", "name": "mont-belvieu-ethane-opis-5-decimals", "sector_name": "Energy"},
+        "Propane": {"sector": "energy", "group": "petrochemicals", "name": "mont-belvieu-propane-5-decimals-swap", "sector_name": "Energy"},
+        "Butane": {"sector": "energy", "group": "petrochemicals", "name": "mont-belvieu-normal-butane-5-decimals-swap", "sector_name": "Energy"},
+        "Ethane": {"sector": "energy", "group": "petrochemicals", "name": "mont-belvieu-ethane-opis-5-decimals-swap", "sector_name": "Energy"},
         "Ethanol": {"sector": "energy", "group": "biofuels", "name": "chicago-ethanol-platts-swap", "sector_name": "Energy"},
 
         "Cocoa": {"sector": "agriculture", "group": "lumber-and-softs", "name": "cocoa", "sector_name": "Agriculture"},
@@ -71,9 +74,11 @@ class CMEReader:
     def _open_website(self, browser="chrome", url=None):
         if not hasattr(self, "driver"):
             if browser == "chrome":
-                self.driver = webdriver.Chrome()
+                options = webdriver.ChromeOptions()
+                options.add_experimental_option('excludeSwitches', ['enable-logging'])
+                self.driver = webdriver.Chrome(service=Service(CHROMEDRIVER_PATH), options=options)
             else:
-                raise NotImplementedError
+                raise NotImplementedError("CMEReader is only implemented for the Google Chrome Browser")
         self.driver.get(self.url)
         i = 0
         clicked = False
@@ -114,9 +119,9 @@ class CMEReader:
             if index == 0:
                 continue
             date = pd.to_datetime(option.get("value"))
-            button_dates = self.driver.find_element_by_xpath("/html/body/main/div/div[3]/div[2]/div/div/div/div/div/div[2]/div/div/div/div/div/div[4]/div/div/div/div/select")
+            button_dates = self.driver.find_element(by=By.XPATH, value="/html/body/main/div/div[3]/div[2]/div/div/div/div/div/div[2]/div/div/div/div/div/div[4]/div/div/div/div/select")
             button_dates.click()
-            button_refresh = self.driver.find_element_by_xpath(f"/html/body/main/div/div[3]/div[2]/div/div/div/div/div/div[2]/div/div/div/div/div/div[4]/div/div/div/div/select/option[{index+1}]")
+            button_refresh = self.driver.find_element(by=By.XPATH, value=f"/html/body/main/div/div[3]/div[2]/div/div/div/div/div/div[2]/div/div/div/div/div/div[4]/div/div/div/div/select/option[{index+1}]")
             button_refresh.click()
             if self.timestamps:
                 data[int(date.timestamp())] = self._parse_table()
@@ -128,7 +133,7 @@ class CMEReader:
     def _parse_table(self) -> pd.DataFrame:
         time.sleep(1)
         try:
-            button_expand = self.driver.find_element_by_xpath("/html/body/main/div/div[3]/div[2]/div/div/div/div/div/div[2]/div/div/div/div/div/div[8]/div[2]/button")
+            button_expand = self.driver.find_element(by=By.XPATH, value="/html/body/main/div/div[3]/div[2]/div/div/div/div/div/div[2]/div/div/div/div/div/div[8]/div[2]/button")
         except common.exceptions.NoSuchElementException:
             y_distance = 0
         else:

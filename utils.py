@@ -24,6 +24,7 @@ TIPRANKS_HEADERS = deepcopy(HEADERS)
 if "private.cfg" in os.listdir(Path(__file__).parent):
     cfg = configparser.ConfigParser()
     cfg.read(rf"{Path(__file__).parent}\private.cfg")
+    CHROMEDRIVER_PATH = cfg.get("PATHS", "chromedriver")
     FRED_API_KEY = cfg.get("KEYS", "fred_api_key")
     TIPRANKS_HEADERS["cookie"] = cfg.get("COOKIES", "tipranks_cookies")
 else:
