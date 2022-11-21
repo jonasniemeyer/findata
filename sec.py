@@ -1666,6 +1666,9 @@ class FilingNPORT(_SECFiling):
     
     def _parse_fund_information(self) -> dict:        
         form_data = self._soup.find("formdata")
+        if form_data is None:
+            form_data = self._soup.find("nport:formdata")
+
         fund_section = form_data.find("fundinfo")
         
         # assets and liabilities
@@ -1808,19 +1811,19 @@ class FilingNPORT(_SECFiling):
                         "asset_category": asset_category
                     }
                 )
-        
+
         securities_lending = {
             "borrowers": borrowers,
             "non_cash_collateral": non_cash_collateral
         }
-        
+
         reporting_date = pd.to_datetime(self.general_information["reporting_date"])
         months = {
             1: (reporting_date - pd.DateOffset(months=2)).date().isoformat(),
             2: (reporting_date - pd.DateOffset(months=1)).date().isoformat(),
             3: reporting_date.date().isoformat()
         }
-        
+
         # return information
         return_section = fund_section.find("returninfo")
         class_return_tags = return_section.find("monthlytotreturns").find_all("monthlytotreturn")
@@ -1851,25 +1854,23 @@ class FilingNPORT(_SECFiling):
             "othercategory": "Other"
         }
         
-        derivative_return_tags = return_section.find("monthlyreturncats")
-        if derivative_return_tags is None:
-            derivative_gains = None
-        else:
-            derivative_gains = {}
-            
-            for contract in tag_contract_category_match.values():
-                derivative_gains[contract] = {
-                    months[1]: 0.0,
-                    months[2]: 0.0,
-                    months[3]: 0.0
+        derivative_gains = {}
+
+        for contract in tag_contract_category_match.values():
+            derivative_gains[contract] = {
+                months[1]: None,
+                months[2]: None,
+                months[3]: None
+            }
+            for instrument in tag_derivative_instrument_match.values():
+                derivative_gains[contract][instrument] = {
+                    months[1]: None,
+                    months[2]: None,
+                    months[3]: None
                 }
-                for instrument in tag_derivative_instrument_match.values():
-                    derivative_gains[contract][instrument] = {
-                        months[1]: 0.0,
-                        months[2]: 0.0,
-                        months[3]: 0.0
-                    }
-            
+
+        derivative_return_tags = return_section.find("monthlyreturncats")
+        if derivative_return_tags is not None:
             for contract_tag in derivative_return_tags.children:
                 if contract_tag == "\n":
                     continue
@@ -1919,7 +1920,7 @@ class FilingNPORT(_SECFiling):
             "derivative_gains": derivative_gains,
             "non-derivative_gains": non_derivative_gains
         }
-        
+
         # flow information
         flow_information = {}
         for month in range(1,4):
