@@ -1069,12 +1069,12 @@ class FilingNPORT(_SECFiling):
         coupon_rate = debt_section.find("annualizedrt").text
         coupon_rate = None if coupon_rate == "N/A" else float(coupon_rate) / 100
 
-        default = debt_section.find("isdefault").text
-        if default == "Y":
-            default = True
-        elif default == "N":
-             default = False
-        assert isinstance(default, bool)
+        in_default = debt_section.find("isdefault").text
+        if in_default == "Y":
+            in_default = True
+        elif in_default == "N":
+             in_default = False
+        assert isinstance(in_default, bool)
 
         coupon_payments_deferred = debt_section.find("areintrstpmntsinarrs").text
         if coupon_payments_deferred == "Y":
@@ -1090,10 +1090,11 @@ class FilingNPORT(_SECFiling):
              paid_in_kind = False
         assert isinstance(paid_in_kind, bool)
 
-        if debt_section.find("ismandatoryconvrtbl") is None:
+        mandatory_convertible = debt_section.find("ismandatoryconvrtbl")
+        if mandatory_convertible is None:
             convertible_information = None
         else:                
-            mandatory_convertible = debt_section.find("ismandatoryconvrtbl").text
+            mandatory_convertible = mandatory_convertible.text
             if mandatory_convertible == "Y":
                 mandatory_convertible = True
             elif mandatory_convertible == "N":
@@ -1157,7 +1158,7 @@ class FilingNPORT(_SECFiling):
                 "rate": coupon_rate,
                 "type": coupon_type
             },
-            "default": default,
+            "in_default": in_default,
             "coupon_payments_deferred": coupon_payments_deferred,
             "paid_in_kind": paid_in_kind,
             "convertible_information": convertible_information
@@ -1538,6 +1539,7 @@ class FilingNPORT(_SECFiling):
         
     def _get_lending_information(self, entry):
         security_lending_section = entry.find("securitylending")
+
         cash_collateral = security_lending_section.find("iscashcollateral")
         if cash_collateral is not None:
             assert cash_collateral.text == "N"
@@ -1545,6 +1547,7 @@ class FilingNPORT(_SECFiling):
         else:
             assert security_lending_section.find("cashcollateralcondition").get("iscashcollateral") == "Y"
             loaned = float(security_lending_section.find("cashcollateralcondition").get("cashcollateralval")) * 1000
+
         non_cash_collateral = security_lending_section.find("isnoncashcollateral")
         if non_cash_collateral is not None:
             assert non_cash_collateral.text == "N"
@@ -1552,7 +1555,7 @@ class FilingNPORT(_SECFiling):
         else:
             assert security_lending_section.find("noncashcollateralcondition").get("isnoncashcollateral") == "Y"
             non_cash_collateral = float(security_lending_section.find("noncashcollateralcondition").get("noncashcollateralval")) * 1000
-            
+
         loaned = security_lending_section.find("isloanbyfund")
         if loaned is not None:
             assert loaned.text == "N"
