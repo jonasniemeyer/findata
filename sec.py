@@ -911,11 +911,7 @@ class FilingNPORT(_SECFiling):
         self._has_short_positions = True if any(item["amount"]["quantity"] < 0 for item in self._investments if item["amount"]["quantity"] is not None) else False
     
     def _parse_investments(self) -> list:
-        entries = self._soup.find("invstorsecs")
-        if entries is None:
-            return []
-        else:
-            entries = entries.find_all("invstorsec")
+        entries = self._soup.find("invstorsecs").find_all("invstorsec")
         investments = []
         for entry in entries:
             issuer_name = entry.find("name").text
@@ -964,7 +960,7 @@ class FilingNPORT(_SECFiling):
             quantity_type_abbr = entry.find("units").text
             if quantity_type_abbr == "N/A" or quantity_type_abbr is None:
                 raise ValueError
-            quantity_type = {"name": self._quantity_types[quantity_type_abbr], "abbreviation": quantity_type_abbr}            
+            quantity_type = {"name": self._quantity_types[quantity_type_abbr], "abbreviation": quantity_type_abbr}
             
             currency = entry.find("curcd")
             if currency is None:
@@ -1003,12 +999,11 @@ class FilingNPORT(_SECFiling):
                 asset_type_name = entry.find("assetconditional").get("desc")
                 asset_type = {"name": asset_type_name, "abbreviation": "OTH"}
             
-            
             issuer_type = entry.find("issuercat")
             if issuer_type is None:
                 issuer["type"] = {
                     "name": entry.find("issuerconditional").get("desc"),
-                    "abbreviation": "O"
+                    "abbreviation": "OTH"
                 }
             else:
                 issuer["type"] = {
