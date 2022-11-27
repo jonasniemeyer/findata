@@ -108,6 +108,32 @@ class CMEReader:
         soup = BeautifulSoup(html, "lxml")
         button = soup.find("select", {"class": "dropdown-toggle"})
         options = button.find_all("option")
+
+        time.sleep(1)
+        try:
+            button_expand = self.driver.find_element(by=By.XPATH, value="/html/body/main/div/div[3]/div[2]/div/div/div/div/div/div[2]/div/div/div/div/div/div[8]/div[2]/button")
+        except common.exceptions.NoSuchElementException:
+            y_distance = 0
+        else:
+            y_distance = button_expand.location["y"] - 200
+            self.driver.execute_script(f"window.scrollBy(0, {y_distance})")
+            time.sleep(1)
+            button_expand.click()
+
+        deleted = False
+        index = 0
+        while not deleted and index < 20:
+            try:
+                button_advertising = WebDriverWait(self.driver, 0.5).until(
+                    EC.element_to_be_clickable((By.XPATH, f"/html/body/div[{index}]/div/div/div/div[2]/a"))
+                )
+                button_advertising.click()
+                deleted = True
+            except common.exceptions.TimeoutException:
+                index += 1
+
+        self.driver.execute_script(f"window.scrollBy(0, {-y_distance})")
+        time.sleep(1)
         
         date = pd.to_datetime(options[0].get("value"))
         if self.timestamps:
@@ -132,16 +158,6 @@ class CMEReader:
     
     def _parse_table(self) -> pd.DataFrame:
         time.sleep(1)
-        try:
-            button_expand = self.driver.find_element(by=By.XPATH, value="/html/body/main/div/div[3]/div[2]/div/div/div/div/div/div[2]/div/div/div/div/div/div[8]/div[2]/button")
-        except common.exceptions.NoSuchElementException:
-            y_distance = 0
-        else:
-            y_distance = button_expand.location["y"] - 200
-            self.driver.execute_script(f"window.scrollBy(0, {y_distance})")
-            time.sleep(1)
-            button_expand.click()
-        
         html = self.driver.page_source
         df = pd.read_html(html)[0]
         df = df.set_index("Month")
@@ -157,6 +173,4 @@ class CMEReader:
             df[col] = df[col].apply(lambda x: x.replace("UNCH", "0") if isinstance(x, str) else x)
             df[col] = pd.to_numeric(df[col])
         df = df.rename(columns = {"Est. Volume": "Volume", "Prior day OI": "Open Interest"})
-        self.driver.execute_script(f"window.scrollBy(0, {-y_distance})")
-        time.sleep(1)
         return df
