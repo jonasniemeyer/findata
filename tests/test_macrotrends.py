@@ -2,6 +2,8 @@ from finance_data import MacrotrendsReader, TickerError
 from finance_data.utils import MACROTRENDS_CONVERSION
 import pytest
 
+NoneType = type(None)
+
 def test_default():
     data = MacrotrendsReader("AAPL").read()
     assert (("income statement" in data) and ("balance sheet" in data) and ("cashflow statement" in data))
@@ -9,7 +11,7 @@ def test_default():
     for statement in data:
         for variable in data[statement]:
             for date in data[statement][variable]:
-                assert data[statement][variable][date] is None or isinstance(data[statement][variable][date], (float, int))
+                assert isinstance(data[statement][variable][date], (float, int, NoneType))
 
 def test_single_statement():
     for statement in ("income-statement", "balance-sheet", "cash-flow-statement"):

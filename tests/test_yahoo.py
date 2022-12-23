@@ -4,6 +4,8 @@ import pandas as pd
 import datetime as dt
 import pytest
 
+NoneType = type(None)
+
 class TestClassMethods:
     @classmethod
     def setup_class(cls):
@@ -55,9 +57,9 @@ class TestEquity:
         executives = profile["executives"]
         for item in executives:
             assert isinstance(item["name"], str)
-            assert item["age"] is None or isinstance(item["age"], int)
+            assert isinstance(item["age"], (int, NoneType))
             assert isinstance(item["position"], str)
-            assert item["born"] is None or isinstance(item["born"], int)
+            assert isinstance(item["born"], (int, NoneType))
             assert item["salary"] is None or round(item["salary"], 2) == item["salary"]
             assert isinstance(item["exercised_options"], int)
             assert isinstance(item["unexercised_options"], int)
@@ -67,7 +69,7 @@ class TestEquity:
         for item in recommendations:
             assert dt.date.fromisoformat(item["date"])
             assert isinstance(item["company"], str)
-            assert item["old"] is None or isinstance(item["old"], str)
+            assert isinstance(item["old"], (str, NoneType))
             assert isinstance(item["new"], str)
             assert isinstance(item["change"], str)
             if item["change"] == "main":
@@ -101,7 +103,7 @@ class TestEquity:
                 assert round(item["last_price"], 2) == item["last_price"]
                 assert round(item["bid"], 2) == item["bid"]
                 assert round(item["ask"], 2) == item["ask"]
-                assert item["volume"] is None or isinstance(item["volume"], int)
+                assert isinstance(item["volume"], (int, NoneType))
                 assert round(item["implied_volatility"], 4) == item["implied_volatility"]
                 assert isinstance(item["itm"], bool)
         
@@ -145,14 +147,14 @@ class TestEquity:
             assert item["date"] is None or dt.date.fromisoformat(item["date"])
             assert isinstance(item["name"], str)
             assert isinstance(item["position"], str)
-            assert item["shares"] is None or isinstance(item["shares"], int)
-            assert item["file"] is None or isinstance(item["file"], str)
+            assert isinstance(item["shares"], (int, NoneType))
+            assert isinstance(item["file"], (str, NoneType))
             assert dt.date.fromisoformat(item["latest_trade"][0])
             assert isinstance(item["latest_trade"][1], str)
         
         insider = self.reader.insider_ownership(timestamps=True)
         for item in insider:
-            assert item["date"] is None or isinstance(item["date"], int)
+            assert isinstance(item["date"], (int, NoneType))
     
     def test_ownership_breakdown(self):
         breakdown = self.reader.ownership_breakdown()
@@ -170,8 +172,8 @@ class TestEquity:
             assert isinstance(item["position"], str)
             assert isinstance(item["shares"], int)
             assert item["value"] is None or round(item["value"], 2) == item["value"]
-            assert item["file"] is None or isinstance(item["file"], str)
-            assert item["text"] is None or isinstance(item["text"], str)
+            assert isinstance(item["file"], (str, NoneType))
+            assert isinstance(item["text"], (str, NoneType))
         
         trades = self.reader.insider_trades(timestamps=True)
         for item in trades:
@@ -243,21 +245,21 @@ class TestEquity:
 
         for date in income:
             for var in income[date]:
-                assert income[date][var] is None or isinstance(income[date][var], (int, float))
+                assert isinstance(income[date][var], (int, float, NoneType))
         for date in balance:
             for var in balance[date]:
-                assert balance[date][var] is None or isinstance(balance[date][var], (int, float))
+                assert isinstance(balance[date][var], (int, float, NoneType))
         for date in cashflow:
             for var in cashflow[date]:
-                assert cashflow[date][var] is None or isinstance(cashflow[date][var], (int, float))
+                assert isinstance(cashflow[date][var], (int, float, NoneType))
         
         for type_ in ("income_statement", "balance_sheet", "cashflow_statement"):
             for date in statement[type_]:
                 for var in statement[type_][date]:
-                    assert statement[type_][date][var] is None or isinstance(statement[type_][date][var], (int, float))
+                    assert isinstance(statement[type_][date][var], (int, float, NoneType))
         for date in statement_merged:
             for var in statement_merged[date]:
-                assert statement_merged[date][var] is None or isinstance(statement_merged[date][var], (int, float))
+                assert isinstance(statement_merged[date][var], (int, float, NoneType))
 
         income = self.reader.income_statement(timestamps=True)
         for date in income:

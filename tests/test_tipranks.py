@@ -1,6 +1,8 @@
 from finance_data import TipranksStockReader
 import datetime as dt
 
+NoneType = type(None)
+
 def test_trending_stocks():
     data = TipranksStockReader.trending_stocks()
     assert isinstance(data, list)
@@ -10,7 +12,7 @@ def test_trending_stocks():
         assert isinstance(item["sentiment"], int)
         assert round(item["consensus_score"], 2) == item["consensus_score"]
         assert isinstance(item["sector"], str)
-        assert item["market_cap"] is None or isinstance(item["market_cap"], int)
+        assert isinstance(item["market_cap"], (int, NoneType))
         assert isinstance(item["buy"], int)
         assert isinstance(item["hold"], int)
         assert isinstance(item["sell"], int)
@@ -72,7 +74,7 @@ class TestRatingData:
         for item in data:
             assert isinstance(item["name"], str)
             assert isinstance(item["company"], str)
-            assert (isinstance(item["image_url"], str) or item["image_url"] is None)
+            assert (isinstance(item["image_url"], (str, NoneType))
             assert round(item["success_rate_stock"], 4) == item["success_rate_stock"]
             assert round(item["average_rating_return_stock"], 4) == item["average_rating_return_stock"]
             assert isinstance(item["total_recommendations_stock"], int)
@@ -82,7 +84,7 @@ class TestRatingData:
             assert len(item["ratings"]) == 1
             assert dt.date.fromisoformat(item["ratings"][0]["date"])
             assert isinstance(item["ratings"][0]["news_url"], str)
-            assert (isinstance(item["ratings"][0]["news_title"], str) or item["ratings"][0]["news_title"] is None)
+            assert (isinstance(item["ratings"][0]["news_title"], (str, NoneType))
             assert isinstance(item["analyst_ranking"], dict)
             assert isinstance(item["analyst_ranking"]["rank"], int)
             assert isinstance(item["analyst_ranking"]["successful_recommendations"], int)
@@ -121,7 +123,7 @@ class TestRatingData:
             assert isinstance(item["shares"], int)
             assert dt.date.fromisoformat(item["report_date"])
             assert isinstance(item["file_url"], str)
-            assert (isinstance(item["image_url"], str) or item["image_url"] is None)
+            assert isinstance(item["image_url"], (str, NoneType))
         assert round(data["insider_trades_last_3_months"], 2) == data["insider_trades_last_3_months"]
 
         data = self.reader.insider_trades(timestamps=True)
@@ -143,7 +145,7 @@ class TestRatingData:
             assert isinstance(item["value"], int)
             assert round(item["change"], 4) == item["change"]
             assert round(item["percentage_of_portfolio"], 4) == item["percentage_of_portfolio"]
-            assert (isinstance(item["image_url"], str) or item["image_url"] is None)
+            assert isinstance(item["image_url"], (str, NoneType))
         
         for key in ("name", "company", "stars", "rank", "value", "percentage_of_portfolio"):
             assert self.reader.institutional_ownership(sorted_by=key)
