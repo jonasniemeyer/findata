@@ -1,6 +1,8 @@
 import re
 import pytest
+import requests
 from finance_data.sec import _SECFiling
+from finance_data.utils import HEADERS
 from finance_data import (
     latest_sec_filings,
     sec_companies,
@@ -53,11 +55,52 @@ def test_latest_sec_filings():
         assert isinstance(filing["accepted"], int)
         assert isinstance(filing["date_filed"], int)
 
-def search_sec_filings():
-    pass
 
 class TestSECFiling:
-    pass
+    @classmethod
+    def setup_class(cls):
+        file = requests.get(url="https://www.sec.gov/Archives/edgar/data/320193/000119312519041014/0001193125-19-041014.txt", headers=HEADERS).text
+        cls.file = _SECFiling(file=file)
+    
+    def test_attributes(self):
+        assert self.file.accession_number  == "0001193125-19-041014"
+        assert self.file.date_filed == "2019-02-14"
+        assert self.file.date_of_change == "2019-02-14"
+        assert self.file.date_of_period is None
+        assert isinstance(self.file.document, str)
+        assert self.file.document_count == 1
+        assert self.file.effectiveness_date is None
+        assert isinstance(self.file.file, str)
+        assert self.file.file_number == "005-33632"
+        assert self.file.film_number == 19607502
+        assert isinstance(self.file.header, str)
+        assert self.file.is_amendment is False
+        assert self.file.is_html is True
+        assert self.file.is_xml is False
+        assert self.file.submission_type == "SC 13G"
+
+    def test_from_url(self):
+        assert _SECFiling.from_url("https://www.sec.gov/Archives/edgar/data/320193/000119312519041014/0001193125-19-041014.txt")
+    
+    def test_date_of_period(self):
+        file = _SECFiling.from_url("https://www.sec.gov/Archives/edgar/data/320193/000032019322000063/0000320193-22-000063.txt")
+        assert file.date_of_period == "2022-05-06"
+    
+    def test_effectiveness_date(self):
+        file = _SECFiling.from_url("https://www.sec.gov/Archives/edgar/data/1336528/000117266122002568/0001172661-22-002568.txt")
+        assert file.effectiveness_date == "2022-11-14"
+
+    def test_amendment(self):
+        file = _SECFiling.from_url("https://www.sec.gov/Archives/edgar/data/102909/000093247118004625/0000932471-18-004625.txt")
+        assert file.is_amendment is True
+
+    def test_text_file(self):
+        file = _SECFiling.from_url("https://www.sec.gov/Archives/edgar/data/315066/000031506610001412/0000315066-10-001412.txt")
+        assert file.is_html is False
+
+    def test_xml_file(self):
+        file = _SECFiling.from_url("https://www.sec.gov/Archives/edgar/data/320193/000032019322000113/0000320193-22-000113.txt")
+        assert file.is_xml is True
 
 
 class TestFilingNPORT:
