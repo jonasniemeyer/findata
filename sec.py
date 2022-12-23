@@ -846,6 +846,7 @@ class FilingNPORT(_SECFiling):
         sort_variables = (
             None,
             "name",
+            "title",
             "market_value",
             "quantity",
             "percentage",
@@ -860,8 +861,10 @@ class FilingNPORT(_SECFiling):
             desc = True if sorted_by in ("market_value", "quantity", "percentage") else False
             if sorted_by in ("quantity", "market_value", "percentage"):
                 portfolio = sorted(self._investments, key=lambda x: x["amount"][sorted_by] if x["amount"][sorted_by] is not None else 0, reverse=desc)
+            elif sorted_by == "name":
+                portfolio = sorted(self._investments, key=lambda x: x["issuer"][sorted_by] if x["issuer"][sorted_by] is not None else "", reverse=desc)
             else:
-                portfolio = sorted(self._investments, key=lambda x: x[sorted_by] if x[sorted_by] is not None else 0, reverse=desc)
+                portfolio = sorted(self._investments, key=lambda x: x[sorted_by] if x[sorted_by] is not None else "", reverse=desc)
         
         return portfolio
     
@@ -1545,7 +1548,7 @@ class FilingNPORT(_SECFiling):
             cash_collateral = False
         else:
             assert security_lending_section.find("cashcollateralcondition").get("iscashcollateral") == "Y"
-            loaned = float(security_lending_section.find("cashcollateralcondition").get("cashcollateralval")) * 1000
+            cash_collateral = float(security_lending_section.find("cashcollateralcondition").get("cashcollateralval")) * 1000
 
         non_cash_collateral = security_lending_section.find("isnoncashcollateral")
         if non_cash_collateral is not None:
