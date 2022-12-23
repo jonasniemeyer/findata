@@ -1075,21 +1075,21 @@ class FilingNPORT(_SECFiling):
         if in_default == "Y":
             in_default = True
         elif in_default == "N":
-             in_default = False
+            in_default = False
         assert isinstance(in_default, bool)
 
         coupon_payments_deferred = debt_section.find("areintrstpmntsinarrs").text
         if coupon_payments_deferred == "Y":
             coupon_payments_deferred = True
         elif coupon_payments_deferred == "N":
-             coupon_payments_deferred = False
+            coupon_payments_deferred = False
         assert isinstance(coupon_payments_deferred, bool)
 
         paid_in_kind = debt_section.find("ispaidkind").text
         if paid_in_kind == "Y":
             paid_in_kind = True
         elif paid_in_kind == "N":
-             paid_in_kind = False
+            paid_in_kind = False
         assert isinstance(paid_in_kind, bool)
 
         mandatory_convertible = debt_section.find("ismandatoryconvrtbl")
