@@ -189,7 +189,7 @@ class _SECFiling:
                 month=int(date_of_period[4:6]),
                 day=int(date_of_period[6:8])
             ).isoformat()
-            self._date_of_period = date_of_period
+        self._date_of_period = date_of_period
 
         date_of_change = re.findall("DATE AS OF CHANGE:\t{2}([0-9]{8})", self.header)
         if len(date_of_change) == 0:
@@ -213,7 +213,7 @@ class _SECFiling:
                 month=int(effectiveness_date[4:6]),
                 day=int(effectiveness_date[6:8])
             ).isoformat()
-            self._effectiveness_date = effectiveness_date
+        self._effectiveness_date = effectiveness_date
         
         indices = []
         
@@ -303,7 +303,7 @@ class _SECFiling:
         if len(fiscal_year_end) == 0:
             fiscal_year_end = None
         else:
-            year = dt.date.fromisoformat(self.date_of_period).year
+            year = dt.date.fromisoformat(self.date_filed).year
             month = int(fiscal_year_end[0][:2])
             day = int(fiscal_year_end[0][2:])
             fiscal_year_end = dt.date(
@@ -1927,8 +1927,8 @@ class FilingNPORT(_SECFiling):
         flow_information = {}
         for month in range(1,4):
             flow = fund_section.find(f"mon{month}flow")
-            redemption = flow.get("redemption")
-            redemption = None if redemption == "N/A" else float(redemption)
+            redemptions = flow.get("redemption")
+            redemptions = None if redemptions == "N/A" else float(redemptions)
             reinvestment = flow.get("reinvestment")
             reinvestment = None if reinvestment == "N/A" else float(reinvestment)
             sales = flow.get("sales")
@@ -1936,7 +1936,7 @@ class FilingNPORT(_SECFiling):
             flow_information[months[month]] = {
                 "sales": sales,
                 "reinvestments": reinvestment,
-                "redemption": redemption
+                "redemptions": redemptions
             }
         
         liquid_investment_minimum_information = None
