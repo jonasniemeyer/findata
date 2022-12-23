@@ -61,8 +61,7 @@ class MacrotrendsReader:
     
     def read(self):
         self._open_website()
-        data = self._parse()
-        return data
+        return self._parse()
 
     def _open_website(self, browser="chrome", url=None):
         """
@@ -99,7 +98,7 @@ class MacrotrendsReader:
             
             try:
                 button_cookies = WebDriverWait(self.driver, 10).until(
-                    EC.element_to_be_clickable((By.XPATH, "/html/body/div[5]/div[1]/div[1]/div/button"))
+                    EC.element_to_be_clickable((By.XPATH, "/html/body/div[4]/div[1]/div[1]/div/button"))
                 )
                 button_cookies.click()
             except:
@@ -126,10 +125,10 @@ class MacrotrendsReader:
         Parses the table and returns a dictionary of dates as keys and dictionaries as values,
         each having the variables as keys and the data of the variable at the respective date as values
         """
-        footer = self.driver.find_element_by_xpath("/html/body/footer")
+        footer = self.driver.find_element(by=By.XPATH, value="/html/body/div[3]/footer")
         actions = ActionChains(self.driver)
         actions.move_to_element(footer).perform()
-        self.slider = self.driver.find_element_by_id("jqxScrollThumbhorizontalScrollBarjqxgrid")
+        self.slider = self.driver.find_element(by=By.ID, value="jqxScrollThumbhorizontalScrollBarjqxgrid")
         try:
             self._cell_width = self._find_cell_width()
         except:
