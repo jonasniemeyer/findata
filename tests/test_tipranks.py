@@ -74,7 +74,7 @@ class TestRatingData:
         for item in data:
             assert isinstance(item["name"], str)
             assert isinstance(item["company"], str)
-            assert (isinstance(item["image_url"], (str, NoneType))
+            assert isinstance(item["image_url"], (str, NoneType))
             assert round(item["success_rate_stock"], 4) == item["success_rate_stock"]
             assert round(item["average_rating_return_stock"], 4) == item["average_rating_return_stock"]
             assert isinstance(item["total_recommendations_stock"], int)
@@ -84,7 +84,7 @@ class TestRatingData:
             assert len(item["ratings"]) == 1
             assert dt.date.fromisoformat(item["ratings"][0]["date"])
             assert isinstance(item["ratings"][0]["news_url"], str)
-            assert (isinstance(item["ratings"][0]["news_title"], (str, NoneType))
+            assert isinstance(item["ratings"][0]["news_title"], (str, NoneType))
             assert isinstance(item["analyst_ranking"], dict)
             assert isinstance(item["analyst_ranking"]["rank"], int)
             assert isinstance(item["analyst_ranking"]["successful_recommendations"], int)
