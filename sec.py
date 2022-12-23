@@ -22,7 +22,7 @@ def sec_mutualfunds() -> list:
     items = requests.get("https://www.sec.gov/files/company_tickers_mf.json", headers=HEADERS).json()["data"]
     items = [
         {
-            "ticker": item[3],
+            "ticker": item[3].replace("(", "").replace(")", ""),
             "class_cik": item[2],
             "series_cik": item[1],
             "entity_cik": item[0]
