@@ -19,7 +19,6 @@ class CMEReader:
         "Gasoline": {"sector": "energy", "group": "refined-products", "name": "rbob-gasoline", "sector_name": "Energy"},
         "Heating Oil": {"sector": "energy", "group": "refined-products", "name": "heating-oil", "sector_name": "Energy"},
         "Natural Gas": {"sector": "energy", "group": "natural-gas", "name": "natural-gas", "sector_name": "Energy"},
-        "Off-Peak Electricity": {"sector": "energy", "group": "electricity", "name": "pjm-western-hub-off-peak-calendar-month-real-time-lmp-swap-futures", "sector_name": "Energy"},
         "Global Emissions Offset": {"sector": "energy", "group": "emissions", "name": "cbl-nature-based-global-emissions-offset", "sector_name": "Energy"},
         "Propane": {"sector": "energy", "group": "petrochemicals", "name": "mont-belvieu-propane-5-decimals-swap", "sector_name": "Energy"},
         "Butane": {"sector": "energy", "group": "petrochemicals", "name": "mont-belvieu-normal-butane-5-decimals-swap", "sector_name": "Energy"},
