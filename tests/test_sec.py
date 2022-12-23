@@ -1,4 +1,5 @@
 import re
+import pytest
 from finance_data.sec import _SECFiling
 from finance_data import (
     latest_sec_filings,
@@ -33,60 +34,36 @@ def test_sec_mutualfunds():
         assert isinstance(item["entity_cik"], int)
 
 def test_latest_sec_filings():
-    filings = latest_sec_filings(start="2022-01-01")
-    for item in filings:
-        for key in item.keys():
+    filings = latest_sec_filings(start="2022-12-22")
+    for filing in filings:
+        for key in filing.keys():
             assert key in ("name", "cik", "form_type", "url", "accession_number", "accepted", "date_filed", "file_number", "film_number")
-        assert isinstance(item["name"], str)
-        assert isinstance(item["cik"], int)
-        assert isinstance(item["form_type"], str)
-        assert isinstance(item["url"], str) and item["url"].endswith(".txt")
-        assert isinstance(item["accession_number"], str)
-        assert isinstance(item["accepted"], str) and len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", item["accepted"])) == 1
-        assert isinstance(item["date_filed"], str) and len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", item["date_filed"])) == 1 
-        assert item["file_number"] is None or isinstance(item["file_number"], str)
-        assert item["film_number"] is None or isinstance(item["film_number"], int)
+        assert isinstance(filing["name"], str)
+        assert isinstance(filing["cik"], int)
+        assert isinstance(filing["form_type"], str)
+        assert isinstance(filing["url"], str) and filing["url"].endswith(".txt")
+        assert isinstance(filing["accession_number"], str)
+        assert isinstance(filing["accepted"], str) and len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", filing["accepted"])) == 1
+        assert isinstance(filing["date_filed"], str) and len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", filing["date_filed"])) == 1 
+        assert filing["file_number"] is None or isinstance(filing["file_number"], str)
+        assert filing["film_number"] is None or isinstance(filing["film_number"], int)
+    
+    filings = latest_sec_filings(start="2022-12-22", timestamps=True)
+    for filing in filings:
+        assert isinstance(filing["accepted"], int)
+        assert isinstance(filing["date_filed"], int)
 
 def search_sec_filings():
     pass
 
 class TestSECFiling:
-    def xml_file(self):
-        pass
-    
-    def text_file(self):
-        pass
-
-
-class TestFiling13G:
-    pass
-
-
-class TestFiling13D:
-    pass
-
-
-class TestFiling13F_xml:
-    def test_no_prefix(self):
-        pass
-
-    def test_n1_prefix(self):
-        pass
-
-    def test_ns1_prefix(self):
-        pass
-
-    def test_aggregate_portfolio(self):
-        pass
-
-
-class TestFiling13F_text:
     pass
 
 
 class TestFilingNPORT:
-    def test_attributes(self):
-        pass
+    @classmethod
+    def setup_class(cls):
+        cls.file = None
 
     def test_general_information(self):
         pass
@@ -95,7 +72,11 @@ class TestFilingNPORT:
         pass
 
     def test_portfolio(self):
-        pass
+        for var in (None, "name", "market_value", "quantity", "percentage", "payoff_direction"):
+            portfolio = self.file.portfolio(sorted_by=var)
+        
+        with pytest.raises(ValueError):
+            self.file.portfolio(sorted_by="foo")
 
     def test_miscellaneous_securities(self):
         pass
@@ -109,14 +90,29 @@ class TestFilingNPORT:
     def test_exhibits(self):
         pass
 
+    def test_debt_security(self):
+        pass
 
-class TestFiling3:
-    pass
+    def test_debt_convertible(self):
+        pass
 
+    def test_derivative_future(self):
+        pass
 
-class TestFiling4:
-    pass
+    def test_derivative_currency_forward(self):
+        pass
 
+    def test_derivative_swap(self):
+        pass
 
-class TestFiling5:
-    pass
+    def test_derivative_option(self):
+        pass
+
+    def test_derivative_warrant(self):
+        pass
+
+    def test_derivative_swaption(self):
+        pass
+
+    def test_lending_information(self):
+        pass

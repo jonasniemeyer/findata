@@ -31,7 +31,7 @@ def sec_mutualfunds() -> list:
     ]
     return items
 
-def latest_sec_filings(start=pd.to_datetime("today").isoformat()) -> list:
+def latest_sec_filings(start=pd.to_datetime("today").isoformat(), timestamps=False) -> list:
     filings = []
     start_reached = False
     page_counter = 0
@@ -68,6 +68,10 @@ def latest_sec_filings(start=pd.to_datetime("today").isoformat()) -> list:
                 break
 
             date_filed = cells[4].text
+
+            if timestamps:
+                accepted = int(pd.to_datetime(accepted).timestamp())
+                date_filed = int(pd.to_datetime(date_filed).timestamp())
 
             if len(cells) == 6:
                 file_number, film_number = cells[5].text.split("\n")
