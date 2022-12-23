@@ -1100,14 +1100,14 @@ class FilingNPORT(_SECFiling):
             if mandatory_convertible == "Y":
                 mandatory_convertible = True
             elif mandatory_convertible == "N":
-                 mandatory_convertible = False
+                mandatory_convertible = False
             assert isinstance(mandatory_convertible, bool)
 
             contingent_convertible = debt_section.find("iscontngtconvrtbl").text
             if contingent_convertible == "Y":
                 contingent_convertible = True
             elif contingent_convertible == "N":
-                 contingent_convertible = False
+                contingent_convertible = False
             assert isinstance(contingent_convertible, bool)
 
             conversion_asset_section = debt_section.find("dbtsecrefinstruments").find("dbtsecrefinstrument")
@@ -1545,7 +1545,7 @@ class FilingNPORT(_SECFiling):
         cash_collateral = security_lending_section.find("iscashcollateral")
         if cash_collateral is not None:
             assert cash_collateral.text == "N"
-            cash_collateral = False
+            cash_collateral = None
         else:
             assert security_lending_section.find("cashcollateralcondition").get("iscashcollateral") == "Y"
             cash_collateral = float(security_lending_section.find("cashcollateralcondition").get("cashcollateralval")) * 1000
@@ -1553,7 +1553,7 @@ class FilingNPORT(_SECFiling):
         non_cash_collateral = security_lending_section.find("isnoncashcollateral")
         if non_cash_collateral is not None:
             assert non_cash_collateral.text == "N"
-            non_cash_collateral = False
+            non_cash_collateral = None
         else:
             assert security_lending_section.find("noncashcollateralcondition").get("isnoncashcollateral") == "Y"
             non_cash_collateral = float(security_lending_section.find("noncashcollateralcondition").get("noncashcollateralval")) * 1000
@@ -1561,7 +1561,7 @@ class FilingNPORT(_SECFiling):
         loaned = security_lending_section.find("isloanbyfund")
         if loaned is not None:
             assert loaned.text == "N"
-            loaned = False
+            loaned = None
         else:
             assert security_lending_section.find("loanbyfundcondition").get("isloanbyfund") == "Y"
             loaned = float(security_lending_section.find("loanbyfundcondition").get("loanval")) * 1000
