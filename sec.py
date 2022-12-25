@@ -1168,45 +1168,48 @@ class FilingNPORT(_SECFiling):
     
     def _get_derivative_information(self, entry) -> Union[dict, None]:
         derivative_section = entry.find("derivativeinfo")
-        
         if derivative_section is None:
             return None
 
-        counterparty = derivative_section.find("counterparties")
-        counterparty_name = counterparty.find("counterpartyname").text
-        if counterparty_name == "N/A":
-            counterparty_name = None
-        counterparty_lei = counterparty.find("counterpartylei").text
-        if counterparty_lei == "N/A":
-            counterparty_lei = None
+        counterparties = []
+
+        counterparty_tags = derivative_section.find_all("counterparties")
+        for counterparty in counterparty_tags:
+            name = counterparty.find("counterpartyname").text
+            if name == "N/A":
+                name = None
+            lei = counterparty.find("counterpartylei").text
+            if lei == "N/A":
+                lei = None
+            counterparties.append({"name": name, "lei": lei})
         
-        derivative_abbr = derivative_section.contents[1].get("derivcat")
-        if derivative_abbr == "OTH":
-            derivative_name = derivative_section.contents[1].get("othdesc")
+        contents = derivative_section.contents
+        if contents[0].text == "\n":
+            abbr = contents[1].get("derivcat")
         else:
-            derivative_name = self._derivative_types[derivative_abbr]
-        derivative_type = {"name": derivative_name, "abbr": derivative_abbr}
+            abbr = contents[0].get("derivcat")
+        if abbr == "OTH":
+            name = derivative_section.contents[1].get("othdesc")
+        else:
+            name = self._derivative_types[abbr]
         
-        if derivative_abbr == "FWD":
+        if abbr == "FWD":
             derivative_specific_information = self._parse_currency_forward_information(derivative_section)
-        elif derivative_abbr == "FUT":
+        elif abbr == "FUT":
             derivative_specific_information = self._parse_future_information(derivative_section)
-        elif derivative_abbr == "SWP":
-            derivative_specific_information = self._parse_swap_information(derivative_section)
-        elif derivative_abbr in ("OPT", "SWO", "WAR"):
+        elif abbr in ("OPT", "SWO", "WAR"):
             derivative_specific_information = self._parse_option_information(derivative_section)
-        elif derivative_abbr == "OTH":
+        elif abbr == "SWP":
+            derivative_specific_information = self._parse_swap_information(derivative_section)
+        elif abbr == "OTH":
             derivative_specific_information = self._parse_other_derivative_information(derivative_section)
         
         return {
             "type": {
-                "name": derivative_type,
-                "abbr": derivative_abbr
+                "name": name,
+                "abbr": abbr
             },
-            "counterparty": {
-                "name": counterparty_name,
-                "lei": counterparty_lei
-            },
+            "counterparties": counterparties,
             **derivative_specific_information
         }
 
