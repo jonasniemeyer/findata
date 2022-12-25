@@ -967,7 +967,7 @@ class FilingNPORT(_SECFiling):
             quantity_type_abbr = entry.find("units").text
             if quantity_type_abbr == "N/A" or quantity_type_abbr is None:
                 raise ValueError
-            quantity_type = {"name": self._quantity_types[quantity_type_abbr], "abbreviation": quantity_type_abbr}
+            quantity_type = {"name": self._quantity_types[quantity_type_abbr], "abbr": quantity_type_abbr}
             
             currency = entry.find("curcd")
             if currency is None:
@@ -1001,21 +1001,21 @@ class FilingNPORT(_SECFiling):
             asset_type = entry.find("assetcat")
             if asset_type is not None:
                 asset_type_abbr = asset_type.text
-                asset_type = {"name": self._asset_types[asset_type_abbr], "abbreviation": asset_type_abbr}
+                asset_type = {"name": self._asset_types[asset_type_abbr], "abbr": asset_type_abbr}
             else:
                 asset_type_name = entry.find("assetconditional").get("desc")
-                asset_type = {"name": asset_type_name, "abbreviation": "OTH"}
+                asset_type = {"name": asset_type_name, "abbr": "OTH"}
             
             issuer_type = entry.find("issuercat")
             if issuer_type is None:
                 issuer["type"] = {
                     "name": entry.find("issuerconditional").get("desc"),
-                    "abbreviation": "OTH"
+                    "abbr": "OTH"
                 }
             else:
                 issuer["type"] = {
                     "name": self._issuer_types[issuer_type.text],
-                    "abbreviation": issuer_type.text
+                    "abbr": issuer_type.text
                 }
             country = entry.find("invcountry").text
             if country == "N/A":
@@ -1185,7 +1185,7 @@ class FilingNPORT(_SECFiling):
             derivative_name = derivative_section.contents[1].get("othdesc")
         else:
             derivative_name = self._derivative_types[derivative_abbr]
-        derivative_type = {"name": derivative_name, "abbreviation": derivative_abbr}
+        derivative_type = {"name": derivative_name, "abbr": derivative_abbr}
         
         if derivative_abbr == "FWD":
             derivative_specific_information = self._parse_currency_forward_information(derivative_section)
@@ -1201,7 +1201,7 @@ class FilingNPORT(_SECFiling):
         return {
             "type": {
                 "name": derivative_type,
-                "abbreviation": derivative_abbr
+                "abbr": derivative_abbr
             },
             "counterparty": {
                 "name": counterparty_name,
@@ -1807,7 +1807,7 @@ class FilingNPORT(_SECFiling):
                 category_abbr = tag.find("invstcat").text
                 asset_category = {
                     "name": self._asset_types[category_abbr],
-                    "abbreviation": category_abbr
+                    "abbr": category_abbr
                 }
                 non_cash_collateral.append(
                     {
