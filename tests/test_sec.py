@@ -108,6 +108,7 @@ class TestFilingNPORT:
     @classmethod
     def setup_class(cls):
         cls.file = FilingNPORT.from_url("https://www.sec.gov/Archives/edgar/data/930667/000175272422234894/0001752724-22-234894.txt")
+        #cls.derivative_file = FilingNPORT.from_url("https://www.sec.gov/Archives/edgar/data/1444822/000175272422264732/0001752724-22-264732.txt")
 
     def test_attributes(self):
         assert self.file.accession_number  == "0001752724-22-234894"
@@ -244,12 +245,37 @@ class TestFilingNPORT:
         portfolio = self.file.portfolio()
         for var in (None, "name", "market_value", "quantity", "percentage", "payoff_direction"):
             self.file.portfolio(sorted_by=var)
-        
+
+        security = portfolio[0]
+        assert security["issuer"]["name"] == "Domino's Pizza Enterprises Ltd"
+        assert security["issuer"]["lei"] == "54930034RFI409JZ3179"
+        assert security["issuer"]["type"]["name"] == "Corporate"
+        assert security["issuer"]["type"]["abbr"] == "CORP"
+        assert security["title"] == "Domino's Pizza Enterprises Ltd"
+        assert security["identifier"]["isin"] == "AU000000DMP0"
+        assert security["amount"]["percentage"] == 0.00005
+        assert security["amount"]["market_value"] == 109220.68
+        assert security["amount"]["quantity"] == 2534.0
+        assert security["amount"]["quantity_type"]["name"] == "Number of shares"
+        assert security["amount"]["quantity_type"]["abbr"] == "NS"
+        assert security["amount"]["currency"]["name"] == "AUD"
+        assert security["amount"]["currency"]["exchange_rate"] == 1.461454
+        assert security["payoff_direction"] == "Long"
+        assert security["asset_type"]["name"] == "Equity-common"
+        assert security["asset_type"]["abbr"] == "EC"
+        assert security["restricted_security"] is False
+        assert security["us_gaap_fair_value_hierarchy"] == 2
+        assert security["debt_information"] is None
+        assert security["derivative_information"] is None
+        assert security["securities_lending"]["cash_collateral"] is None
+        assert security["securities_lending"]["non_cash_collateral"] is None
+        assert security["securities_lending"]["loaned"] is None
+
         for item in portfolio:
             assert isinstance(item["issuer"]["name"], str)
             assert isinstance(item["issuer"]["lei"], (str, NoneType))
             assert isinstance(item["issuer"]["type"]["name"], str)
-            assert isinstance(item["issuer"]["type"]["abbreviation"], str)
+            assert isinstance(item["issuer"]["type"]["abbr"], str)
             assert isinstance(item["issuer"]["country"], str)
 
             assert isinstance(item["title"], str)
@@ -262,14 +288,14 @@ class TestFilingNPORT:
             assert isinstance(item["amount"]["market_value"], float)
             assert isinstance(item["amount"]["quantity"], float)
             assert isinstance(item["amount"]["quantity_type"]["name"], str)
-            assert isinstance(item["amount"]["quantity_type"]["abbreviation"], str)
+            assert isinstance(item["amount"]["quantity_type"]["abbr"], str)
             assert isinstance(item["amount"]["currency"]["name"], str)
             assert isinstance(item["amount"]["currency"]["exchange_rate"], (float, NoneType))
 
             assert item["payoff_direction"] in ("Long", "Short", None)
 
             assert isinstance(item["asset_type"]["name"], str)
-            assert isinstance(item["asset_type"]["abbreviation"], str)
+            assert isinstance(item["asset_type"]["abbr"], str)
 
             assert isinstance(item["restricted_security"], bool)
             assert item["us_gaap_fair_value_hierarchy"] in (1, 2, 3)
@@ -299,25 +325,115 @@ class TestFilingNPORT:
         pass
 
     def test_debt_security(self):
-        pass
+        portfolio = FilingNPORT.from_url("https://www.sec.gov/Archives/edgar/data/1100663/000175272422234846/0001752724-22-234846.txt").portfolio()
+        portfolio = [security for security in portfolio if security["debt_information"] is not None]
+        
+        info = portfolio[0]["debt_information"]
+        assert info["maturity"] == "2050-05-15"
+        assert info["coupon"]["rate"] == 0.0125
+        assert info["coupon"]["type"] == "Fixed"
+        assert info["in_default"] is False
+        assert info["coupon_payments_deferred"] is False
+        assert info["paid_in_kind"] is False
+        assert info["convertible_information"] is None
+        
+        for security in portfolio:
+            info = security["debt_information"]
+            assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", info["maturity"])) == 1
+            assert isinstance(info["coupon"]["rate"], float)
+            assert isinstance(info["coupon"]["type"], str)
+            assert isinstance(info["in_default"], bool)
+            assert isinstance(info["coupon_payments_deferred"], bool)
+            assert isinstance(info["paid_in_kind"], bool)
+            assert isinstance(info["convertible_information"], NoneType)
 
     def test_debt_convertible(self):
-        pass
+        portfolio = FilingNPORT.from_url("https://www.sec.gov/Archives/edgar/data/1100663/000175272422218333/0001752724-22-218333.txt").portfolio()
+        portfolio = [security for security in portfolio if security["debt_information"] is not None]
+
+        info = portfolio[0]["debt_information"]
+        assert info["maturity"] == "2026-09-15"
+        assert info["coupon"]["rate"] == 0.0025
+        assert info["coupon"]["type"] == "Fixed"
+        assert info["in_default"] is False
+        assert info["coupon_payments_deferred"] is False
+        assert info["paid_in_kind"] is False
+        convertible_info = info["convertible_information"]
+        assert convertible_info["mandatory_convertible"] is False
+        assert convertible_info["conversion_asset"]["name"] == "Sea Ltd."
+        assert convertible_info["conversion_asset"]["title"] == "Sea Ltd."
+        assert convertible_info["conversion_asset"]["currency"] == "USD"
+        assert convertible_info["conversion_asset"]["identifier"]["cusip"] == "81141R100"
+        assert convertible_info["conversion_asset"]["identifier"]["isin"] == "US81141R1005"
+        assert convertible_info["conversion_ratio"]["ratio"] == 2.0964
+        assert convertible_info["conversion_ratio"]["currency"] == "USD"
+        assert convertible_info["delta"] is None
+        
+        for security in portfolio:
+            info = security["debt_information"]
+            assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", info["maturity"])) == 1
+            assert isinstance(info["coupon"]["rate"], float)
+            assert isinstance(info["coupon"]["type"], str)
+            assert isinstance(info["in_default"], bool)
+            assert isinstance(info["coupon_payments_deferred"], bool)
+            assert isinstance(info["paid_in_kind"], bool)
+            convertible_info = info["convertible_information"]
+            assert isinstance(convertible_info["mandatory_convertible"], bool)
+            assert isinstance(convertible_info["conversion_asset"]["name"], str)
+            assert isinstance(convertible_info["conversion_asset"]["title"], str)
+            assert isinstance(convertible_info["conversion_asset"]["currency"], str)
+            for identifier, value in convertible_info["conversion_asset"]["identifier"].items():
+                assert isinstance(identifier, str)
+                assert isinstance(value, str)
+            assert isinstance(convertible_info["conversion_ratio"]["ratio"], float)
+            assert isinstance(convertible_info["conversion_ratio"]["currency"], str)
+            assert isinstance(convertible_info["delta"], NoneType)
 
     def test_derivative_future(self):
-        pass
+        portfolio = self.derivative_file.portfolio()
+        portfolio = [security for security in portfolio if security["derivative_information"] is not None]
 
     def test_derivative_currency_forward(self):
-        pass
+        portfolio = self.derivative_file.portfolio()
+        portfolio = [security for security in portfolio if security["derivative_information"] is not None]
 
     def test_derivative_swap(self):
-        pass
+        portfolio = self.derivative_file.portfolio()
+        portfolio = [security for security in portfolio if security["derivative_information"] is not None]
 
     def test_derivative_option(self):
-        pass
+        portfolio = FilingNPORT.from_url("https://www.sec.gov/Archives/edgar/data/1432353/000175272422218231/0001752724-22-218231.txt").portfolio()
+        info = [security for security in portfolio if security["derivative_information"] is not None][0]["derivative_information"]
+        assert info["type"]["name"] == "Option"
+        assert info["type"]["abbr"] == "OPT"
+        counterparty = info["counterparties"][0]
+        assert counterparty["name"] == "NDX US 08/19/22 C11925"
+        assert counterparty["lei"] is None
+        assert info["option_type"] == "Call"
+        assert info["trade_direction"] == "Written"
+        reference = info["reference_asset"]
+        assert reference["name"] == "Call Option 11925 Aug 2022 on NASDAQ 100 STOCK INDEX"
+        assert reference["title"] is None
+        assert reference["identifier"]["isin"] is None
+        assert reference["amount"]["quantity"] == 599600.0
+        assert reference["amount"]["quantity_type"]["name"] == "Number of shares"
+        assert reference["amount"]["quantity_type"]["abbr"] == "NS"
+        assert info["exercise_price"] == 925.0
+        assert info["currency"] =="USD"
+        assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", info["expiration_date"])) == 1
+        assert info["delta"] is None
+        assert info["unrealized_appreciation"] == -395183757.78
 
     def test_derivative_warrant(self):
-        pass
+        portfolio = self.derivative_file.portfolio()
+        portfolio = [security for security in portfolio if security["derivative_information"] is not None]
 
     def test_derivative_swaption(self):
-        pass
+        portfolio = FilingNPORT.from_url("https://www.sec.gov/Archives/edgar/data/1810747/000175272422261043/0001752724-22-261043.txt").portfolio()
+        portfolio = [security for security in portfolio if security["derivative_information"] is not None]
+
+
+class TestNPORTNestedDerivative:
+    def test_nested_derivative(self):
+        portfolio = FilingNPORT.from_url("https://www.sec.gov/Archives/edgar/data/1003239/0001752724-21-190757.txt").portfolio(sorted_by="percentage")
+        portfolio = [security for security in portfolio if security["derivative_information"] is not None]
