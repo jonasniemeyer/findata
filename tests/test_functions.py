@@ -1,4 +1,4 @@
-from finance_data import finra_margin_debt, shiller_cape
+from finance_data import finra_margin_debt, shiller_data
 import pandas as pd
 import numpy as np
 
@@ -21,8 +21,8 @@ def test_finra_margin_debt():
     for key in data:
         assert all(isinstance(item, int) for item in data[key].index)
 
-def test_shiller_cape():
-    df = shiller_cape()
+def test_shiller_data():
+    df = shiller_data()
     assert all(isinstance(date, pd.Timestamp) for date in df.index)
     for col in df.columns:
         assert col in (
@@ -48,5 +48,5 @@ def test_shiller_cape():
     for col in df.columns:
         assert df[col].dtype in (np.int32, np.float64)
 
-    df = shiller_cape(timestamps=True)
+    df = shiller_data(timestamps=True)
     assert all(isinstance(date, int) for date in df.index)

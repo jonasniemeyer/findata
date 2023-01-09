@@ -71,7 +71,7 @@ def finra_margin_debt(timestamps=False) -> dict:
 
     return data
 
-def shiller_cape(timestamps=False) -> pd.DataFrame:
+def shiller_data(timestamps=False) -> pd.DataFrame:
     df = pd.read_excel(
         io="http://www.econ.yale.edu/~shiller/data/ie_data.xls",
         sheet_name="Data",

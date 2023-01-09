@@ -21,7 +21,7 @@ from .sec import (
     FilingNPORT
 )
 from .tipranks import TipranksAnalystReader, TipranksStockReader
-from .functions import finra_margin_debt, shiller_cape
+from .functions import finra_margin_debt, shiller_data
 from .utils import DatasetError, TickerError
 
 __all__ = [
@@ -46,7 +46,7 @@ __all__ = [
     "Filing13F",
     "FilingNPORT",
     "finra_margin_debt",
-    "shiller_cape",
+    "shiller_data",
     "DatasetError",
     "TickerError",
     "TipranksAnalystReader",
