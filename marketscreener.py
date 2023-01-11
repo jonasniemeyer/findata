@@ -112,10 +112,14 @@ class MarketscreenerReader:
         for row in rows[1:-3]:
             cells = row.find_all("td")
             name = cells[0].find(text=True)
-            if name not in ("EBITDA", "EPS"):
+            if name == "FCF margin":
+                name = "FCF Margin"
+            elif name not in ("EBITDA", "EPS", "FCF Conversion"):
                 name = name.title()
+
             if "(" in name:
                 name = name[:name.index(" (")]
+
             for index, cell in enumerate(cells[1:]):
                 year = years[index+1]
 
@@ -123,7 +127,7 @@ class MarketscreenerReader:
                     value = None
                 else:
                     value = cell.text.replace(" ", "").replace(",", ".")
-                    if name in ("Operating Margin", "Net Margin"):
+                    if name in ("Operating Margin", "Net Margin", "FCF Margin", "FCF Conversion"):
                         value = float(value.replace("%", ""))  / 100
                     elif name in ("EPS", "Dividend Per Share"):
                         value = float(value)
