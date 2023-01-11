@@ -74,3 +74,20 @@ def test_nasdaq_news():
     assert len(articles) != 0
     for article in articles:
         assert isinstance(article["datetime"], int)
+
+def test_sa_news():
+    articles = SANews.rss_feed("AAPL")
+    assert isinstance(articles, list)
+    assert len(articles) != 0
+
+    for article in articles:
+        assert isinstance(article["header"], str)
+        assert isinstance(article["url"], str)
+        assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", article["datetime"])) == 1
+        assert isinstance(article["author"], str)
+        assert isinstance(article["type"], str)
+
+    articles = NasdaqNews.rss_feed("AAPL", timestamps=True)
+    assert len(articles) != 0
+    for article in articles:
+        assert isinstance(article["datetime"], int)
