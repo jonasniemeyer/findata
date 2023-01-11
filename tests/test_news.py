@@ -91,3 +91,53 @@ def test_sa_news():
     assert len(articles) != 0
     for article in articles:
         assert isinstance(article["datetime"], int)
+
+def test_wsj_news():
+    for sections in (
+        WSJNews.world_sections,
+        WSJNews.us_sections,
+        WSJNews.business_sections,
+        WSJNews.markets_sections,
+        WSJNews.opinions,
+        WSJNews.books_art_sections,
+        WSJNews.life_work_sections,
+        WSJNews.style_sections,
+        WSJNews.sports_sections,
+        WSJNews.columns,
+        WSJNews.reviews
+    ):
+        for section in sections:
+            articles = WSJNews.articles(section=section, start="2022-01-01")
+            assert isinstance(articles, list)
+            assert len(articles) != 0
+
+            for article in articles:
+                assert isinstance(article["title"], str)
+                assert isinstance(article["authors"], list)
+                for author in article["authors"]:
+                    assert isinstance(author, str)
+                assert isinstance(article["category"], (str, NoneType))
+                assert isinstance(article["summary"], str)
+                assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", article["date"])) == 1
+                assert isinstance(article["url"], str)
+
+    articles = WSJNews.articles(section="Europe", start="2023-01-01", timestamps=True)
+    assert len(articles) != 0
+    for article in articles:
+        assert isinstance(article["date"], int)
+
+def test_wsj_rss():
+    for section in WSJNews.rss_sections:
+        articles = WSJNews.rss_feed(section=section)
+        assert isinstance(articles, list)
+        assert len(articles) != 0
+        
+        for article in articles:
+            assert isinstance(article["header"], str)
+            assert isinstance(article["url"], str)
+            assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", article["datetime"])) == 1
+        
+    articles = WSJNews.rss_feed(section="World")
+    assert len(articles) != 0
+    for article in articles:
+        assert isinstance(article["date"], int)
