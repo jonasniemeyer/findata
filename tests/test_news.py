@@ -25,3 +25,30 @@ def test_economist_news():
     assert len(articles) != 0
     for article in articles:
         assert isinstance(article["datetime"], int)
+
+def test_ft_news():
+    for sections in (
+        FTNews.world_sections,
+        FTNews.companies_sections,
+        FTNews.markets_sections,
+        FTNews.career_sections,
+        FTNews.life_sections,
+        FTNews.opinions,
+        FTNews.columnists
+    ):
+        for section in sections:
+            articles = FTNews.articles(section=section, start="2022-01-01")
+            assert isinstance(articles, list)
+            assert len(articles) != 0
+
+            for article in articles:
+                assert isinstance(article["header"], str)
+                assert isinstance(article["url"], str)
+                assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", article["datetime"])) == 1
+                assert isinstance(article["author"], str)
+                assert isinstance(article["type"], str)
+
+    articles = FTNews.articles(section="Tech Sector", start="2023-01-01", timestamps=True)
+    assert len(articles) != 0
+    for article in articles:
+        assert isinstance(article["datetime"], int)
