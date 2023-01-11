@@ -1,13 +1,18 @@
 from .aqr import AQRReader
 from .cme import CMEReader
-from .yahoo import YahooReader
-from .macrotrends import MacrotrendsReader
-from .marketscreener import MarketscreenerReader
 from .finviz import FinvizReader
 from .french import FrenchReader
 from .fred import FREDReader
+from .macrotrends import MacrotrendsReader
+from .marketscreener import MarketscreenerReader
 from .msci import MSCIReader
-from .rss import RSSReader
+from .news import (
+    EconomistNews,
+    FTNews,
+    NasdaqNews,
+    SANews,
+    WSJNews
+)
 from .sec import (
     latest_sec_filings,
     sec_companies,
@@ -21,23 +26,15 @@ from .sec import (
     FilingNPORT
 )
 from .tipranks import TipranksAnalystReader, TipranksStockReader
+from .yahoo import YahooReader
 from .functions import finra_margin_debt, shiller_data
 from .utils import DatasetError, TickerError
 
 __all__ = [
     "AQRReader",
     "CMEReader",
-    "YahooReader",
-    "MacrotrendsReader",
-    "MarketscreenerReader",
-    "FrenchReader",
-    "MSCIReader",
-    "FinvizReader",
-    "FREDReader",
-    "RSSReader",
-    "latest_sec_filings",
-    "sec_companies",
-    "sec_mutualfunds",
+    "DatasetError",
+    "EconomistNews",
     "Filing3",
     "Filing4",
     "Filing5",
@@ -45,10 +42,23 @@ __all__ = [
     "Filing13G",
     "Filing13F",
     "FilingNPORT",
+    "FinvizReader",
     "finra_margin_debt",
+    "FREDReader",
+    "FrenchReader",
+    "FTNews",
+    "latest_sec_filings",
+    "MacrotrendsReader",
+    "MarketscreenerReader",
+    "MSCIReader",
+    "NasdaqNews",
+    "SANews",
+    "sec_companies",
+    "sec_mutualfunds",
     "shiller_data",
-    "DatasetError",
     "TickerError",
     "TipranksAnalystReader",
-    "TipranksStockReader"
+    "TipranksStockReader",
+    "WSJNews",
+    "YahooReader"
 ]
