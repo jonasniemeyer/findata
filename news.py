@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from finance_data.utils import HEADERS, DatasetError
 
 class EconomistNews:
-    base_url = "https://www.economist.com"
+    _base_url = "https://www.economist.com"
     
     sections = {
         "Leaders": "leaders",
@@ -28,13 +28,14 @@ class EconomistNews:
         "Essay": "essay",
         "By Invitation": "by-invitation",
         "Schools Brief": "schools-brief",
-        "The Economist Explains": "the-economist-explains"
+        "The Economist Explains": "the-economist-explains",
+        "The Economist Reads": "the-economist-reads"
     }
     
     @classmethod
     def articles(
         cls,
-        source,
+        section,
         start=pd.to_datetime("today").date().isoformat(),
         timestamps=False
     ) -> list:
@@ -47,14 +48,12 @@ class EconomistNews:
         start_reached = False
         page_counter = 0
         
-        if source in cls.sections:
-            section = cls.sections[source]
-        else:
-            section = source
+        if section in cls.sections:
+            section = cls.sections[section]
         
         while start_reached is False:
             page_counter+=1
-            url = f"{cls.base_url}/{section}?page={page_counter}"
+            url = f"{cls._base_url}/{section}?page={page_counter}"
             response = requests.get(url=url, headers=HEADERS)
             
             if int(response.url.split("page=")[1]) != page_counter:
@@ -67,39 +66,39 @@ class EconomistNews:
                 div = soup.find_all("div", {"class": "layout-section-collection ds-layout-grid"})[0]
                 tags = div.find_all("div", {"class": "css-e6sfh4 e1mrg8dy0"}, recursive=False)
             except IndexError:
-                raise DatasetError(f"No articles found for source '{source}'")
+                raise DatasetError(f"No articles found for section '{section}'")
             assert len(tags) != 0
             
             for tag in tags:
                 tag = tag.find_all("div", recursive=False)[0]
                 url = tag.find("h3", recursive=False).find("a").get("href")
-                url = f"{cls.base_url}{url}"
+                url = f"{cls._base_url}{url}"
                 
-                datetime = re.findall("[0-9]{4}/[0-9]{2}/[0-9]{2}", url)
-                if datetime == []:
-                    datetime = None
+                date = re.findall("[0-9]{4}/[0-9]{2}/[0-9]{2}", url)
+                if date == []:
+                    date = None
                 else:
-                    datetime = pd.to_datetime(datetime[0])
-                    if datetime.timestamp() < start:
+                    date = pd.to_datetime(date[0])
+                    if date.timestamp() < start:
                         start_reached = True
                         break
 
                     if timestamps:
-                        datetime = int(datetime.timestamp())
+                        date = int(date.timestamp())
                     else:
-                        datetime = datetime.isoformat()
+                        date = date.date().isoformat()
                 
                 title = tag.find("h3", recursive=False).find("a").text
                 description = tag.find_all("p", recursive=False)
                 if description == []:
                     description = None
                 else:
-                    description = description[1].text
+                    description = description[0].text
 
                 article = {
                     "title": title,
                     "description": description,
-                    "datetime": datetime,
+                    "date": date,
                     "url": url
                 }
 
@@ -108,7 +107,8 @@ class EconomistNews:
 
 
 class FTNews:
-    base_url = "https://www.ft.com"
+    _base_url = "https://www.ft.com"
+
     world_sections = {
         "World": "world",
         "Global Economy": "global-economy",
@@ -133,7 +133,6 @@ class FTNews:
         "Americas": "world/americas",
         "Middle East & North Africa": "world/mideast",
         "Australia & NZ": "australia-newzealand",
-
         "Climate": "climate-capital"
     }
     
@@ -225,7 +224,6 @@ class FTNews:
     }
     
     life_sections = {
-        "Life & Arts": "life-arts",
         "Arts": "arts",
         "Architecture": "architecture",
         "Collecting": "collecting",
@@ -248,23 +246,11 @@ class FTNews:
         "House & Home": "house-home",
         "Style": "style",
         "Fashion shows": "fashion-shows",
-        "The Art of Fashion": "art-of-fashion",
         "Travel": "travel",
         "Adventure Holidays": "adventure-holidays",
         "Cycling Holidays": "cycling-holidays",
         "City Breaks": "city-breaks",
-        "Winter Sports": "winter-sports",
-        "FT Globetrotter": "globetrotter",
-        "London": "globetrotter/london",
-        "Paris": "globetrotter/paris",
-        "Rome": "globetrotter/rome",
-        "Frankfurt": "globetrotter/frankfurt",
-        "New York City": "globetrotter/new-york-city",
-        "Miami": "globetrotter/miami",
-        "Hong Kong": "globetrotter/hong-kong",
-        "Tokyo": "globetrotter/tokyo",
-        "Singapore": "globetrotter/singapore",
-        "Toronto": "globetrotter/toronto", 
+        "Winter Sports": "winter-sports"
     }
 
     opinions = {
@@ -324,7 +310,7 @@ class FTNews:
     @classmethod
     def articles(
         cls,
-        source,
+        section,
         start=pd.to_datetime("today").date().isoformat(),
         timestamps=False
     ) -> list:
@@ -337,34 +323,32 @@ class FTNews:
         start_reached = False
         page_counter = 0
         
-        if source in cls.world_sections:
-            section = cls.world_sections[source]
-        elif source in cls.companies_sections:
-            section = cls.companies_sections[source]
-        elif source in cls.markets_sections:
-            section = cls.markets_sections[source]
-        elif source in cls.career_sections:
-            section = cls.career_sections[source]
-        elif source in cls.life_sections:
-            section = cls.life_sections[source]
-        elif source in cls.opinions:
-            section = cls.opinions[source]
-        elif source in cls.columnists:
-            section = cls.columnists[source]
-        else:
-            section = source
+        if section in cls.world_sections:
+            section = cls.world_sections[section]
+        elif section in cls.companies_sections:
+            section = cls.companies_sections[section]
+        elif section in cls.markets_sections:
+            section = cls.markets_sections[section]
+        elif section in cls.career_sections:
+            section = cls.career_sections[section]
+        elif section in cls.life_sections:
+            section = cls.life_sections[section]
+        elif section in cls.opinions:
+            section = cls.opinions[section]
+        elif section in cls.columnists:
+            section = cls.columnists[section]
         
         while start_reached is False:
             page_counter+=1
             if page_counter == 201:
                 break
-            url = f"{cls.base_url}/{section}?page={page_counter}"
+            url = f"{cls._base_url}/{section}?page={page_counter}"
             html = requests.get(url=url, headers=HEADERS).text
             soup = BeautifulSoup(html, "lxml")
             try:
                 tags = soup.find_all("ul", {"class": "o-teaser-collection__list js-stream-list"})[0].find_all("li")
             except IndexError:
-                raise DatasetError(f"No articles found for source '{source}'")
+                raise DatasetError(f"No articles found for section '{section}'")
             assert len(tags) != 0
             
             for tag in tags:
@@ -377,6 +361,9 @@ class FTNews:
                         start_reached = True
                         break
 
+                if timestamps:
+                    datetime = int(pd.to_datetime(datetime).timestamp())
+
                 content = tag.find_all("div", recursive=False)[1].find_all("div", recursive=False)[0].find_all("div", recursive=False)[0].find_all("div", recursive=False)[0]
                 category = content.find("div", {"class": "o-teaser__meta"}).find("a")
                 if category is not None:
@@ -386,7 +373,7 @@ class FTNews:
                 description = content.find("p", {"class": "o-teaser__standfirst"})
                 if description is not None:
                     description = description.find("a").text
-                url = f"{cls.base_url}{path}"
+                url = f"{cls._base_url}{path}"
 
                 article = {
                     "title": title,
@@ -476,7 +463,7 @@ class SANews:
 
 
 class WSJNews:
-    base_url = "https://www.wsj.com/news/"
+    _base_url = "https://www.wsj.com/news/"
     
     world_sections = {
         "Africa": "types/africa-news",
@@ -489,8 +476,6 @@ class WSJNews:
     }
     
     us_sections = {
-        "Economy": "economy",
-        "Politics": "politics",
         "Capital Account": "types/capital-account"
     }
     
@@ -568,8 +553,6 @@ class WSJNews:
     columns = {
         "Washington Wire": "types/washington-wire",
 
-        "Heard on the Street": "heard-on-the-street",
-
         "Christopher Mims": "author/christopher-mims",
         "Joanna Stern": "author/joanna-stern",
         "Julie Jargon": "author/julie-jargon",
@@ -586,7 +569,7 @@ class WSJNews:
         "William A. Galston": "author/william-a-galston",
         "Daniel Henninger": "author/daniel-henninger",
         "Holman W. Jenkins": "author/holman-w-jenkinsjr",
-        "Andy_kessler": "author/andy-kessler",
+        "Andy Kessler": "author/andy-kessler",
         "William McGurn": "author/william-mcgurn",
         "Walter Russell Mead": "author/walter-russell-mead",
         "Peggy Noonan": "author/peggy-noonan",
@@ -622,11 +605,13 @@ class WSJNews:
         "Exhibition": "types/exhibition-review",
         "Cultural Commentary": "types/cultural-commentary"
     }
+
+    rss_sections = ("Opinion", "World", "U.S. Business", "Markets", "Technology", "Lifestyle")
         
     @classmethod
     def articles(
         cls,
-        source,
+        section,
         start=pd.to_datetime("today").date().isoformat(),
         timestamps=False
     ) -> list:
@@ -639,55 +624,48 @@ class WSJNews:
         start_reached = False
         page_counter = 0
 
-        if source in cls.world_sections:
-            section = cls.world_sections[source]
-        elif source in cls.us_sections:
-            section = cls.us_sections[source]
-        elif source in cls.business_sections:
-            section = cls.business_sections[source]
-        elif source in cls.markets_sections:
-            section = cls.markets_sections[source]
-        elif source in cls.opinions:
-            section = cls.opinions[source]
-        elif source in cls.books_art_sections:
-            section = cls.books_art_sections[source]
-        elif source in cls.life_work_sections:
-            section = cls.life_work_sections[source]
-        elif source in cls.style_sections:
-            section = cls.style_sections[source]
-        elif source in cls.sports_sections:
-            section = cls.sports_sections[source]
-        elif source in cls.columns:
-            section = cls.columns[source]
-        elif source in cls.reviews:
-            section = cls.reviews[source]
+        if section in cls.world_sections:
+            key = cls.world_sections[section]
+        elif section in cls.us_sections:
+            key = cls.us_sections[section]
+        elif section in cls.business_sections:
+            key = cls.business_sections[section]
+        elif section in cls.markets_sections:
+            key = cls.markets_sections[section]
+        elif section in cls.opinions:
+            key = cls.opinions[section]
+        elif section in cls.books_art_sections:
+            key = cls.books_art_sections[section]
+        elif section in cls.life_work_sections:
+            key = cls.life_work_sections[section]
+        elif section in cls.style_sections:
+            key = cls.style_sections[section]
+        elif section in cls.sports_sections:
+            key = cls.sports_sections[section]
+        elif section in cls.columns:
+            key = cls.columns[section]
+        elif section in cls.reviews:
+            key = cls.reviews[section]
         else:
-            section = source
+            key = section
         
         while start_reached is False:
-            page_counter+=1
-            url = f"{cls.base_url}{section}?page={page_counter}"
-            html = requests.get(url=url, headers=HEADERS).text
-            soup = BeautifulSoup(html, "lxml")
-            
-            try:
-                tags = soup.find("div", {"id": "latest-stories"}).find_all("article")
-            except AttributeError:
-                raise DatasetError(f"No articles found for source '{section}'")
-            
-            try:
-                assert len(tags) != 0
-            except AssertionError:
-                retry = True
-                while retry:
-                    html = requests.get(url=url, headers=HEADERS).text
-                    soup = BeautifulSoup(html, "lxml")
-                    soup = BeautifulSoup(html, "lxml")
-                    tags = soup.find("div", {"id": "latest-stories"}).find_all("article")
-                    try:
-                        assert len(tags) != 0
-                    except AssertionError:
-                        continue
+            page_counter += 1
+            url = f"{cls._base_url}{key}?page={page_counter}"
+
+            retry = True
+            while retry:
+                html = requests.get(url=url, headers=HEADERS).text
+                soup = BeautifulSoup(html, "lxml")
+
+                tag_section = soup.find("div", {"id": "latest-stories"})
+                if tag_section is None:
+                    tag_section = soup.find("div", {"id": "author-articles"})
+                if tag_section is None:
+                    raise DatasetError(f"No articles found for section '{section}'")
+                tags = tag_section.find_all("article")
+
+                if len(tags) != 0:
                     retry = False
             
             for tag in tags:
@@ -701,8 +679,12 @@ class WSJNews:
                     category = None
                 else:
                     length = 3
-                    category = content.find_all("div", recursive=False)[0].find("ul").find("li").text
-                
+                    category = content.find_all("div", recursive=False)[0]
+                    if category.find("ul") is not None:
+                        category = category.find("ul").find("li").text
+                    else:
+                        category = category.find("span").text
+
                 date = content.find_all("div", recursive="False")[length-1].find("div").find("p").text
                 date = pd.to_datetime(date)
                 if date.timestamp() < start:
@@ -737,23 +719,22 @@ class WSJNews:
         
         return articles
     
-    @staticmethod
-    def rss_feed(source, timestamps=False):
+    @classmethod
+    def rss_feed(cls, section, timestamps=False):
         url = "https://feeds.a.dj.com/rss/{}.xml"
-        sources = ("Opinion", "World", "U.S. Business", "Markets", "Technology", "Lifestyle")
-        if source not in sources:
-            raise ValueError(f"source has to be in {sources}")
-        if source == "Opinion":
+        if section not in cls.rss_sections:
+            raise ValueError(f"section has to be in {cls.rss_sections}")
+        if section == "Opinion":
             url = url.format("RSSOpinion")
-        elif source == "World":
+        elif section == "World":
             url = url.format("RSSWorldNews")
-        elif source == "U.S. Business":
+        elif section == "U.S. Business":
             url = url.format("WSJcomUSBusiness")
-        elif source == "Markets":
+        elif section == "Markets":
             url = url.format("RSSMarketsMain")
-        elif source == "Technology":
+        elif section == "Technology":
             url = url.format("RSSWSJD")
-        elif source == "Lifestyle":        
+        elif section == "Lifestyle":
             url = url.format("RSSLifestyle")
         
         response = requests.get(url=url, headers=HEADERS).text
@@ -765,7 +746,7 @@ class WSJNews:
             article = {
                 "header": tag.find("title").text,
                 "url": f"https://www.wsj.com/articles/{tag.find('guid').text}",
-                "datetime": int(pd.to_datetime(tag.find("pubdate").text).timestamp()) if timestamps else tag.find("pubdate").text
+                "datetime": int(pd.to_datetime(tag.find("pubdate").text).timestamp()) if timestamps else pd.to_datetime(tag.find("pubdate").text).isoformat()
             }
             articles.append(article)
             
