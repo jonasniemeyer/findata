@@ -6,7 +6,6 @@ from bs4 import BeautifulSoup
 from finance_data.utils import HEADERS
 
 class MSCIReader:
-
     _base_url = "https://app2.msci.com/products/service/index/indexmaster/getLevelDataForGraph"
 
     def __init__(
