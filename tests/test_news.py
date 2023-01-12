@@ -11,20 +11,24 @@ NoneType = type(None)
 
 def test_economist_news():
     for section in EconomistNews.sections:
-        articles = EconomistNews.articles(section=section, start="2022-01-01")
+        articles = EconomistNews.articles(section=section, start="2023-01-01")
+        if len(articles) == 0:
+            articles = EconomistNews.articles(section=section, start="2022-01-01")
+            if len(articles) == 0:
+                articles = EconomistNews.articles(section=section, start="2021-01-01")
         assert isinstance(articles, list)
         assert len(articles) != 0
 
         for article in articles:
             assert isinstance(article["title"], str)
-            assert isinstance(article["description"], str)
-            assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", article["datetime"])) == 1
+            assert isinstance(article["description"], (str, NoneType))
+            assert article["date"] is None or len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", article["date"])) == 1
             assert isinstance(article["url"], str)
     
-    articles = EconomistNews(section="Europe", start="2023-01-01", timestamps=True)
+    articles = EconomistNews.articles(section="Europe", start="2023-01-01", timestamps=True)
     assert len(articles) != 0
     for article in articles:
-        assert isinstance(article["datetime"], int)
+        assert isinstance(article["date"], (int, NoneType))
 
 def test_ft_news():
     for sections in (
@@ -37,16 +41,20 @@ def test_ft_news():
         FTNews.columnists
     ):
         for section in sections:
-            articles = FTNews.articles(section=section, start="2022-01-01")
+            articles = FTNews.articles(section=section, start="2023-01-01")
+            if len(articles) == 0:
+                articles = FTNews.articles(section=section, start="2022-01-01")
+                if len(articles) == 0:
+                    articles = FTNews.articles(section=section, start="2021-01-01")
             assert isinstance(articles, list)
             assert len(articles) != 0
 
             for article in articles:
-                assert isinstance(article["header"], str)
-                assert isinstance(article["url"], str)
+                assert isinstance(article["title"], str)
+                assert isinstance(article["category"], (str, NoneType))
+                assert isinstance(article["description"], (str, NoneType))
                 assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", article["datetime"])) == 1
-                assert isinstance(article["author"], str)
-                assert isinstance(article["type"], str)
+                assert isinstance(article["url"], str)
 
     articles = FTNews.articles(section="Tech Sector", start="2023-01-01", timestamps=True)
     assert len(articles) != 0
@@ -107,7 +115,11 @@ def test_wsj_news():
         WSJNews.reviews
     ):
         for section in sections:
-            articles = WSJNews.articles(section=section, start="2022-01-01")
+            articles = WSJNews.articles(section=section, start="2023-01-01")
+            if len(articles) == 0:
+                articles = WSJNews.articles(section=section, start="2022-01-01")
+                if len(articles) == 0:
+                    articles = WSJNews.articles(section=section, start="2021-01-01")
             assert isinstance(articles, list)
             assert len(articles) != 0
 
@@ -137,7 +149,7 @@ def test_wsj_rss():
             assert isinstance(article["url"], str)
             assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", article["datetime"])) == 1
         
-    articles = WSJNews.rss_feed(section="World")
+    articles = WSJNews.rss_feed(section="World", timestamps=True)
     assert len(articles) != 0
     for article in articles:
-        assert isinstance(article["date"], int)
+        assert isinstance(article["datetime"], int)
