@@ -163,12 +163,18 @@ def sp_index_data(timestamps=False) -> dict:
         index.append(pd.to_datetime(f"{year}-{int(quarter)*3:02}-01"))
     quarterly_op_eps.index = index
     quarterly_op_eps = quarterly_op_eps.resample("Q").last()
+    if timestamps:
+        quarterly_op_eps.index = [int(date.timestamp()) for date in quarterly_op_eps.index]
 
     yearly_op_eps = op_eps.iloc[blank1+1:blank2, :]
     eps = yearly_op_eps[yearly_op_eps.index.str.contains("EPS")]
     eps.index = [pd.to_datetime(f"{item.split()[0].replace('E', '')}-12-31") for item in eps.index]
+    if timestamps:
+        eps.index = [int(date.timestamp()) for date in eps.index]
     pe = yearly_op_eps[yearly_op_eps.index.str.contains("P/E")]
     pe.index = [pd.to_datetime(f"{item.split()[0].replace('E', '')}-12-31") for item in pe.index]
+    if timestamps:
+        pe.index = [int(date.timestamp()) for date in pe.index]
     operating_data = {
         "quarterly_eps": quarterly_op_eps,
         "yearly_eps": eps,
@@ -183,12 +189,18 @@ def sp_index_data(timestamps=False) -> dict:
         index.append(pd.to_datetime(f"{year}-{int(quarter)*3:02}-01"))
     quarterly_reported_eps.index = index
     quarterly_reported_eps = quarterly_reported_eps.resample("Q").last()
+    if timestamps:
+        quarterly_reported_eps.index = [int(date.timestamp()) for date in quarterly_reported_eps.index]
 
     yearly_reported_eps = reported_eps.iloc[blank1+1:blank2, :]
     eps = yearly_reported_eps[yearly_reported_eps.index.str.contains("EPS")]
     eps.index = [pd.to_datetime(f"{item.split()[0].replace('E', '')}-12-31") for item in eps.index]
+    if timestamps:
+        eps.index = [int(date.timestamp()) for date in eps.index]
     pe = yearly_op_eps[yearly_op_eps.index.str.contains("P/E")]
     pe.index = [pd.to_datetime(f"{item.split()[0].replace('E', '')}-12-31") for item in pe.index]
+    if timestamps:
+        pe.index = [int(date.timestamp()) for date in pe.index]
     reported_data = {
         "quarterly_eps": quarterly_reported_eps,
         "yearly_eps": eps,
@@ -196,10 +208,9 @@ def sp_index_data(timestamps=False) -> dict:
     }
 
     prices = op_eps.iloc[blank2+1:, :].applymap(lambda x: round(x, 2))
+    prices.index = [pd.to_datetime(f"20{item[-2:]}-12-31") for item in prices.index]
     if timestamps:
-        prices.index = [int(pd.to_datetime(f"20{item[-2:]}-12-31").timestamp()) for item in prices.index]
-    else:
-        prices.index = [pd.to_datetime(f"20{item[-2:]}-12-31") for item in prices.index]
+        prices.index = [int(date.timestamp()) for date in prices.index]
 
     data["quarterly_data"] = quarterly_data
     data["sector_data"] = {
