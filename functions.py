@@ -110,3 +110,34 @@ def shiller_data(timestamps=False) -> pd.DataFrame:
     if timestamps:
         df.index = [int(date.timestamp()) for date in df.index]
     return df
+
+def sp_index_data(timestamps=False) -> dict:
+    response = requests.get(
+        url="https://www.spglobal.com/spdji/en/documents/additional-material/sp-500-eps-est.xlsx",
+        headers=HEADERS
+    ).content
+
+    data = {}
+
+    quarterly_data = pd.read_excel(response, sheet_name="QUARTERLY DATA", skiprows=5, index_col=0)
+    quarterly_data.index.name = "date"
+    quarterly_data.rename(
+        columns={
+            "PER SHR": "Operating Earnings Per Share",
+            "PER SHR.1": "Reported Earnings Per Share",
+            "PER SHR.1": "Dividends Per Share",
+            "SHARE": "Sales Per Share",
+            "SHARE.1": "Book Value Per Share",
+            "PER SHARE": "Capital Expenditures Per Share",
+            "PRICE": "Price",
+            "DIVISOR": "Divisor"
+        },
+        inplace=True
+    )
+    quarterly_data = quarterly_data[::-1]
+    if timestamps:
+        quarterly_data.index = [int(date.timestamp()) for date in quarterly_data.index]
+
+    data["quarterly_data"] = quarterly_data
+
+    return quarterly_data

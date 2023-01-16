@@ -27,7 +27,7 @@ from .sec import (
 )
 from .tipranks import TipranksAnalystReader, TipranksStockReader
 from .yahoo import YahooReader
-from .functions import finra_margin_debt, shiller_data
+from .functions import finra_margin_debt, shiller_data, sp_index_data
 from .utils import DatasetError, TickerError
 
 __all__ = [
