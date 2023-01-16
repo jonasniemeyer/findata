@@ -126,7 +126,7 @@ def sp_index_data(timestamps=False) -> dict:
         columns={
             "PER SHR": "Operating Earnings Per Share",
             "PER SHR.1": "Reported Earnings Per Share",
-            "PER SHR.1": "Dividends Per Share",
+            "PER SHR.2": "Dividends Per Share",
             "SHARE": "Sales Per Share",
             "SHARE.1": "Book Value Per Share",
             "PER SHARE": "Capital Expenditures Per Share",
@@ -143,6 +143,7 @@ def sp_index_data(timestamps=False) -> dict:
     sector_data = pd.read_excel(response, sheet_name="SECTOR EPS", skiprows=5, index_col=0).iloc[:, 1:-1]
     sector_data.index.name = "date"
     sector_data = sector_data.T
+    sector_data.columns = [item.strip() if isinstance(item, str) else item for item in sector_data.columns]
 
     blank1, blank2 = [sector_data.index.get_loc(col) for col in sector_data.index if "Unnamed:" in col]
     op_eps_index = sector_data.columns.get_loc("Operating Earnings Per Share by Economic Sector")
