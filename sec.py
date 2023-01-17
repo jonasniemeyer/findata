@@ -1172,7 +1172,6 @@ class FilingNPORT(_SECFiling):
             return None
 
         counterparties = []
-
         counterparty_tags = derivative_section.find_all("counterparties")
         for counterparty in counterparty_tags:
             name = counterparty.find("counterpartyname").text
@@ -1182,35 +1181,36 @@ class FilingNPORT(_SECFiling):
             if lei == "N/A":
                 lei = None
             counterparties.append({"name": name, "lei": lei})
-
+        
         contents = derivative_section.contents
         if contents[0].text == "\n":
             abbr = contents[1].get("derivcat")
         else:
             abbr = contents[0].get("derivcat")
+
         if abbr == "OTH":
             name = derivative_section.contents[1].get("othdesc")
         else:
             name = self._derivative_types[abbr]
-        
+
         if abbr == "FWD":
-            type_information = self._parse_currency_forward_information(derivative_section)
+            information = self._parse_currency_forward_information(derivative_section)
         elif abbr == "FUT":
-            type_information = self._parse_future_information(derivative_section)
+            information = self._parse_future_information(derivative_section)
         elif abbr in ("OPT", "SWO", "WAR"):
-            type_information = self._parse_option_information(derivative_section)
+            information = self._parse_option_information(derivative_section)
         elif abbr == "SWP":
-            type_information = self._parse_swap_information(derivative_section)
+            information = self._parse_swap_information(derivative_section)
         elif abbr == "OTH":
-            type_information = self._parse_other_derivative_information(derivative_section)
+            information = self._parse_other_derivative_information(derivative_section)
         
         return {
             "type": {
                 "name": name,
-                "abbr": abbr
+                "abbreviation": abbr
             },
             "counterparties": counterparties,
-            **type_information
+            **information
         }
 
     def _parse_future_information(self, derivative_section) -> dict:
