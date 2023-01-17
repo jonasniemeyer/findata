@@ -967,7 +967,7 @@ class FilingNPORT(_SECFiling):
             quantity_type_abbr = entry.find("units").text
             if quantity_type_abbr == "N/A" or quantity_type_abbr is None:
                 raise ValueError
-            quantity_type = {"name": self._quantity_types[quantity_type_abbr], "abbr": quantity_type_abbr}
+            quantity_type = {"name": self._quantity_types[quantity_type_abbr], "abbreviation": quantity_type_abbr}
             
             currency = entry.find("curcd")
             if currency is None:
@@ -1001,21 +1001,21 @@ class FilingNPORT(_SECFiling):
             asset_type = entry.find("assetcat")
             if asset_type is not None:
                 asset_type_abbr = asset_type.text
-                asset_type = {"name": self._asset_types[asset_type_abbr], "abbr": asset_type_abbr}
+                asset_type = {"name": self._asset_types[asset_type_abbr], "abbreviation": asset_type_abbr}
             else:
                 asset_type_name = entry.find("assetconditional").get("desc")
-                asset_type = {"name": asset_type_name, "abbr": "OTH"}
+                asset_type = {"name": asset_type_name, "abbreviation": "OTH"}
             
             issuer_type = entry.find("issuercat")
             if issuer_type is None:
                 issuer["type"] = {
                     "name": entry.find("issuerconditional").get("desc"),
-                    "abbr": "OTH"
+                    "abbreviation": "OTH"
                 }
             else:
                 issuer["type"] = {
                     "name": self._issuer_types[issuer_type.text],
-                    "abbr": issuer_type.text
+                    "abbreviation": issuer_type.text
                 }
             country = entry.find("invcountry").text
             if country == "N/A":
