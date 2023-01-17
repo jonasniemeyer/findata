@@ -1327,134 +1327,88 @@ class FilingNPORT(_SECFiling):
             "unrealized_appreciation": unrealized_appreciation
         }
 
-    def _parse_swap_information(self, derivative_section) -> dict:
-        reference_section = derivative_section.find("descrefinstrmnt")
-        if reference_section is None:
-            pass
+    def _parse_swap_information(self, section) -> dict:
+        custom_swap = section.find("swapflag")
+        if custom_swap is not None:
+            custom_swap = True if custom_swap.text == "Y" else False
+
+        reference_section = section.find("descrefinstrmnt")
+        reference_asset = self._parse_reference_asset_information(reference_section)
+
+        if section.find("floatingrecdesc") is not None:
+            receiving_leg = self._parse_floating_leg(section.find("floatingrecdesc"))
+        elif section.find("fixedrecdesc") is not None:
+            receiving_leg = self._parse_fixed_leg(section.find("fixedrecdesc"))
+        elif section.find("otherrecdesc") is not None:
+            receiving_leg = self._parse_other_leg(section.find("otherrecdesc"))
         else:
-            reference_section = reference_section.find("otherrefinst")
-            if reference_section is not None:
-                reference_asset_name = reference_section.find("issuername").text
-                if reference_asset_name == "N/A":
-                    reference_asset_name = None
-                reference_asset_title = reference_section.find("issuetitle").text
-                identifier = {}
-                identifier_section = reference_section.find("identifiers")
-                cusip = identifier_section.find("cusip")
-                if cusip is not None:
-                    cusip = cusip.get("value")
-                    identifier["cusip"] = cusip
-                isin = identifier_section.find("isin")
-                if isin is not None:
-                    isin = isin.get("value")
-                    identifier["isin"] = isin
-                ticker = identifier_section.find("ticker")
-                if ticker is not None:
-                    ticker = ticker.get("value")
-                    identifier["ticker"] = ticker
-                other = identifier_section.find_all("other")
-                for item in other:
-                    other_name = item.get("otherdesc")
-                    other_value = item.get("value")
-                    identifier[other_name] = other_value
-            else:
-                reference_section = reference_section.find("indexbasketinfo")
-                reference_asset_name = reference_section.find("indexname").text
-                reference_asset_title = None
-                identifier = {"isin": reference_section.find("indexidentifier").text}
-            
-        if derivative_section.find("floatingrecdesc") is not None:
-            receiving_section = derivative_section.find("floatingrecdesc")
-            receiving_currency = receiving_section.get("curcd")
-            receiving_fixed_or_floating = receiving_section.get("fixedorfloating")
-            receiving_index = receiving_section.get("floatingrtindex")
-            receiving_spread = float(receiving_section.get("floatingrtspread"))
-            receiving_amount = float(receiving_section.get("pmntamt"))
-            receive_leg = {
-                "currency": receiving_currency,
-                "type": receiving_fixed_or_floating,
-                "index": receiving_index,
-                "spread": receiving_spread,
-                "amount": receiving_amount
-            }
-        elif derivative_section.find("fixedrecdesc") is not None:
-            receiving_section = derivative_section.find("fixedrecdesc")
-            receiving_amount = float(receiving_section.get("amount"))
-            receiving_currency = receiving_section.get("curcd")
-            receiving_fixed_or_floating = receiving_section.get("fixedorfloating")
-            receiving_rate = float(receiving_section.get("fixedrt"))
-            receive_leg = {
-                "amount": receiving_amount,
-                "currency": receiving_currency,
-                "type": receiving_fixed_or_floating,
-                "rate": receiving_rate
-            }
-        elif derivative_section.find("otherrecdesc") is not None:
-            receiving_section = derivative_section.find("otherrecdesc")
-            receiving_fixed_or_floating = receiving_section.get("fixedorfloating")
-            receiving_tenor = receiving_section.text
-            receive_leg = {
-                "type": receiving_fixed_or_floating,
-                "tenor": receiving_tenor
-            }
+            receiving_leg = None
 
-        if derivative_section.find("floatingpmntdesc") is not None:
-            payment_section = derivative_section.find("floatingpmntdesc")
-            payment_currency = payment_section.get("curcd")
-            payment_fixed_or_floating = payment_section.get("fixedorfloating")
-            payment_index = payment_section.get("floatingrtindex")
-            payment_spread = float(payment_section.get("floatingrtspread"))
-            payment_amount = float(payment_section.get("pmntamt"))
-            pay_leg = {
-                "currency": payment_currency,
-                "type": payment_fixed_or_floating,
-                "index": payment_index,
-                "spread": payment_spread,
-                "amount": payment_amount
-            }
-        elif derivative_section.find("fixedpmntdesc") is not None:
-            payment_section = derivative_section.find("fixedpmntdesc")
-            payment_amount = payment_section.get("amount")
-            payment_amount = None if payment_amount == "N/A" else float(payment_amount)
-            payment_currency = payment_section.get("curcd")
-            assert payment_currency != "N/A"
-            payment_fixed_or_floating = payment_section.get("fixedorfloating")
-            payment_rate = float(payment_section.get("fixedrt"))
-            pay_leg = {
-                "amount": payment_amount,
-                "currency": payment_currency,
-                "type": payment_fixed_or_floating,
-                "rate": payment_rate
-            }
-        elif derivative_section.find("otherpmntdesc") is not None:
-            payment_section = derivative_section.find("otherpmntdesc")
-            payment_fixed_or_floating = payment_section.get("fixedorfloating")
-            payment_tenor = payment_section.text
-            pay_leg = {
-                "type": payment_fixed_or_floating,
-                "tenor": payment_tenor
-            }
+        if section.find("floatingpmntdesc") is not None:
+            payer_leg = self._parse_floating_leg(section.find("floatingpmntdesc"))
+        elif section.find("fixedpmtdesc") is not None:
+            payer_leg = self._parse_fixed_leg(section.find("fixedpmtdesc"))
+        elif section.find("otherpmtdesc") is not None:
+            payer_leg = self._parse_other_leg(section.find("otherpmtdesc"))
+        else:
+            payer_leg = None
 
-        termination_date = derivative_section.find("terminationdt").text
+        termination_date = section.find("terminationdt")
+        if termination_date is not None:
+            termination_date = termination_date.text
+        else:
+            termination_date = section.find("settlementdt").text
         assert termination_date != "N/A"
-        upfront_payments = float(derivative_section.find("upfrontpmnt").text)
-        notional_amount = float(derivative_section.find("notionalamt").text)
-        currency = derivative_section.find("curcd").text
-        assert currency != "N/A"
-        unrealized_appreciation = float(derivative_section.find("unrealizedappr").text)
+
+        upfront_receipt = section.find("upfrontrcpt")
+        if upfront_receipt is not None:
+            upfront_receipt = float(upfront_receipt.text)
+        receipt_currency = section.find("rcptcurcd")
+        if receipt_currency is not None:
+            receipt_currency = receipt_currency.text
+        receipt_currency = None if receipt_currency == "N/A" else receipt_currency
+        upfront_receipt = {
+            "amount": upfront_receipt,
+            "currency": receipt_currency
+        }
+
+        upfront_payment = section.find("upfrontpmnt")
+        if upfront_payment is not None:
+            upfront_payment = float(upfront_payment.text)
+        payment_currency = section.find("pmntcurcd")
+        if payment_currency is not None:
+            payment_currency = payment_currency.text
+        payment_currency = None if payment_currency == "N/A" else payment_currency
+        upfront_payment = {
+            "amount": upfront_payment,
+            "currency": payment_currency
+        }
+
+        notional_amount = section.find("notionalamt")
+        if notional_amount is not None:
+            notional_amount = float(notional_amount.text)
+        currency = section.find("curcd")
+        if currency is None:
+            notional_amount = {"amount": notional_amount, "currency": "USD"}
+        else:
+            currency = currency.text
+            if currency == "N/A":
+                currency = None
+            notional_amount = {"amount": notional_amount, "currency": currency}
+
+        unrealized_appreciation = section.find("unrealizedappr")
+        if unrealized_appreciation is not None:
+            unrealized_appreciation = float(unrealized_appreciation.text)
 
         return {
-            "reference_asset": {
-                "name": reference_asset_name,
-                "title": reference_asset_title,
-                "identifier": identifier
-            },
-            "receive_leg": receive_leg,
-            "pay_leg": pay_leg,
+            "custom_swap": custom_swap,
+            "reference_asset": reference_asset,
+            "receiving_leg": receiving_leg,
+            "payer_leg": payer_leg,
             "termination_date": termination_date,
-            "upfront_payments": upfront_payments,
+            "upfront_receipt": upfront_receipt,
+            "upfront_payment": upfront_payment,
             "notional_amount": notional_amount,
-            "currency": currency,
             "unrealized_appreciation": unrealized_appreciation
         }
 
@@ -1510,7 +1464,63 @@ class FilingNPORT(_SECFiling):
             "delta": delta,
             "unrealized_appreciation": unrealized_appreciation
         }
-        
+
+    def _parse_floating_leg(self, section):
+        currency = section.get("curcd")
+        type_ = section.get("fixedorfloating")
+        index = section.get("floatingrtindex")
+        spread = float(section.get("floatingrtspread"))
+        amount = float(section.get("pmntamt"))
+
+        reset_tenor = section.find("rtresettenors").find_all("rtresettenor")
+        assert len(reset_tenor) == 1
+        reset_tenor = reset_tenor[0]
+
+        payment_unit = reset_tenor.get("ratetenor")
+        payment_frequency = int(reset_tenor.get("ratetenorunit"))
+
+        reset_unit = reset_tenor.get("resetdt")
+        reset_frequency = int(reset_tenor.get("resetdtunit"))
+
+        return {
+            "currency": currency,
+            "type": type_,
+            "index": index,
+            "spread": spread,
+            "amount": amount,
+            "payment_frequency": {
+                "unit": payment_unit,
+                "frequency": payment_frequency
+            },
+            "reset_frequency": {
+                "unit": reset_unit,
+                "frequency": reset_frequency
+            },
+        }
+
+    def _parse_fixed_leg(self, section):
+        amount = section.get("amount")
+        amount = None if amount == "N/A" else float(amount)
+        currency = section.get("curcd")
+        type_ = section.get("fixedorfloating")
+        rate = float(section.get("fixedrt"))
+
+        return {
+            "amount": amount,
+            "currency": currency,
+            "type": type_,
+            "rate": rate
+        }
+
+    def _parse_other_leg(self, section):
+        type_ = section.get("fixedorfloating")
+        tenor = section.text
+
+        return {
+            "type": type_,
+            "tenor": tenor
+        }
+
     def _get_lending_information(self, entry):
         security_lending_section = entry.find("securitylending")
 
