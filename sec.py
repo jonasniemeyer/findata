@@ -1273,67 +1273,55 @@ class FilingNPORT(_SECFiling):
             "unrealized_appreciation": unrealized_appreciation
         }
 
-    def _parse_option_information(self, derivative_section) -> dict:
-        option_type = derivative_section.find("putorcall").text
-        trade_direction = derivative_section.find("writtenorpur").text
+    def _parse_option_information(self, section) -> dict:
+        reference_section = section.find("descrefinstrmnt")
+        reference_asset = self._parse_reference_asset_information(reference_section)
 
-        reference_section = derivative_section.find("descrefinstrmnt").find("otherrefinst")
-        if reference_section is not None:
-            reference_asset_name = reference_section.find("issuername").text
-            if reference_asset_name == "N/A":
-                reference_asset_name = None
-            reference_asset_title = reference_section.find("issuetitle").text
-            if reference_asset_title == "N/A":
-                reference_asset_title = None
-            identifier = {}
-            identifier_section = reference_section.find("identifiers")
-            cusip = identifier_section.find("cusip")
-            if cusip is not None:
-                cusip = cusip.get("value")
-                identifier["cusip"] = cusip
-            isin = identifier_section.find("isin")
-            if isin is not None:
-                isin = isin.get("value")
-                identifier["isin"] = isin
-            ticker = identifier_section.find("ticker")
-            if ticker is not None:
-                ticker = ticker.get("value")
-                identifier["ticker"] = ticker
-            other = identifier_section.find_all("other")
-            for item in other:
-                other_name = item.get("otherdesc")
-                other_value = item.get("value")
-                identifier[other_name] = other_value
+        type_ = section.find("putorcall").text
+        trade_direction = section.find("writtenorpur").text
+
+        no_shares = section.find("shareno")
+        if no_shares is not None:
+            no_shares = None if no_shares.text == "N/A" else float(no_shares.text)
+            amount = {
+                "quantity": no_shares,
+                "quantity_type": {
+                    "name": self._quantity_types["NS"],
+                    "abbr": "NS"
+                }
+            }
         else:
-            reference_section = derivative_section.find("descrefinstrmnt").find("indexbasketinfo")
-            reference_asset_name = reference_section.find("indexname").text
-            reference_asset_title = None
-            identifier = {"isin": reference_section.find("indexidentifier").text}
+            principal_amount = section.find("principalamt").text
+            principal_amount = None if principal_amount == "N/A" else float(principal_amount)
+            amount = {
+                "quantity": principal_amount,
+                "quantity_type": {
+                    "name": self._quantity_types["PA"],
+                    "abbr": "PA"
+                },
+            }
 
-        no_shares = derivative_section.find("shareno").text
-        no_shares = None if no_shares == "N/A" else float(no_shares)
-        exercise_price = float(derivative_section.find("exerciseprice").text)
-        currency = derivative_section.find("exercisepricecurcd").text
+        exercise_price = float(section.find("exerciseprice").text)
+        currency = section.find("exercisepricecurcd").text
         assert currency != "N/A"
-        expiration_date = derivative_section.find("expdt").text
+
+        expiration_date = section.find("expdt").text
         assert expiration_date != "N/A"
 
-        delta = derivative_section.find("delta").text
+        delta = section.find("delta").text
         delta = None if delta == "XXXX" else float(delta)
 
-        unrealized_appreciation = float(derivative_section.find("unrealizedappr").text)
+        unrealized_appreciation = float(section.find("unrealizedappr").text)
 
         return {
-            "option_type": option_type,
+            "reference_asset": reference_asset,
+            "type": type_,
             "trade_direction": trade_direction,
-            "reference_asset": {
-                "name": reference_asset_name,
-                "title": reference_asset_title,
-                "identifier": identifier
+            "amount": amount,
+            "exercise_data": {
+                "price": exercise_price,
+                "currency": currency
             },
-            "number_of_shares": no_shares,
-            "exercise_price": exercise_price,
-            "currency": currency,
             "expiration_date": expiration_date,
             "delta": delta,
             "unrealized_appreciation": unrealized_appreciation
