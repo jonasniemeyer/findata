@@ -1213,6 +1213,36 @@ class FilingNPORT(_SECFiling):
             **information
         }
 
+    def _parse_currency_forward_information(self, section) -> dict:
+        amount_currency_sold = float(section.find("amtcursold").text)
+        currency_sold = section.find("cursold").text
+        if currency_sold == "N/A":
+            currency_sold = None
+
+        amount_currency_purchased = float(section.find("amtcurpur").text)
+        currency_purchased = section.find("curpur").text
+        if currency_purchased == "N/A":
+            currency_purchased = None
+
+        settlement_date = section.find("settlementdt").text
+
+        unrealized_appreciation = section.find("unrealizedappr")
+        if unrealized_appreciation is not None:
+            unrealized_appreciation = float(unrealized_appreciation.text)
+
+        return {
+            "purchased": {
+                "amount": amount_currency_purchased,
+                "currency": currency_purchased
+            },
+            "sold": {
+                "amount": amount_currency_sold,
+                "currency": currency_sold
+            },
+            "settlement_date": settlement_date,
+            "unrealized_appreciation": unrealized_appreciation
+        }
+
     def _parse_future_information(self, derivative_section) -> dict:
         reference_section = derivative_section.find("descrefinstrmnt").find("otherrefinst")
         if reference_section is not None:
@@ -1264,31 +1294,6 @@ class FilingNPORT(_SECFiling):
             "expiration": expiration_date,
             "notional_amount": notional_amount,
             "currency": currency,
-            "unrealized_appreciation": unrealized_appreciation
-        }
-    
-    def _parse_currency_forward_information(self, derivative_section) -> dict:
-        amount_currency_short = float(derivative_section.find("amtcursold").text)
-        currency_short = derivative_section.find("cursold").text
-        assert currency_short != "N/A"
-
-        amount_currency_long = float(derivative_section.find("amtcurpur").text)
-        currency_long = derivative_section.find("curpur").text
-        assert currency_long != "N/A"
-
-        settlement_date = derivative_section.find("settlementdt").text
-        unrealized_appreciation = float(derivative_section.find("unrealizedappr").text)
-
-        return {
-            "long": {
-                "amount": amount_currency_long,
-                "currency": currency_long
-            },
-            "short": {
-                "amount": amount_currency_short,
-                "currency": currency_short
-            },
-            "settlement": settlement_date,
             "unrealized_appreciation": unrealized_appreciation
         }
 
