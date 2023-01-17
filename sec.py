@@ -1243,54 +1243,30 @@ class FilingNPORT(_SECFiling):
             "unrealized_appreciation": unrealized_appreciation
         }
 
-    def _parse_future_information(self, derivative_section) -> dict:
-        reference_section = derivative_section.find("descrefinstrmnt").find("otherrefinst")
-        if reference_section is not None:
-            reference_asset_name = reference_section.find("issuername").text
-            if reference_asset_name == "N/A":
-                reference_asset_name = None
-            reference_asset_title = reference_section.find("issuetitle").text
-            identifier = {}
-            identifier_section = reference_section.find("identifiers")
-            cusip = identifier_section.find("cusip")
-            if cusip is not None:
-                cusip = cusip.get("value")               
-                identifier["cusip"] = cusip
-            isin = identifier_section.find("isin")
-            if isin is not None:
-                isin = isin.get("value")               
-                identifier["isin"] = isin
-            ticker = identifier_section.find("ticker")
-            if ticker is not None:
-                ticker = ticker.get("value")               
-                identifier["ticker"] = ticker
-            other = identifier_section.find_all("other")
-            for item in other:
-                other_name = item.get("otherdesc")
-                other_value = item.get("value")
-                identifier[other_name] = other_value
-        else:
-            reference_section = derivative_section.find("descrefinstrmnt").find("indexbasketinfo")
-            reference_asset_name = reference_section.find("indexname").text
-            reference_asset_title = None
-            identifier = {"isin": reference_section.find("indexidentifier").text}
+    def _parse_future_information(self, section) -> dict:
+        reference_section = section.find("descrefinstrmnt")
+        reference_asset = self._parse_reference_asset_information(reference_section)
 
-        future_payoff_direction = derivative_section.find("payoffprof").text
-        assert future_payoff_direction != "N/A"
-        expiration_date = derivative_section.find("expdate").text
-        assert expiration_date != "N/A"
-        notional_amount = float(derivative_section.find("notionalamt").text)
-        currency = derivative_section.find("curcd").text
-        assert currency != "N/A"
-        unrealized_appreciation = float(derivative_section.find("unrealizedappr").text)
+        trade_direction = section.find("payoffprof").text
+        if trade_direction == "N/A":
+            trade_direction = None
+
+        expiration_date = section.find("expdate").text
+        expiration_date = None if expiration_date == "N/A" else expiration_date
+
+        notional_amount = section.find("notionalamt").text
+        notional_amount = None if notional_amount == "N/A" else float(notional_amount)
+
+        currency = section.find("curcd").text
+        currency = None if currency == "N/A" else currency
+
+        unrealized_appreciation = section.find("unrealizedappr")
+        if unrealized_appreciation is not None:
+            unrealized_appreciation = float(unrealized_appreciation.text)
 
         return {
-            "reference_asset": {
-                "name": reference_asset_name,
-                "title": reference_asset_title,
-                "identifier": identifier
-            },
-            "payoff_direction": future_payoff_direction,
+            "reference_asset": reference_asset,
+            "trade_direction": trade_direction,
             "expiration": expiration_date,
             "notional_amount": notional_amount,
             "currency": currency,
