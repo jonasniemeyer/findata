@@ -1110,28 +1110,28 @@ class FilingNPORT(_SECFiling):
                 contingent_convertible = False
             assert isinstance(contingent_convertible, bool)
 
-            reference_asset_section = debt_section.find("dbtsecrefinstruments").find("dbtsecrefinstrument")
-            reference_asset_name = reference_asset_section.find("name").text
-            reference_asset_title = reference_asset_section.find("title").text
-            reference_asset_currency = reference_asset_section.find("curcd").text
-            reference_asset_identifier = {}
-            reference_asset_cusip = reference_asset_section.find("cusip")
-            if reference_asset_cusip is not None:
-                reference_asset_identifier["cusip"] = reference_asset_cusip.get("value")
-            reference_asset_isin = reference_asset_section.find("isin")
-            if reference_asset_isin is not None:
-                reference_asset_identifier["isin"] = reference_asset_isin.get("value")
-            other = reference_asset_section.find_all("other")
+            conversion_asset_section = debt_section.find("dbtsecrefinstruments").find("dbtsecrefinstrument")
+            conversion_asset_name = conversion_asset_section.find("name").text
+            conversion_asset_title = conversion_asset_section.find("title").text
+            conversion_asset_currency = conversion_asset_section.find("curcd").text
+            conversion_asset_identifier = {}
+            conversion_asset_cusip = conversion_asset_section.find("cusip")
+            if conversion_asset_cusip is not None:
+                conversion_asset_identifier["cusip"] = conversion_asset_cusip.get("value")
+            conversion_asset_isin = conversion_asset_section.find("isin")
+            if conversion_asset_isin is not None:
+                conversion_asset_identifier["isin"] = conversion_asset_isin.get("value")
+            other = conversion_asset_section.find_all("other")
             for item in other:
                 other_name = item.get("otherdesc")
                 other_value = item.get("value")
-                reference_asset_identifier[other_name] = other_value
+                conversion_asset_identifier[other_name] = other_value
 
             conversion_asset = {
-                "name": reference_asset_name,
-                "title": reference_asset_title,
-                "currency": reference_asset_currency,
-                "identifier": reference_asset_identifier
+                "name": conversion_asset_name,
+                "title": conversion_asset_title,
+                "currency": conversion_asset_currency,
+                "identifier": conversion_asset_identifier
             }
 
             conversion_information = debt_section.find("currencyinfos").find("currencyinfo")
@@ -1149,7 +1149,7 @@ class FilingNPORT(_SECFiling):
             convertible_information = {
                 "mandatory_convertible": mandatory_convertible,
                 "contingent_convertible": contingent_convertible,
-                "reference_asset": conversion_asset,
+                "conversion_asset": conversion_asset,
                 "conversion_ratio": conversion_information,
                 "delta": delta
             }
