@@ -1440,6 +1440,187 @@ class FilingNPORT(_SECFiling):
             "unrealized_appreciation": unrealized_appreciation
         }
 
+    def _parse_reference_asset_information(self, section) -> Union[dict, None]:
+        if section is None:
+            return None
+
+        if section.find("nestedderivinfo") is not None:
+            reference_section = section.find("nestedderivinfo")
+
+            contents = reference_section.contents
+            if contents[0].text == "\n":
+                abbr = contents[1].get("derivcat")
+            else:
+                abbr = contents[0].get("derivcat")
+            if abbr == "OTH":
+                name = section.contents[1].get("othdesc")
+            else:
+                name = self._derivative_types[abbr]
+
+            counterparties = []
+            counterparty_tags = reference_section.find_all("counterparties")
+            for counterparty in counterparty_tags:
+                name = counterparty.find("counterpartyname").text
+                if name == "N/A":
+                    name = None
+                lei = counterparty.find("counterpartylei").text
+                if lei == "N/A":
+                    lei = None
+                counterparties.append({"name": name, "lei": lei})
+
+            information = reference_section.find("derivaddlinfo")
+            if information is not None:
+                issuer_name = information.find("name").text
+                if issuer_name == "N/A":
+                    issuer_name = None
+                issuer_lei = information.find("lei").text
+                if issuer_lei == "N/A":
+                    issuer_lei = None
+                issuer = {
+                    "name": issuer_name,
+                    "lei": issuer_lei
+                }
+
+                title = information.find("title").text
+                if title == "N/A":
+                    title = None
+
+                identifier = {}
+                cusip = information.find("cusip").text
+                if cusip != "N/A" and cusip != "0"*9:
+                    identifier["cusip"] = cusip
+                other_identifier = information.find("identifiers")
+                isin = other_identifier.find("isin")
+                if isin is not None:
+                    isin_value = isin.get("value")
+                    if isin_value is None:
+                        isin_value = isin.text
+                    identifier["isin"] = isin_value
+                ticker = other_identifier.find("ticker")
+                if ticker is not None:
+                    ticker_value = ticker.get("value")
+                    if ticker_value is None:
+                        ticker_value = ticker.text
+                    identifier["ticker"] = ticker_value
+                other = other_identifier.find_all("other")
+                for item in other:
+                    other_name = item.get("otherdesc")
+                    other_value = item.get("value")
+                    identifier[other_name] = other_value
+
+                quantity = information.find("balance").text
+                quantity = None if quantity == "N/A" else float(quantity)
+
+                quantity_type_abbr = information.find("units").text
+                if quantity_type_abbr == "N/A" or quantity_type_abbr is None:
+                    raise ValueError
+                quantity_type = {"name": self._quantity_types[quantity_type_abbr], "abbreviation": quantity_type_abbr}
+
+                currency = information.find("curcd")
+                if currency is None:
+                    currency = entry.find("currencyconditional")
+                    currency_name = currency.get("curcd")
+                    exchange_rate = currency.get("exchangert")
+                    exchange_rate = None if exchange_rate == "N/A" else round(float(exchange_rate), 6)
+                else:
+                    currency_name = currency.text
+                    exchange_rate = None
+                if currency_name == "N/A":
+                    currency_name = None
+                currency = {
+                    "name": currency_name,
+                    "exchange_rate": exchange_rate
+                }
+
+                market_value = information.find("valusd").text
+                market_value = None if market_value == "N/A" else float(market_value)
+
+                percentage = information.find("pctval").text
+                percentage = None if percentage == "N/A" else round(float(percentage) / 100, 6)
+
+                asset_type = information.find("assetcat")
+                if asset_type is not None:
+                    asset_type_abbr = asset_type.text
+                    asset_type = {"name": self._asset_types[asset_type_abbr], "abbreviation": asset_type_abbr}
+                else:
+                    asset_type_name = entry.find("assetconditional").get("desc")
+                    asset_type = {"name": asset_type_name, "abbreviation": "OTH"}
+
+                issuer_type = information.find("issuercat")
+                if issuer_type is None:
+                    issuer["type"] = {
+                        "name": information.find("issuerconditional").get("desc"),
+                        "abbreviation": "OTH"
+                    }
+                else:
+                    issuer["type"] = {
+                        "name": self._issuer_types[issuer_type.text],
+                        "abbreviation": issuer_type.text
+                    }
+
+                country = information.find("invcountry")
+                if country is not None:
+                    country = country.text
+                    if country == "N/A":
+                        country = None
+                issuer["country"] = country
+            else:
+                title = None
+                identifier = None
+
+            if abbr == "FWD":
+                information = self._parse_currency_forward_information(reference_section)
+            elif abbr == "FUT":
+                information = self._parse_future_information(reference_section)
+            elif abbr == "SWP":
+                information = self._parse_swap_information(reference_section)
+            else:
+                raise ValueError
+
+        elif section.find("indexbasketinfo") is not None:
+            reference_section = section.find("indexbasketinfo")
+
+            name = reference_section.find("indexname").text
+            if name == "N/A":
+                name = None
+            title = None
+
+            identifier = {"isin": reference_section.find("indexidentifier").text}
+        elif section.find("otherrefinst") is not None:
+            reference_section = section.find("otherrefinst")
+            name = reference_section.find("issuername").text
+            if name == "N/A":
+                name = None
+            title = reference_section.find("issuetitle").text
+            if title == "N/A":
+                title = None
+
+            identifier = {}
+            identifier_section = reference_section.find("identifiers")
+            cusip = identifier_section.find("cusip")
+            if cusip is not None:
+                cusip = cusip.get("value")
+                identifier["cusip"] = cusip
+            isin = identifier_section.find("isin")
+            if isin is not None:
+                isin = isin.get("value")
+                identifier["isin"] = isin
+            ticker = identifier_section.find("ticker")
+            if ticker is not None:
+                ticker = ticker.get("value")
+                identifier["ticker"] = ticker
+            other = identifier_section.find_all("other")
+            for item in other:
+                other_name = item.get("otherdesc")
+                other_value = item.get("value")
+                identifier[other_name] = other_value
+
+        return {
+            "name": name,
+            "title": title,
+            "identifier": identifier
+        }
+
     def _parse_floating_leg(self, section):
         currency = section.get("curcd")
         type_ = section.get("fixedorfloating")
