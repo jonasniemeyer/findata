@@ -1412,53 +1412,28 @@ class FilingNPORT(_SECFiling):
             "unrealized_appreciation": unrealized_appreciation
         }
 
-    def _parse_other_derivative_information(self, derivative_section) -> dict:
-        reference_section = derivative_section.find("descrefinstrmnt").find("otherrefinst")
-        reference_asset_name = reference_section.find("issuername").text
-        if reference_asset_name == "N/A":
-            reference_asset_name = None
-        reference_asset_title = reference_section.find("issuetitle").text
-        identifier = {}
-        identifier_section = reference_section.find("identifiers")
-        cusip = identifier_section.find("cusip")
-        if cusip is not None:
-            cusip = cusip.get("value")               
-            identifier["cusip"] = cusip
-        isin = identifier_section.find("isin")
-        if isin is not None:
-            isin = isin.get("value")               
-            identifier["isin"] = isin
-        ticker = identifier_section.find("ticker")
-        if ticker is not None:
-            ticker = ticker.get("value")               
-            identifier["ticker"] = ticker
-        other = identifier_section.find_all("other")
-        for item in other:
-            other_name = item.get("otherdesc")
-            other_value = item.get("value")
-            identifier[other_name] = other_value
+    def _parse_other_derivative_information(self, section) -> dict:
+        reference_section = section.find("descrefinstrmnt")
+        reference_asset = self._parse_reference_asset_information(reference_section)
 
-        termination_date = derivative_section.find("terminationdt").text
+        termination_date = section.find("terminationdt").text
         assert termination_date != "N/A"
-        notional_amounts = derivative_section.find("notionalamts")
-        if notional_amounts is None:
-            notional_amount = float(derivative_section.find("notionalamt").text)
+        notional_amount = section.find("notionalamts")
+        if notional_amount is None:
+            amount = float(section.find("notionalamt").text)
+            notional_amount = {"amount": amount, "currency": "USD"}
         else:
-            notional_amount = float(notional_amounts.find("notionalamt").get("amt"))
-            notional_amount_currency = notional_amounts.find("notionalamt").get("curcd")
-            notional_amount = {"amount": notional_amount, "currency": notional_amount_currency}
+            amount = float(notional_amount.find("notionalamt").get("amt"))
+            currency = notional_amount.find("notionalamt").get("curcd")
+            notional_amount = {"amount": amount, "currency": currency}
 
-        delta = derivative_section.find("delta").text
+        delta = section.find("delta").text
         delta = None if delta == "XXXX" else float(delta)
 
-        unrealized_appreciation = float(derivative_section.find("unrealizedappr").text)
+        unrealized_appreciation = float(section.find("unrealizedappr").text)
 
         return {
-            "reference_asset": {
-                "name": reference_asset_name,
-                "title": reference_asset_title,
-                "identifier": identifier
-            },
+            "reference_asset": reference_asset,
             "termination_date": termination_date,
             "notional_amount": notional_amount,
             "delta": delta,
