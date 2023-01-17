@@ -108,7 +108,7 @@ class TestFilingNPORT:
     @classmethod
     def setup_class(cls):
         cls.file = FilingNPORT.from_url("https://www.sec.gov/Archives/edgar/data/930667/000175272422234894/0001752724-22-234894.txt")
-        #cls.derivative_file = FilingNPORT.from_url("https://www.sec.gov/Archives/edgar/data/1444822/000175272422264732/0001752724-22-264732.txt")
+        cls.derivative_file = FilingNPORT.from_url("https://www.sec.gov/Archives/edgar/data/1444822/000175272422264732/0001752724-22-264732.txt")
 
     def test_attributes(self):
         assert self.file.accession_number  == "0001752724-22-234894"
@@ -214,14 +214,14 @@ class TestFilingNPORT:
             )
             for key, value in data.items():
                 if len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", key)) == 1:
-                    assert isinstance(value["realized_gain"], (float, NoneType))
-                    assert isinstance(value["unrealized_appreciation"], (float, NoneType))
+                    assert value is None or isinstance(value["realized_gain"], float)
+                    assert value is None or isinstance(value["unrealized_appreciation"], float)
                 else:
                     assert key in ("Forward", "Future", "Option", "Swap", "Swaption", "Warrant", "Other")
                     for date, instrument_value in value.items():
                         assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", date)) == 1
-                        assert isinstance(instrument_value["realized_gain"], (float, NoneType))
-                        assert isinstance(instrument_value["unrealized_appreciation"], (float, NoneType))
+                    assert instrument_value is None or isinstance(instrument_value["realized_gain"], float)
+                    assert instrument_value is None or isinstance(instrument_value["unrealized_appreciation"], float)
 
         for date, data in returns["non-derivative_gains"].items():
             assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", date)) == 1
@@ -249,10 +249,10 @@ class TestFilingNPORT:
         assert security["issuer"]["lei"] == "54930034RFI409JZ3179"
         assert security["issuer"]["type"]["name"] == "Corporate"
         assert security["issuer"]["type"]["abbr"] == "CORP"
-        assert item["issuer"]["country"] == "AU"
+        assert security["issuer"]["country"] == "AU"
         assert security["title"] == "Domino's Pizza Enterprises Ltd"
         assert security["identifier"]["isin"] == "AU000000DMP0"
-        assert security["amount"]["percentage"] == 0.00005
+        assert security["amount"]["percentage"] == 0.000051
         assert security["amount"]["market_value"] == 109220.68
         assert security["amount"]["quantity"] == 2534.0
         assert security["amount"]["quantity_type"]["name"] == "Number of shares"
@@ -341,11 +341,11 @@ class TestFilingNPORT:
         convertible_info = info["convertible_information"]
         assert convertible_info["mandatory_convertible"] is False
         assert convertible_info["contingent_convertible"] is True
-        assert convertible_info["reference_asset"]["name"] == "Sea Ltd."
-        assert convertible_info["reference_asset"]["title"] == "Sea Ltd."
-        assert convertible_info["reference_asset"]["currency"] == "USD"
-        assert convertible_info["reference_asset"]["identifier"]["cusip"] == "81141R100"
-        assert convertible_info["reference_asset"]["identifier"]["isin"] == "US81141R1005"
+        assert convertible_info["conversion_asset"]["name"] == "Sea Ltd"
+        assert convertible_info["conversion_asset"]["title"] == "Sea Ltd"
+        assert convertible_info["conversion_asset"]["currency"] == "USD"
+        assert convertible_info["conversion_asset"]["identifier"]["cusip"] == "81141R100"
+        assert convertible_info["conversion_asset"]["identifier"]["isin"] == "US81141R1005"
         assert convertible_info["conversion_ratio"]["ratio"] == 2.0964
         assert convertible_info["conversion_ratio"]["currency"] == "USD"
         assert convertible_info["delta"] is None
@@ -361,31 +361,83 @@ class TestFilingNPORT:
             convertible_info = info["convertible_information"]
             assert isinstance(convertible_info["mandatory_convertible"], bool)
             assert isinstance(convertible_info["contingent_convertible"], bool)
-            assert isinstance(convertible_info["reference_asset"]["name"], str)
-            assert isinstance(convertible_info["reference_asset"]["title"], str)
-            assert isinstance(convertible_info["reference_asset"]["currency"], str)
-            for identifier, value in convertible_info["reference_asset"]["identifier"].items():
+            assert isinstance(convertible_info["conversion_asset"]["name"], str)
+            assert isinstance(convertible_info["conversion_asset"]["title"], str)
+            assert isinstance(convertible_info["conversion_asset"]["currency"], str)
+            for identifier, value in convertible_info["conversion_asset"]["identifier"].items():
                 assert isinstance(identifier, str)
                 assert isinstance(value, str)
             assert isinstance(convertible_info["conversion_ratio"]["ratio"], float)
             assert isinstance(convertible_info["conversion_ratio"]["currency"], str)
             assert isinstance(convertible_info["delta"], NoneType)
 
-    def test_derivative_future(self):
-        portfolio = self.derivative_file.portfolio()
-        portfolio = [security for security in portfolio if security["derivative_information"] is not None]
-
     def test_derivative_currency_forward(self):
         portfolio = self.derivative_file.portfolio()
-        portfolio = [security for security in portfolio if security["derivative_information"] is not None]
+        portfolio = [security for security in portfolio if security["derivative_information"] is not None and security["derivative_information"]["type"]["name"] == "Forward"]
+        info = portfolio[0]["derivative_information"]
+        assert info["type"]["name"] == "Forward"
+        assert info["type"]["abbr"] == "FWD"
+        assert info["counterparties"][0]["name"] == "Citibank"
+        assert info["counterparties"][0]["lei"] == "MBNUM2BPBDO7JBLYG310"
+        assert info["purchased"]["amount"] == 53434501.0
+        assert info["purchased"]["currency"] == "JPY"
+        assert info["sold"]["amount"] == 374429.88
+        assert info["sold"]["currency"] == "USD"
+        assert info["unrealized_appreciation"] == -1827.79
 
-    def test_derivative_swap(self):
+        for item in portfolio:
+            info = item["derivative_information"]
+            assert info["type"]["name"] == "Forward"
+            assert info["type"]["abbr"] == "FWD"
+            for counterparty in info["counterparties"]:
+                assert isinstance(counterparty["name"], str)
+                assert isinstance(counterparty["lei"], str)
+            assert isinstance(info["purchased"]["amount"], float)
+            assert isinstance(info["purchased"]["currency"], str)
+            assert isinstance(info["sold"]["amount"], float)
+            assert isinstance(info["sold"]["currency"], str)
+            assert isinstance(info["unrealized_appreciation"], float)
+
+    def test_derivative_future(self):
         portfolio = self.derivative_file.portfolio()
-        portfolio = [security for security in portfolio if security["derivative_information"] is not None]
+        portfolio = [security for security in portfolio if security["derivative_information"] is not None and security["derivative_information"]["type"]["name"] == "Future"]
+        info = portfolio[0]["derivative_information"]
+        assert info["type"]["name"] == "Future"
+        assert info["type"]["abbr"] == "FUT"
+        assert info["counterparties"][0]["name"] == "ICE Clear Europe"
+        assert info["counterparties"][0]["lei"] == "5R6J7JCQRIPQR1EEP713"
+        assert info["reference_asset"]["name"] is None
+        assert info["reference_asset"]["title"] == "3 Month SONIA"
+        assert info["reference_asset"]["identifier"]["ticker"] == "SFIM4 Comdty"
+        assert info["trade_direction"] == "Short"
+        assert info["expiration_date"] == "2024-09-17"
+        assert info["notional_amount"] == -944450.0
+        assert info["currency"] == "GBP"
+        assert info["unrealized_appreciation"] == 26717.03
+
+        for item in portfolio:
+            info = item["derivative_information"]
+            assert isinstance(info["type"]["name"], str)
+            assert isinstance(info["type"]["abbr"], str)
+            for counterparty in info["counterparties"]:
+                assert isinstance(counterparty["name"], str)
+                assert isinstance(counterparty["lei"], str)
+            assert isinstance(info["reference_asset"]["name"], (str, NoneType))
+            assert isinstance(info["reference_asset"]["title"], (str, NoneType))
+            if info["reference_asset"]["identifier"] is not None: #fix this
+                for identifier, value in info["reference_asset"]["identifier"].items():
+                    assert isinstance(identifier, str)
+                    assert isinstance(value, str)
+            assert info["trade_direction"] in ("Long", "Short")
+            assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", info["expiration_date"])) == 1
+            assert isinstance(info["notional_amount"], float)
+            assert isinstance(info["currency"], str)
+            assert isinstance(info["unrealized_appreciation"], float)
 
     def test_derivative_option(self):
         portfolio = FilingNPORT.from_url("https://www.sec.gov/Archives/edgar/data/1432353/000175272422218231/0001752724-22-218231.txt").portfolio()
-        info = [security for security in portfolio if security["derivative_information"] is not None][0]["derivative_information"]
+        portfolio = [security for security in portfolio if security["derivative_information"] is not None and security["derivative_information"]["type"]["name"] == "Option"]
+        info = portfolio[0]["derivative_information"]
         assert info["type"]["name"] == "Option"
         assert info["type"]["abbr"] == "OPT"
         counterparty = info["counterparties"][0]
@@ -396,23 +448,100 @@ class TestFilingNPORT:
         reference = info["reference_asset"]
         assert reference["name"] == "Call Option 11925 Aug 2022 on NASDAQ 100 STOCK INDEX"
         assert reference["title"] is None
-        assert reference["identifier"]["isin"] is None
-        assert reference["amount"]["quantity"] == 599600.0
-        assert reference["amount"]["quantity_type"]["name"] == "Number of shares"
-        assert reference["amount"]["quantity_type"]["abbr"] == "NS"
-        assert info["exercise_price"] == 925.0
-        assert info["currency"] =="USD"
-        assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", info["expiration_date"])) == 1
+        assert reference["identifier"] is None
+        assert info["amount"]["quantity"] == -599600.0
+        assert info["amount"]["quantity_type"]["name"] == "Number of shares"
+        assert info["amount"]["quantity_type"]["abbr"] == "NS"
+        assert info["exercise_data"]["price"] == 925.0
+        assert info["exercise_data"]["currency"] == "USD"
+        assert info["expiration_date"] == "2022-08-22"
         assert info["delta"] is None
         assert info["unrealized_appreciation"] == -395183757.78
 
-    def test_derivative_warrant(self):
+        for security in portfolio:
+            info = security["derivative_information"]
+            assert isinstance(info["type"]["name"], str)
+            assert isinstance(info["type"]["abbr"], str)
+            for counterparty in info["counterparties"]:
+                assert isinstance(counterparty["name"], (str, NoneType))
+                assert isinstance(counterparty["lei"], (str, NoneType))
+            assert info["option_type"] in ("Call", "Put")
+            assert info["trade_direction"] in ("Written", "Purchased")
+            reference = info["reference_asset"]
+            assert isinstance(reference["name"], (str, NoneType))
+            assert isinstance(reference["title"], (str, NoneType))
+            if reference["identifier"] is not None:
+                for identifier, value in reference["identifier"].items():
+                    assert isinstance(identifier, str)
+                    assert isinstance(value, str)
+            assert isinstance(info["amount"]["quantity"], float)
+            assert isinstance(info["amount"]["quantity_type"]["name"], str)
+            assert isinstance(info["amount"]["quantity_type"]["abbr"], str)
+            assert isinstance(info["exercise_data"]["price"], float)
+            assert isinstance(info["exercise_data"]["currency"], str)
+            assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", info["expiration_date"])) == 1
+            assert isinstance(info["delta"], NoneType)
+            assert isinstance(info["unrealized_appreciation"], float)
+
+    def test_derivative_other(self):
         portfolio = self.derivative_file.portfolio()
-        portfolio = [security for security in portfolio if security["derivative_information"] is not None]
+        portfolio = [security for security in portfolio if security["derivative_information"] is not None and security["derivative_information"]["type"]["name"] == "Other"]
+
+    def test_derivative_swap(self):
+        portfolio = self.derivative_file.portfolio()
+        portfolio = [security for security in portfolio if security["derivative_information"] is not None and security["derivative_information"]["type"]["name"] == "Swap"]
 
     def test_derivative_swaption(self):
         portfolio = FilingNPORT.from_url("https://www.sec.gov/Archives/edgar/data/1810747/000175272422261043/0001752724-22-261043.txt").portfolio()
-        portfolio = [security for security in portfolio if security["derivative_information"] is not None]
+        portfolio = [security for security in portfolio if security["derivative_information"] is not None and security["derivative_information"]["type"]["name"] == "Swaption"]
+
+    def test_derivative_warrant(self):
+        portfolio = self.derivative_file.portfolio()
+        portfolio = [security for security in portfolio if security["derivative_information"] is not None and security["derivative_information"]["type"]["name"] == "Warrant"]
+        info = portfolio[0]["derivative_information"]
+        assert info["type"]["name"] == "Warrant"
+        assert info["type"]["abbr"] == "WAR"
+        counterparty = info["counterparties"][0]
+        assert counterparty["name"] == "Cenovus Energy, Inc."
+        assert counterparty["lei"] == "549300F4XPHJ7NOSP309"
+        assert info["option_type"] == "Call"
+        assert info["trade_direction"] == "Written"
+        reference = info["reference_asset"]
+        assert reference["name"] == "Cenovus Energy, Inc."
+        assert reference["title"] == "Cenovus Energy, Inc."
+        assert reference["identifier"]["cusip"] == "15135U109"
+        assert info["amount"]["quantity"] == 1.0
+        assert info["amount"]["quantity_type"]["name"] == "Number of shares"
+        assert info["amount"]["quantity_type"]["abbr"] == "NS"
+        assert info["exercise_data"]["price"] == 6.54
+        assert info["exercise_data"]["currency"] == "CAD"
+        assert info["expiration_date"] == "2026-01-01"
+        assert info["delta"] is None
+        assert info["unrealized_appreciation"] == -7123.76
+
+        for security in portfolio:
+            info = security["derivative_information"]
+            assert isinstance(info["type"]["name"], str)
+            assert isinstance(info["type"]["abbr"], str)
+            for counterparty in info["counterparties"]:
+                assert isinstance(counterparty["name"], str)
+                assert isinstance(counterparty["lei"], str)
+            assert info["option_type"] in ("Call", "Put")
+            assert info["trade_direction"] in ("Written", "Purchased")
+            reference = info["reference_asset"]
+            assert isinstance(reference["name"], str)
+            assert isinstance(reference["title"], str)
+            for identifier, value in reference["identifier"].items():
+                assert isinstance(identifier, str)
+                assert isinstance(value, str)
+            assert isinstance(info["amount"]["quantity"], float)
+            assert isinstance(info["amount"]["quantity_type"]["name"], str)
+            assert isinstance(info["amount"]["quantity_type"]["abbr"], str)
+            assert isinstance(info["exercise_data"]["price"], float)
+            assert isinstance(info["exercise_data"]["currency"], str)
+            assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", info["expiration_date"])) == 1
+            assert isinstance(info["delta"], NoneType)
+            assert isinstance(info["unrealized_appreciation"], float)
 
     def test_miscellaneous_securities(self):
         pass

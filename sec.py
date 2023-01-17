@@ -1267,7 +1267,7 @@ class FilingNPORT(_SECFiling):
         return {
             "reference_asset": reference_asset,
             "trade_direction": trade_direction,
-            "expiration": expiration_date,
+            "expiration_date": expiration_date,
             "notional_amount": notional_amount,
             "currency": currency,
             "unrealized_appreciation": unrealized_appreciation
@@ -1518,7 +1518,7 @@ class FilingNPORT(_SECFiling):
 
                 currency = information.find("curcd")
                 if currency is None:
-                    currency = entry.find("currencyconditional")
+                    currency = information.find("currencyconditional")
                     currency_name = currency.get("curcd")
                     exchange_rate = currency.get("exchangert")
                     exchange_rate = None if exchange_rate == "N/A" else round(float(exchange_rate), 6)
@@ -1543,7 +1543,7 @@ class FilingNPORT(_SECFiling):
                     asset_type_abbr = asset_type.text
                     asset_type = {"name": self._asset_types[asset_type_abbr], "abbr": asset_type_abbr}
                 else:
-                    asset_type_name = entry.find("assetconditional").get("desc")
+                    asset_type_name = information.find("assetconditional").get("desc")
                     asset_type = {"name": asset_type_name, "abbr": "OTH"}
 
                 issuer_type = information.find("issuercat")
@@ -1577,6 +1577,13 @@ class FilingNPORT(_SECFiling):
             else:
                 raise ValueError
 
+            return {
+                "type": "Derivative",
+                "name": name,
+                "title": title,
+                "identifier": identifier
+            }
+
         elif section.find("indexbasketinfo") is not None:
             reference_section = section.find("indexbasketinfo")
 
@@ -1585,7 +1592,20 @@ class FilingNPORT(_SECFiling):
                 name = None
             title = None
 
-            identifier = {"isin": reference_section.find("indexidentifier").text}
+            identifier = reference_section.find("indexidentifier").text
+            identifier = None if identifier == "N/A" else identifier
+
+            description = reference_section.find("narrativedesc")
+            description = None if description is not None and description.text == "N/A" else description
+
+            return {
+                "type": "Index",
+                "name": name,
+                "title": title,
+                "identifier": identifier,
+                "description": description
+            }
+
         elif section.find("otherrefinst") is not None:
             reference_section = section.find("otherrefinst")
             name = reference_section.find("issuername").text
@@ -1615,11 +1635,12 @@ class FilingNPORT(_SECFiling):
                 other_value = item.get("value")
                 identifier[other_name] = other_value
 
-        return {
-            "name": name,
-            "title": title,
-            "identifier": identifier
-        }
+            return {
+                "type": "Other",
+                "name": name,
+                "title": title,
+                "identifier": identifier
+            }
 
     def _parse_floating_leg(self, section):
         currency = section.get("curcd")
