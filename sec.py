@@ -11,7 +11,7 @@ def sec_companies() -> list:
     items = [
         {
             "cik": item["cik_str"],
-            "ticker": item["ticker"],
+            "ticker": item["ticker"].upper(),
             "name": item["title"],
         }
         for _, item in items.items()
@@ -22,10 +22,10 @@ def sec_mutualfunds() -> list:
     items = requests.get("https://www.sec.gov/files/company_tickers_mf.json", headers=HEADERS).json()["data"]
     items = [
         {
-            "ticker": item[3].replace("(", "").replace(")", ""),
-            "class_cik": item[2],
-            "series_cik": item[1],
-            "entity_cik": item[0]
+            "ticker": item[3].replace("(", "").replace(")", "").upper(),
+            "class_cik": item[2].upper(),
+            "series_cik": item[1].upper(),
+            "entity_cik": item[0].upper()
         }
         for item in items
     ]
