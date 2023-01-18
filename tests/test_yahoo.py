@@ -11,10 +11,6 @@ class TestClassMethods:
     def setup_class(cls):
         cls.reader = YahooReader
     
-    @pytest.mark.skip()
-    def test_crumb(self):
-        assert self.reader.crumb() == ""
-    
     def test_currencies(self):
         currencies = self.reader.currencies()
         assert isinstance(currencies, list)
@@ -24,6 +20,10 @@ class TestClassMethods:
             "long_name": "US Dollar",
             "symbol": "USD"
         } in currencies
+    
+    def test_isin_to_ticker(self):
+        assert self.reader.isin_to_ticker("JP3633400001") == "7203.T"
+    
 
 class TestEquity:
     @classmethod
