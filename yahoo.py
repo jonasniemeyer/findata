@@ -65,7 +65,7 @@ class YahooReader:
             try:
                 self._ticker = re.findall(f"{self.quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response.url)[0].strip()
             except IndexError as e:
-                raise DatasetError(f'cannot find a ticker that belongs to the identifier "{search_input}"')            
+                raise TickerError(f'cannot find a ticker that belongs to the identifier "{search_input}"')            
         
         self._stored_data = self._get_stored_data()
         
@@ -74,6 +74,9 @@ class YahooReader:
         if self._name is None:
             self._name =  self._stored_data["quoteType"]["shortName"]
         self._name = unescape(self._name)
+
+    def __repr__(self):
+        return f"YahooReader({self.security_type}|{self.name}|{self.ticker})"
 
     @property
     def ticker(self):
@@ -1344,6 +1347,17 @@ class YahooReader:
             raise TickerError(f"no data found for ticker {self.ticker}")
         data = data["quoteSummary"]["result"][0]
         return data
-    
-    def __repr__(self):
-        return f"YahooReader({self.security_type}|{self.name}|{self.ticker})"
+
+    @classmethod
+    def isin_to_ticker(cls, isin: str) -> str:
+        """
+        This classmethod takes an isin and returns the corresponding Yahoo ticker if it exists.
+        If there is no corresponding ticker found, a TickerError is raised instead.
+        """
+        params = {"yfin-usr-qry": isin}
+        response = requests.get(cls.quote_url, params=params, headers=HEADERS)
+        try:
+            ticker = re.findall(f"{cls.quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response.url)[0].strip()
+            return ticker
+        except IndexError as e:
+            raise TickerError(f'cannot find a ticker that belongs to the isin "{isin}"')
