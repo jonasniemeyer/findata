@@ -93,9 +93,11 @@ class YahooReader:
         try:
             data = self._stored_data["assetProfile"].copy()
         except:
-            data = {}
-            return data
+            return {}
         
+        if "phone" not in data.keys() or data["phone"] == "N/A":
+            data["phone"] = None
+
         for key in (
             "address1",
             "address2",
@@ -107,11 +109,15 @@ class YahooReader:
                     data[key] = data[key].encode("latin-1").decode("cp1252").replace("\n ", "\n")
                 except:
                     pass
+            else:
+                data[key] = None
         
         if "fullTimeEmployees" in data.keys():
             data["employees"] = data.pop("fullTimeEmployees")
-        if "longBusinessSummary" in data.keys(): 
-            data["description"] = unescape(data.pop("longBusinessSummary"))
+        if "longBusinessSummary" in data.keys():
+            data["description"] = data.pop("longBusinessSummary")
+            if data["description"] is not None:
+                data["description"] = unescape(data["description"])
         if "website" in data.keys():
             data["website"] = data["website"].replace("http:", "https:")
         data["executives"] = [

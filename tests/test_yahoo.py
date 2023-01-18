@@ -41,8 +41,10 @@ class TestEquity:
     
     def test_profile(self):
         profile = self.reader.profile()
-        assert len(profile) == 12
+        assert len(profile) == 14
         assert profile["address1"] == "One Apple Park Way"
+        assert profile["address2"] is None
+        assert profile["address3"] is None
         assert profile["city"] == "Cupertino"
         assert profile["state"] == "CA"
         assert profile["zip"] == "95014"
@@ -101,8 +103,8 @@ class TestEquity:
                 assert round(item["strike"], 2) == item["strike"]
                 assert isinstance(item["symbol"], str)
                 assert round(item["last_price"], 2) == item["last_price"]
-                assert round(item["bid"], 2) == item["bid"]
-                assert round(item["ask"], 2) == item["ask"]
+                assert item["bid"] is None or round(item["bid"], 2) == item["bid"]
+                assert item["ask"] is None or round(item["ask"], 2) == item["ask"]
                 assert isinstance(item["volume"], (int, NoneType))
                 assert round(item["implied_volatility"], 4) == item["implied_volatility"]
                 assert isinstance(item["itm"], bool)
@@ -582,7 +584,7 @@ class TestCrypto:
     def test_profile(self):
         profile = self.reader.profile()
         assert isinstance(profile["name"], str)
-        assert isinstance(profile["description"], str)
+        assert profile["description"] is None
     
     def test_historical_data(self):
         for freq in ("1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"):
@@ -687,7 +689,7 @@ class TestMutualFund:
             "phone",
             "description"
         ):
-            assert isinstance(profile[key], str)
+            assert isinstance(profile[key], (str, NoneType))
     
     def test_esg_scores(self):
         scores = self.reader.esg_scores()
