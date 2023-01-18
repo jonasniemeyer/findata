@@ -424,10 +424,12 @@ class TestFilingNPORT:
                 assert isinstance(counterparty["lei"], str)
             assert isinstance(info["reference_asset"]["name"], (str, NoneType))
             assert isinstance(info["reference_asset"]["title"], (str, NoneType))
-            if info["reference_asset"]["identifier"] is not None: #fix this
+            if isinstance(info["reference_asset"]["identifier"], dict):
                 for identifier, value in info["reference_asset"]["identifier"].items():
                     assert isinstance(identifier, str)
                     assert isinstance(value, str)
+            else:
+                assert isinstance(info["reference_asset"]["identifier"], (str, NoneType))
             assert info["trade_direction"] in ("Long", "Short")
             assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", info["expiration_date"])) == 1
             assert isinstance(info["notional_amount"], float)
