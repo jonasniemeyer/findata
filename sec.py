@@ -918,9 +918,11 @@ class FilingNPORT(_SECFiling):
         self._has_short_positions = True if any(item["amount"]["quantity"] < 0 for item in self._investments if item["amount"]["quantity"] is not None) else False
     
     def _parse_investments(self) -> list:
-        entries = self._soup.find("invstorsecs").find_all("invstorsec")
+        entries = self._soup.find("invstorsecs")
+        if entries is None:
+            return []
         investments = []
-        for entry in entries:
+        for entry in entries.find_all("invstorsec"):
             issuer_name = entry.find("name").text
             if issuer_name == "N/A":
                 issuer_name = None
@@ -1214,17 +1216,23 @@ class FilingNPORT(_SECFiling):
         }
 
     def _parse_currency_forward_information(self, section) -> dict:
-        amount_currency_sold = float(section.find("amtcursold").text)
-        currency_sold = section.find("cursold").text
-        if currency_sold == "N/A":
-            currency_sold = None
+        amount_currency_sold = section.find("amtcursold")
+        if amount_currency_sold is not None:
+            amount_currency_sold = None if amount_currency_sold.text == "N/A" else float(amount_currency_sold.text)
+        currency_sold = section.find("cursold")
+        if currency_sold is not None:
+            currency_sold = None if currency_sold.text == "N/A" else currency_sold.text
 
-        amount_currency_purchased = float(section.find("amtcurpur").text)
-        currency_purchased = section.find("curpur").text
-        if currency_purchased == "N/A":
-            currency_purchased = None
+        amount_currency_purchased = section.find("amtcurpur")
+        if amount_currency_purchased is not None:
+            amount_currency_purchased = None if amount_currency_purchased.text == "N/A" else float(amount_currency_purchased.text)
+        currency_purchased = section.find("curpur")
+        if currency_purchased is not None:
+            currency_purchased = None if currency_purchased.text == "N/A" else currency_purchased.text
 
-        settlement_date = section.find("settlementdt").text
+        settlement_date = section.find("settlementdt")
+        if settlement_date is not None:
+            settlement_date = None if settlement_date.text == "N/A" else settlement_date.text
 
         unrealized_appreciation = section.find("unrealizedappr")
         if unrealized_appreciation is not None:
@@ -1303,15 +1311,18 @@ class FilingNPORT(_SECFiling):
 
         exercise_price = float(section.find("exerciseprice").text)
         currency = section.find("exercisepricecurcd").text
-        assert currency != "N/A"
+        currency = None if currency == "N/A" else currency
 
         expiration_date = section.find("expdt").text
         assert expiration_date != "N/A"
 
-        delta = section.find("delta").text
-        delta = None if delta == "XXXX" else float(delta)
+        delta = section.find("delta")
+        if delta is not None:
+            delta = None if delta.text == "XXXX" else float(delta.text)
 
-        unrealized_appreciation = float(section.find("unrealizedappr").text)
+        unrealized_appreciation = section.find("unrealizedappr")
+        if unrealized_appreciation is not None:
+            unrealized_appreciation = None if unrealized_appreciation.text == "N/A" else float(unrealized_appreciation.text)
 
         return {
             "reference_asset": reference_asset,
@@ -1358,11 +1369,11 @@ class FilingNPORT(_SECFiling):
             termination_date = termination_date.text
         else:
             termination_date = section.find("settlementdt").text
-        assert termination_date != "N/A"
+        termination_date = None if termination_date == "N/A" else termination_date
 
         upfront_receipt = section.find("upfrontrcpt")
         if upfront_receipt is not None:
-            upfront_receipt = float(upfront_receipt.text)
+            upfront_receipt = None if upfront_receipt.text == "N/A" else float(upfront_receipt.text)
         receipt_currency = section.find("rcptcurcd")
         if receipt_currency is not None:
             receipt_currency = receipt_currency.text
@@ -1374,7 +1385,7 @@ class FilingNPORT(_SECFiling):
 
         upfront_payment = section.find("upfrontpmnt")
         if upfront_payment is not None:
-            upfront_payment = float(upfront_payment.text)
+            upfront_payment = None if upfront_payment.text == "N/A" else float(upfront_payment.text)
         payment_currency = section.find("pmntcurcd")
         if payment_currency is not None:
             payment_currency = payment_currency.text
@@ -1386,7 +1397,7 @@ class FilingNPORT(_SECFiling):
 
         notional_amount = section.find("notionalamt")
         if notional_amount is not None:
-            notional_amount = float(notional_amount.text)
+            notional_amount = None if notional_amount.text == "N/A" else float(notional_amount.text)
         currency = section.find("curcd")
         if currency is None:
             notional_amount = {"amount": notional_amount, "currency": "USD"}
@@ -1427,10 +1438,13 @@ class FilingNPORT(_SECFiling):
             currency = notional_amount.find("notionalamt").get("curcd")
             notional_amount = {"amount": amount, "currency": currency}
 
-        delta = section.find("delta").text
-        delta = None if delta == "XXXX" else float(delta)
+        delta = section.find("delta")
+        if delta is not None:
+            delta = None if delta.text == "XXXX" else float(delta.text)
 
-        unrealized_appreciation = float(section.find("unrealizedappr").text)
+        unrealized_appreciation = section.find("unrealizedappr")
+        if unrealized_appreciation is not None:
+            unrealized_appreciation = None if unrealized_appreciation.text == "N/A" else float(unrealized_appreciation.text)
 
         return {
             "reference_asset": reference_asset,
@@ -1574,6 +1588,8 @@ class FilingNPORT(_SECFiling):
                 information = self._parse_future_information(reference_section)
             elif abbr == "SWP":
                 information = self._parse_swap_information(reference_section)
+            elif abbr == "SWO":
+                information = self._parse_option_information(reference_section)
             else:
                 raise ValueError
 
@@ -1646,18 +1662,22 @@ class FilingNPORT(_SECFiling):
         currency = section.get("curcd")
         type_ = section.get("fixedorfloating")
         index = section.get("floatingrtindex")
-        spread = float(section.get("floatingrtspread"))
-        amount = float(section.get("pmntamt"))
+        spread = section.get("floatingrtspread")
+        spread = None if spread == "N/A" else float(spread)
+        amount = section.get("pmntamt")
+        amount = None if amount == "N/A" else float(amount)
 
         reset_tenor = section.find("rtresettenors").find_all("rtresettenor")
         assert len(reset_tenor) == 1
         reset_tenor = reset_tenor[0]
 
         payment_unit = reset_tenor.get("ratetenor")
-        payment_frequency = int(reset_tenor.get("ratetenorunit"))
+        payment_frequency = reset_tenor.get("ratetenorunit")
+        payment_frequency = None if payment_frequency == "N/A" else float(payment_frequency)
 
         reset_unit = reset_tenor.get("resetdt")
-        reset_frequency = int(reset_tenor.get("resetdtunit"))
+        reset_frequency = reset_tenor.get("resetdtunit")
+        reset_frequency = None if reset_frequency == "N/A" else float(reset_frequency)
 
         return {
             "currency": currency,
@@ -1680,7 +1700,8 @@ class FilingNPORT(_SECFiling):
         amount = None if amount == "N/A" else float(amount)
         currency = section.get("curcd")
         type_ = section.get("fixedorfloating")
-        rate = float(section.get("fixedrt"))
+        rate = section.get("fixedrt")
+        rate = None if rate == "N/A" else float(rate)
 
         return {
             "amount": amount,
