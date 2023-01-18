@@ -47,8 +47,6 @@ class YahooReader:
         isin=None,
         other_identifier=None
     ) -> None:
-        """
-        """
         if ticker:
             self._ticker = ticker.upper()
         else:
@@ -67,7 +65,7 @@ class YahooReader:
             try:
                 self._ticker = re.findall(f"{self.quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response.url)[0].strip()
             except IndexError as e:
-                raise DatasetError(f"cannot find a ticker that belongs to the isin {self.isin}")            
+                raise DatasetError(f'cannot find a ticker that belongs to the identifier "{search_input}"')            
         
         self._stored_data = self._get_stored_data()
         
