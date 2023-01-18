@@ -21,25 +21,6 @@ class YahooReader:
     _options_url = "https://query1.finance.yahoo.com/v7/finance/options/{}"
     _esg_ts_url = "https://query1.finance.yahoo.com/v1/finance/esgChart"
     quote_url = "https://finance.yahoo.com/quote/"
-    
-    @staticmethod
-    def currencies() -> list:
-        data = requests.get(
-            url="https://query1.finance.yahoo.com/v1/finance/currencies",
-            headers=HEADERS
-        ).json()
-        
-        data = data["currencies"]["result"]
-        data = [
-            {
-                "short_name": item["shortName"],
-                "long_name": item["longName"],
-                "symbol": item["symbol"]
-            }
-            for item in data
-        ]
-        
-        return data
 
     def __init__(
         self,
@@ -57,15 +38,7 @@ class YahooReader:
             else:
                 raise ValueError("YahooReader has to be called with ticker, isin or other_identifier")
 
-            params = {
-                "yfin-usr-qry": search_input
-            }
-            response = requests.get(self.quote_url, params=params, headers=HEADERS)
-
-            try:
-                self._ticker = re.findall(f"{self.quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response.url)[0].strip()
-            except IndexError as e:
-                raise TickerError(f'cannot find a ticker that belongs to the identifier "{search_input}"')            
+            self._ticker = YahooReader.get_ticker(search_input)
         
         self._stored_data = self._get_stored_data()
         
@@ -1349,15 +1322,34 @@ class YahooReader:
         return data
 
     @classmethod
-    def isin_to_ticker(cls, isin: str) -> str:
+    def get_ticker(cls, identifier: str) -> str:
         """
-        This classmethod takes an isin and returns the corresponding Yahoo ticker if it exists.
+        This classmethod takes an isin or other identifier and returns the corresponding Yahoo ticker if it exists.
         If there is no corresponding ticker found, a TickerError is raised instead.
         """
-        params = {"yfin-usr-qry": isin}
+        params = {"yfin-usr-qry": identifier}
         response = requests.get(cls.quote_url, params=params, headers=HEADERS)
         try:
             ticker = re.findall(f"{cls.quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response.url)[0].strip()
             return ticker
         except IndexError as e:
-            raise TickerError(f'cannot find a ticker that belongs to the isin "{isin}"')
+            raise TickerError(f'cannot find a ticker that belongs to the isin "{identifier}"')
+
+    @staticmethod
+    def currencies() -> list:
+        data = requests.get(
+            url="https://query1.finance.yahoo.com/v1/finance/currencies",
+            headers=HEADERS
+        ).json()
+
+        data = data["currencies"]["result"]
+        data = [
+            {
+                "short_name": item["shortName"],
+                "long_name": item["longName"],
+                "symbol": item["symbol"]
+            }
+            for item in data
+        ]
+
+        return data

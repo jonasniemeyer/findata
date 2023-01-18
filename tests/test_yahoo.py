@@ -21,8 +21,8 @@ class TestClassMethods:
             "symbol": "USD"
         } in currencies
     
-    def test_isin_to_ticker(self):
-        assert self.reader.isin_to_ticker("JP3633400001") == "7203.T"
+    def test_get_ticker(self):
+        assert self.reader.get_ticker("JP3633400001") == "7203.T"
     
 
 class TestEquity:
