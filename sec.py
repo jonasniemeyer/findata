@@ -25,7 +25,7 @@ def sec_mutualfunds() -> list:
             "ticker": item[3].replace("(", "").replace(")", "").upper(),
             "class_cik": item[2].upper(),
             "series_cik": item[1].upper(),
-            "entity_cik": item[0].upper()
+            "entity_cik": item[0]
         }
         for item in items
     ]
