@@ -11,9 +11,64 @@ from finance_data.utils import HEADERS, DatasetError
 class FrenchReader:
     _base_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
     _dataset_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/{}_CSV.zip"
+    _popular_datasets = {
+        "US 3-Factors": "F-F_Research_Data_Factors",
+        "US 3-Factors weekly": "F-F_Research_Data_Factors_weekly",
+        "US 3-Factors daily": "F-F_Research_Data_Factors_daily",
+        "US 5-Factors": "F-F_Research_Data_5_Factors_2x3",
+        "US 5-Factors daily": "F-F_Research_Data_5_Factors_2x3_daily",
+        "US Momentum Factor": "F-F_Momentum_Factor",
+        "US Momentum Factor daily": "F-F_Momentum_Factor_daily",
+
+        "Developed 3-Factors": 'Developed_3_Factors',
+        "Developed 3-Factors daily": 'Developed_3_Factors_Daily',
+        "Developed 5-Factors": 'Developed_5_Factors',
+        "Developed 5-Factors daily": 'Developed_5_Factors_Daily',
+        "Developed Momentum Factor": 'Developed_Mom_Factor',
+        "Developed Momentum Factor daily": 'Developed_Mom_Factor_Daily',
+
+        "Developed ex-USA 3-Factors": 'Developed_ex_US_3_Factors',
+        "Developed ex-USA 3-Factors daily": 'Developed_ex_US_3_Factors_Daily',
+        "Developed ex-USA 5-Factors": 'Developed_ex_US_5_Factors',
+        "Developed ex-USA 5-Factors daily": 'Developed_ex_US_5_Factors_Daily',
+        "Developed ex-USA Momentum Factor": 'Developed_ex_US_Mom_Factor',
+        "Developed ex-USA daily": 'Developed_ex_US_Mom_Factor_Daily',
+
+        "Europe 3-Factors": 'Europe_3_Factors',
+        "Europe 3-Factors daily": 'Europe_3_Factors_Daily',
+        "Europe 5-Factors": 'Europe_5_Factors',
+        "Europe 5-Factors daily": 'Europe_5_Factors_Daily',
+        "Europe Momentum Factor": 'Europe_Mom_Factor',
+        "Europe Momentum Factor daily": 'Europe_Mom_Factor_Daily',
+
+        "Japan 3-Factors": 'Japan_3_Factors',
+        "Japan 3-Factors daily": 'Japan_3_Factors_Daily',
+        "Japan 5-Factors": 'Japan_5_Factors',
+        "Japan 5-Factors daily": 'Japan_5_Factors_Daily',
+        "Japan Momentum Factor": 'Japan_Mom_Factor',
+        "Japan Momentum Factor daily": 'Japan_Mom_Factor_Daily',
+
+        "Asia-Pacific ex-Japan 3-Factors": 'Asia_Pacific_ex_Japan_3_Factors',
+        "Asia-Pacific ex-Japan 3-Factors daily": 'Asia_Pacific_ex_Japan_3_Factors_Daily',
+        "Asia-Pacific ex-Japan 5-Factors": 'Asia_Pacific_ex_Japan_5_Factors',
+        "Asia-Pacific ex-Japan 5-Factors daily": 'Asia_Pacific_ex_Japan_5_Factors_Daily',
+
+        "North America 3-Factors": 'North_America_3_Factors',
+        "North America 3-Factors daily": 'North_America_3_Factors_Daily',
+        "North America 5-Factors": 'North_America_5_Factors',
+        "North America 5-Factors daily": 'North_America_5_Factors_Daily',
+        "North America Momentum Factor": 'North_America_Mom_Factor',
+        "North America Momentum Factor daily": 'North_America_Mom_Factor_Daily',
+
+        "Emerging Markets 5-Factors": "Emerging_5_Factors",
+        "Emerging Markets Momentum Factor": "Emerging_MOM_Factor"
+    }
     
     def __init__(self, dataset, timestamps=False):
-        self._dataset = dataset
+        if dataset in self._popular_datasets:
+            self._dataset = self._popular_datasets[dataset]
+        else:
+            self._dataset = dataset
         self.timestamps = timestamps
           
     def read(self) -> dict:
