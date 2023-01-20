@@ -2144,6 +2144,211 @@ class FilingNPORT(_SECFiling):
 
 
 class SECFundamentals:
+    _popular_variables = {
+        # income statement
+        "Revenue": (
+            "Revenues",
+            "SalesRevenueNet",
+            "RevenueFromContractWithCustomerExcludingAssessedTax",
+            "RevenueFromContractWithCustomerIncludingAssessedTax"
+        ),
+        "Cost Of Goods Sold": (
+            "CostOfRevenue",
+            "CostOfGoodsAndServicesSold"
+        ),
+        "Gross Profit": (
+            "GrossProfit",
+        ),
+
+        "SG&A Expenses": (
+            "SellingGeneralAndAdministrativeExpense",
+        ),
+        "R&D Expenses": (
+            "ResearchAndDevelopmentExpense",
+        ),
+        "Total Operating Expenses": (
+            "OperatingExpenses",
+        ),
+        "Operating Income": (
+            "OperatingIncomeLoss",
+        ),
+
+        "Other Income": (
+            "NonoperatingIncomeExpense",
+        ),
+        "Pre-Tax Income": (
+            "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+        ),
+        "Tax Expenses": (
+            "IncomeTaxExpenseBenefit",
+        ),
+        "Net Income": (
+            "NetIncomeLoss",
+        ),
+
+        "Basic EPS": (
+            "EarningsPerShareBasic",
+        ),
+        "Diluted EPS": (
+            "EarningsPerShareDiluted"
+        ),
+        "Basic Shares Outstanding": (
+            "WeightedAverageNumberOfSharesOutstandingBasic",
+        ),
+        "Diluted Shares Outstanding": (
+            "WeightedAverageNumberOfSharesOutstandingDiluted",
+        ),
+
+        # balance sheet
+        "Cash and Cash Equivalents": (
+            "CashAndCashEquivalentsAtCarryingValue",
+        ),
+        "Short-Term Marketable Securities": (
+            "MarketableSecuritiesCurrent",
+        ),
+        "Accounts Receivable": (
+            "AccountsReceivableNetCurrent",
+        ),
+        "Inventory": (
+            "InventoryNet",
+        ),
+        "Other Current Assets": (
+            "OtherAssetsCurrent",
+        ),
+        "Total Current Assets": (
+            "AssetsCurrent",
+        ),
+
+        "Long-Term Marketable Securities": (
+            "MarketableSecuritiesNoncurrent",
+        ),
+        "Property, Plant And Equipment": (
+            "PropertyPlantAndEquipmentNet",
+        ),
+        "Goodwill": (
+
+        ),
+        "Other Non-Current Assets": (
+            "OtherAssetsNoncurrent",
+        ),
+        "Total Non-Current Assets": (
+            "AssetsNoncurrent",
+        ),
+
+        "Total Assets": (
+            "Assets",
+        ),
+
+        "Accounts Payable": (
+            "AccountsPayableCurrent",
+        ),
+        "Current Deferred Revenue": (
+            "ContractWithCustomerLiabilityCurrent",
+        ),
+        "Short-Term Debt": (
+            "LongTermDebtCurrent",
+        ),
+        "Other Current Liabilities": (
+            "OtherLiabilitiesCurrent",
+        ),
+        "Total Current Liabilities": (
+            "LiabilitiesCurrent",
+        ),
+
+        "Non-Current Deferred Revenue": (
+            "ContractWithCustomerLiabilityNoncurrent",
+        ),
+        "Long-Term Debt": (
+            "LongTermDebtNoncurrent"
+        ),
+        "Other Non-Current Liabilities": (
+            "OtherLiabilitiesNoncurrent",
+        ),
+        "Total Non-Current Liabilities": (
+            "LiabilitiesNoncurrent",
+        ),
+
+        "Common Stock": (
+            "CommonStocksIncludingAdditionalPaidInCapital",
+        ),
+        "Additional Paid-In Capital": (
+
+        ),
+        "Retained Earnings": (
+            "RetainedEarningsAccumulatedDeficit",
+        ),
+        "Accumulated Other Comprehensive Income": (
+            "AccumulatedOtherComprehensiveIncomeLossNetOfTax",
+        ),
+        "Total Shareholders Equity": (
+            "StockholdersEquity",
+        ),
+
+        "Total Liabilities And Shareholders Equity": (
+            "LiabilitiesAndStockholdersEquity",
+        ),
+
+        # cashflow statement
+        "Depreciation And Amortization": (
+            "DepreciationDepletionAndAmortization",
+        ),
+        "Stock-based Compensation": (
+            "ShareBasedCompensation",
+        ),
+        "Deferred Income Taxes": (
+            "DeferredIncomeTaxExpenseBenefit",
+        ),
+        "Other Non-Cash Expenses": (
+            "OtherNoncashIncomeExpense",
+        ),
+
+        "Change In Accounts Receivable": (
+            "IncreaseDecreaseInAccountsReceivable",
+        ),
+        "Change In Inventory": (
+            "IncreaseDecreaseInInventories",
+        ),
+        "Change In Accounts Payable": (
+            "IncreaseDecreaseInAccountsPayable",
+        ),
+        "Change In Deferred Revenue": (
+            "IncreaseDecreaseInContractWithCustomerLiability",
+        ),
+
+        "Operating Cashflow": (
+            "NetCashProvidedByUsedInOperatingActivities",
+        ),
+
+        "Purchases of Marketable Securities": (
+            "PaymentsToAcquireAvailableForSaleSecuritiesDebt",
+        ),
+        "Sales of Marketable Securities": (
+            "ProceedsFromSaleOfAvailableForSaleSecuritiesDebt",
+        ),
+        "Capital Expenditures": (
+            "PaymentsToAcquirePropertyPlantAndEquipment",
+        ),
+        "Investing Cashflow": (
+            "NetCashProvidedByUsedInInvestingActivities",
+        ),
+
+        "Dividends Paid": (
+            "PaymentsOfDividends",
+        ),
+        "Share Repurchases": (
+            "PaymentsForRepurchaseOfCommonStock",
+        ),
+        "Issuance Of Debt": (
+            "ProceedsFromIssuanceOfLongTermDebt",
+        ),
+        "Repayment Of Debt": (
+            "RepaymentsOfLongTermDebt",
+        ),
+        "Financing Cashflow": (
+            "NetCashProvidedByUsedInFinancingActivities",
+        )
+    }
+
     def __init__(self, cik: Union[str, int]) -> None:
         if isinstance(cik, str):
             self._cik = int(cik)
@@ -2173,6 +2378,24 @@ class SECFundamentals:
     @property
     def var_keys(self) -> set:
         return self._var_keys
+
+    def get_variable(self, name: str) -> dict:
+        if name not in self._popular_variables:
+            raise ValueError(f"Variable name has to be in {tuple(self._popular_variables.keys())}")
+
+        data = {"yearly": {}, "quarterly": {}}
+
+        for key in self._popular_variables[name]:
+            if key in self.data:
+                for date, value in self.data[key]["yearly_data"].items():
+                    data["yearly"][date] = value
+                for date, value in self.data[key]["quarterly_data"].items():
+                    data["quarterly"][date] = value
+
+        data["yearly"] = dict(sorted(data["yearly"].items()))
+        data["quarterly"] = dict(sorted(data["quarterly"].items()))
+
+        return data
 
     def _get_data(self) -> None:
         self._data = {}
