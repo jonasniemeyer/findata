@@ -2141,3 +2141,133 @@ class FilingNPORT(_SECFiling):
             "derivatives_exposure": derivatives_exposure,
             "var_information": var_information
         }
+
+
+class SECFundamentals:
+    def __init__(self, cik: Union[str, int]) -> None:
+        if isinstance(cik, str):
+            self._cik = int(cik)
+        elif isinstance(cik, int):
+            self._cik = cik
+        else:
+            raise ValueError('cik has to be of type "int" or "str"')
+
+        self._get_data()
+
+    @property
+    def cik(self) -> int:
+        return self._cik
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def data(self) -> dict:
+        return self._data
+
+    @property
+    def accounting_standard(self) -> str:
+        return self._accounting_standard
+
+    @property
+    def var_keys(self) -> set:
+        return self._var_keys
+
+    def _get_data(self) -> None:
+        self._data = {}
+        self._var_keys = set()
+
+        url = f"https://data.sec.gov/api/xbrl/companyfacts/CIK{self.cik:010}.json"
+        json = requests.get(url=url, headers=HEADERS).json()
+
+        self._name = json["entityName"]
+        facts = json["facts"]
+
+        if "ifrs-full" in facts.keys():
+            raise ValueError
+
+        if "ifrs-full" in facts.keys():
+            self._accounting_standard = "IFRS"
+        elif "us-gaap" in facts.keys():
+            self._accounting_standard = "US-GAAP"
+
+        for key, dct in facts["us-gaap"].items():
+            self._var_keys.add(key)
+            label = dct["label"]
+            description = dct["description"]
+            if len(dct["units"]) == 1:
+                unit = list(dct["units"])[0]
+            else:
+                unit = sorted(dct["units"].items(), key=lambda x: len(x[1]), reverse=True)[0][0]
+
+            quarterly_parsed_data = self._parse_quarterly_data(dct["units"][unit])
+            yearly_parsed_data = self._parse_yearly_data(dct["units"][unit])
+
+            self._data[key] = {
+                "label": dct["label"],
+                "description": dct["description"],
+                "unit": unit,
+                "yearly_data": yearly_parsed_data,
+                "quarterly_data": quarterly_parsed_data
+            }
+    def _parse_quarterly_data(self, entries: dict) -> dict:
+        if not any("start" in item for item in entries): #stock variables
+            data = [item for item in entries if "end" in item]
+            data = {entry["end"]: entry["val"] for entry in data}
+        else: #flow variables
+            data = {}
+            entries = [item for item in entries if "end" in item and "start" in item]
+            for entry in sorted(entries, key=lambda x: x["end"]):
+                if self._month_diff(entry["end"], entry["start"]) <= 3:
+                    data[entry["end"]] = {
+                        "value": entry["val"],
+                        "single_quarter": True,
+                        "quarter": entry["fp"]
+                    }
+                else:
+                    data[entry["end"]] = {
+                        "value": entry["val"],
+                        "single_quarter": False,
+                        "quarter": entry["fp"]
+                    }
+
+            data = list(data.items())
+            for index, (date, dct) in enumerate(data):
+                if dct["single_quarter"] is False:
+                    if dct["quarter"] == "Q2":
+                        if index >= 1 and data[index-1][1]["value"] is not None:
+                            dct["value"] = dct["value"] - data[index-1][1]["value"]
+                        else:
+                            dct["value"] = None
+                    elif dct["quarter"] == "Q3":
+                        if index >= 2 and not any(value is None for value in (data[index-1][1]["value"], data[index-2][1]["value"])):
+                            dct["value"] = dct["value"] - data[index-1][1]["value"] - data[index-2][1]["value"]
+                        else:
+                            dct["value"] = None
+                    elif dct["quarter"] == "FY":
+                        if index >= 3 and not any(value is None for value in (data[index-1][1]["value"], data[index-2][1]["value"], data[index-3][1]["value"])):
+                            dct["value"] = dct["value"] - data[index-1][1]["value"] - data[index-2][1]["value"] - data[index-3][1]["value"]
+                        else:
+                            dct["value"] = None
+
+            data = {date: dct["value"] for date, dct in data if dct["value"] is not None}
+
+        return data
+
+    def _parse_yearly_data(self, entries: dict) -> dict:
+        if not any("start" in entry for entry in entries): #stock variables
+            data = [entry for entry in entries if entry["form"] in ("10-K", "10-K/A") if "end" in entry]
+        else: #flow variables
+            data = [
+                entry for entry in entries if entry["form"] in ("10-K", "10-K/A")
+                if "end" in entry and "start" in entry
+                and diff_month(entry["end"], entry["start"]) > 10
+            ]
+
+        return {entry["end"]: entry["val"] for entry in data}
+
+    def _month_diff(self, date1: str, date2: str) -> int:
+        date1 = pd.to_datetime(date1)
+        date2 = pd.to_datetime(date2)
+        return (date1.year - date2.year) * 12 + date1.month - date2.month

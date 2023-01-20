@@ -23,7 +23,8 @@ from .sec import (
     Filing13D,
     Filing13G,
     Filing13F,
-    FilingNPORT
+    FilingNPORT,
+    SECFundamentals
 )
 from .tipranks import TipranksAnalystReader, TipranksStockReader
 from .yahoo import YahooReader
@@ -55,6 +56,7 @@ __all__ = [
     "SANews",
     "sec_companies",
     "sec_mutualfunds",
+    "SECFundamentals",
     "shiller_data",
     "TickerError",
     "TipranksAnalystReader",
