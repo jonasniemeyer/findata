@@ -2262,7 +2262,7 @@ class SECFundamentals:
             data = [
                 entry for entry in entries if entry["form"] in ("10-K", "10-K/A")
                 if "end" in entry and "start" in entry
-                and diff_month(entry["end"], entry["start"]) > 10
+                and self._month_diff(entry["end"], entry["start"]) > 10
             ]
 
         return {entry["end"]: entry["val"] for entry in data}
