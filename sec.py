@@ -2186,17 +2186,23 @@ class SECFundamentals:
             "NetIncomeLoss",
         ),
 
-        "Basic EPS": (
+        "Basic Earnings Per Share": (
             "EarningsPerShareBasic",
         ),
-        "Diluted EPS": (
-            "EarningsPerShareDiluted"
+        "Diluted Earnings Per Share": (
+            "EarningsPerShareDiluted",
         ),
         "Basic Shares Outstanding": (
             "WeightedAverageNumberOfSharesOutstandingBasic",
+            "WeightedAverageNumberOfBasicSharesOutstanding",
+            "WeightedAverageNumberOfShareOutstandingBasicAndDiluted",
+            "WeightedAverageNumberOfSharesOutstandingBasicAndDilutedOne"
         ),
         "Diluted Shares Outstanding": (
             "WeightedAverageNumberOfSharesOutstandingDiluted",
+            "WeightedAverageNumberOfDilutedSharesOutstanding",
+            "WeightedAverageNumberOfShareOutstandingBasicAndDiluted",
+            "WeightedAverageNumberOfSharesOutstandingBasicAndDilutedOne"
         ),
 
         # balance sheet
@@ -2294,6 +2300,7 @@ class SECFundamentals:
         ),
         "Stock-based Compensation": (
             "ShareBasedCompensation",
+            "AllocatedShareBasedCompensationExpense"
         ),
         "Deferred Income Taxes": (
             "DeferredIncomeTaxExpenseBenefit",
@@ -2317,6 +2324,7 @@ class SECFundamentals:
 
         "Operating Cashflow": (
             "NetCashProvidedByUsedInOperatingActivities",
+            "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"
         ),
 
         "Purchases of Marketable Securities": (
@@ -2435,10 +2443,10 @@ class SECFundamentals:
                 "quarterly_data": quarterly_parsed_data
             }
     def _parse_quarterly_data(self, entries: dict) -> dict:
-        if not any("start" in item for item in entries): #stock variables
+        if not any("start" in item for item in entries): # stock variables
             data = [item for item in entries if "end" in item]
             data = {entry["end"]: entry["val"] for entry in data}
-        else: #flow variables
+        else: # flow variables
             data = {}
             entries = [item for item in entries if "end" in item and "start" in item]
             for entry in sorted(entries, key=lambda x: x["end"]):
@@ -2479,9 +2487,9 @@ class SECFundamentals:
         return data
 
     def _parse_yearly_data(self, entries: dict) -> dict:
-        if not any("start" in entry for entry in entries): #stock variables
+        if not any("start" in entry for entry in entries): # stock variables
             data = [entry for entry in entries if entry["form"] in ("10-K", "10-K/A") if "end" in entry]
-        else: #flow variables
+        else: # flow variables
             data = [
                 entry for entry in entries if entry["form"] in ("10-K", "10-K/A")
                 if "end" in entry and "start" in entry
