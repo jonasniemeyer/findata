@@ -1428,7 +1428,8 @@ class FilingNPORT(_SECFiling):
         reference_asset = self._parse_reference_asset_information(reference_section)
 
         termination_date = section.find("terminationdt").text
-        assert termination_date != "N/A"
+        termination_date = None if termination_date == "N/A" else termination_date
+
         notional_amount = section.find("notionalamts")
         if notional_amount is None:
             amount = float(section.find("notionalamt").text)
@@ -1612,7 +1613,7 @@ class FilingNPORT(_SECFiling):
             identifier = None if identifier == "N/A" else identifier
 
             description = reference_section.find("narrativedesc")
-            description = None if description is not None and description.text == "N/A" else description
+            description = None if (description is not None and description.text == "N/A") else description
 
             return {
                 "type": "Index",
