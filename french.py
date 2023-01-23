@@ -11,7 +11,7 @@ from finance_data.utils import HEADERS, DatasetError
 class FrenchReader:
     _base_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
     _dataset_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/{}_CSV.zip"
-    _popular_datasets = {
+    _factor_datasets = {
         "US 3-Factors": "F-F_Research_Data_Factors",
         "US 3-Factors weekly": "F-F_Research_Data_Factors_weekly",
         "US 3-Factors daily": "F-F_Research_Data_Factors_daily",
@@ -65,8 +65,8 @@ class FrenchReader:
     }
     
     def __init__(self, dataset, timestamps=False):
-        if dataset in self._popular_datasets:
-            self._dataset = self._popular_datasets[dataset]
+        if dataset in self._factor_datasets:
+            self._dataset = self._factor_datasets[dataset]
         else:
             self._dataset = dataset
         self.timestamps = timestamps
