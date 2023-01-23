@@ -775,7 +775,7 @@ class Filing13F(_SECFiling):
         return self._summary
 
 
-class FilingNPORT(_SECFiling):    
+class FilingNPORT(_SECFiling):
     _asset_types = {
         "AMBS": "Agency mortgage-backed securities",
         "ABS-APCP": "ABS-asset backed commercial paper",
@@ -1592,13 +1592,22 @@ class FilingNPORT(_SECFiling):
             elif abbr == "SWO":
                 information = self._parse_option_information(reference_section)
             else:
-                raise ValueError
+                raise ValueError()
+
+            derivative_name = self._derivative_types[abbr]
 
             return {
                 "type": "Derivative",
                 "name": name,
                 "title": title,
-                "identifier": identifier
+                "identifier": identifier,
+                "derivative_information": {
+                    "type": {
+                        "name": derivative_name,
+                        "abbr": abbr
+                    },
+                    **information
+                }
             }
 
         elif section.find("indexbasketinfo") is not None:
