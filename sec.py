@@ -1625,6 +1625,7 @@ class FilingNPORT(_SECFiling):
 
         elif section.find("otherrefinst") is not None:
             reference_section = section.find("otherrefinst")
+
             name = reference_section.find("issuername").text
             if name == "N/A":
                 name = None
@@ -1637,20 +1638,20 @@ class FilingNPORT(_SECFiling):
             cusip = identifier_section.find("cusip")
             if cusip is not None:
                 cusip = cusip.get("value")
-                identifier["cusip"] = cusip
+                identifier["cusip"] = None if cusip == "N/A" else cusip
             isin = identifier_section.find("isin")
             if isin is not None:
                 isin = isin.get("value")
-                identifier["isin"] = isin
+                identifier["isin"] = None if isin == "N/A" else isin
             ticker = identifier_section.find("ticker")
             if ticker is not None:
                 ticker = ticker.get("value")
-                identifier["ticker"] = ticker
+                identifier["ticker"] = None if ticker == "N/A" else ticker
             other = identifier_section.find_all("other")
             for item in other:
                 other_name = item.get("otherdesc")
                 other_value = item.get("value")
-                identifier[other_name] = other_value
+                identifier[other_name] = None if other_value == "N/A" else other_value
 
             return {
                 "type": "Other",
