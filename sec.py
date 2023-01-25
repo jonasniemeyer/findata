@@ -560,7 +560,7 @@ class Filing13F(_SECFiling):
             self._signature = self._parse_signature_from_xml()
             self._summary = self._parse_summary_from_xml()
         else:
-            raise NotImplementedError
+            raise NotImplementedError("Text file parsing is not implemented yet.")
     
     def _parse_other_managers_from_xml(self) -> dict:
         return
@@ -1766,7 +1766,7 @@ class FilingNPORT(_SECFiling):
     def _parse_explanatory_notes(self) -> dict:
         note_section = self._soup.find("explntrnotes")
         if note_section is None:
-            return None
+            return {}
         
         notes = {}
         note_tags = note_section.find_all("explntrnote")
