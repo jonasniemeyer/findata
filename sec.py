@@ -500,7 +500,134 @@ class _SECFiling:
 
 
 class Filing3(_SECFiling):
-    pass
+    ownership_codes = {
+        "D": "Direct Ownership",
+        "I": "Indirect Ownership"
+    }
+
+    def __init__(self, file):
+        super().__init__(file)
+
+        assert len(self.reporting_owner) != 0
+        assert self.issuer is not None
+
+        self._parse_data()
+
+    @property
+    def reporting_owner(self) -> list:
+        return self._reporting_owner
+
+    @property
+    def issuer(self) -> dict:
+        return self._issuer
+
+    @property
+    def relationship(self) -> bool:
+        return self._relationship
+
+    @property
+    def non_derivative_securities(self) -> dict:
+        return self._non_derivative_securities
+
+    @property
+    def derivative_securities(self) -> list:
+        return self._derivative_securities
+
+    @property
+    def footnotes(self) -> list:
+        return self._footnotes
+
+    @property
+    def signature(self) -> dict:
+        return self._signature
+
+    def _parse_data(self) -> None:
+        if not self.is_xml:
+            raise NotImplementedError("Filing 3 classes can only be called on XML compliant files")
+
+        self._soup = BeautifulSoup(self.document, "lxml")
+
+        self._parse_owner()
+        self._non_derivative_securities = self._parse_non_derivative_securities()
+        self._derivative_securities = self._parse_derivative_securities()
+        self._footnotes = self._parse_footnotes()
+        self._signature = self._parse_signature()
+
+    def _parse_owner(self):
+        section = self._soup.find("reportingowner")
+        relationship = section.find("reportingownerrelationship")
+        self._relationship = {}
+        if relationship.find("isdirector").text == "1":
+            self._relationship["director"] = True
+        else:
+            self._relationship["director"] = False
+
+        if relationship.find("isofficer").text == "1":
+            self._relationship["officer"] = True
+            self._relationship["officer_title"] = relationship.find("officertitle").text
+        else:
+            self._relationship["officer"] = False
+
+        if relationship.find("istenpercentowner").text == "1":
+            self._relationship["ten_percent_owner"] = True
+        else:
+            self._relationship["ten_percent_owner"] = False
+
+        if relationship.find("isother").text == "1":
+            self._relationship["other"] = True
+        else:
+            self._relationship["other"] = False
+
+
+    def _parse_non_derivative_securities(self) -> list:
+        section = self._soup.find("nonderivativetable")
+        if section is None:
+            return None
+
+        holdings = []
+        for holding in section.find_all("nonderivativeholding"):
+            title = holding.find("securitytitle").text.strip()
+            shares = int(holding.find("posttransactionamounts").find("sharesownedfollowingtransaction").find("value").text)
+            abbr = holding.find("ownershipnature").find("directorindirectownership").find("value").text
+            ownership = {
+                "abbr": abbr,
+                "name": self.ownership_codes[abbr]
+            }
+            holdings.append(
+                 {
+                     "title": title,
+                     "shares": shares,
+                     "ownership": ownership
+                 }
+            )
+
+        return holdings
+
+    def _parse_derivative_securities(self) -> list:
+        section = self._soup.find("derivativetable")
+
+    def _parse_footnotes(self) -> dict:
+        footnote_section = self._soup.find("footnotes")
+        if footnote_section is None:
+            return {}
+
+        footnotes = {}
+        for footnote in footnote_section.find_all("footnote"):
+            id_ = footnote.get("id")
+            text = footnote.text
+            footnotes[id_] = text
+
+        return footnotes
+
+    def _parse_signature(self) -> dict:
+        signature = self._soup.find("ownersignature")
+        name = signature.find("signaturename").text
+        date = signature.find("signaturedate").text
+
+        return {
+            "name": name,
+            "date": date
+        }
 
 
 class Filing4(Filing3):
