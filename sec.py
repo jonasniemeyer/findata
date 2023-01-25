@@ -500,7 +500,7 @@ class _SECFiling:
 
 
 class Filing3(_SECFiling):
-    ownership_codes = {
+    _ownership_codes = {
         "D": "Direct Ownership",
         "I": "Indirect Ownership"
     }
@@ -578,7 +578,6 @@ class Filing3(_SECFiling):
         else:
             self._relationship["other"] = False
 
-
     def _parse_non_derivative_securities(self) -> list:
         section = self._soup.find("nonderivativetable")
         if section is None:
@@ -591,7 +590,7 @@ class Filing3(_SECFiling):
             abbr = holding.find("ownershipnature").find("directorindirectownership").find("value").text
             ownership = {
                 "abbr": abbr,
-                "name": self.ownership_codes[abbr]
+                "name": self._ownership_codes[abbr]
             }
             holdings.append(
                  {
