@@ -557,23 +557,23 @@ class Filing3(_SECFiling):
         section = self._soup.find("reportingowner")
         relationship = section.find("reportingownerrelationship")
         self._relationship = {}
-        if relationship.find("isdirector").text == "1":
+        if relationship.find("isdirector") is not None and relationship.find("isdirector").text == "1":
             self._relationship["director"] = True
         else:
             self._relationship["director"] = False
 
-        if relationship.find("isofficer").text == "1":
+        if relationship.find("isofficer") is not None and relationship.find("isofficer").text == "1":
             self._relationship["officer"] = True
             self._relationship["officer_title"] = relationship.find("officertitle").text
         else:
             self._relationship["officer"] = False
 
-        if relationship.find("istenpercentowner").text == "1":
+        if relationship.find("istenpercentowner") is not None and relationship.find("istenpercentowner").text == "1":
             self._relationship["ten_percent_owner"] = True
         else:
             self._relationship["ten_percent_owner"] = False
 
-        if relationship.find("isother").text == "1":
+        if relationship.find("isother") is not None and relationship.find("isother").text == "1":
             self._relationship["other"] = True
         else:
             self._relationship["other"] = False
@@ -586,7 +586,7 @@ class Filing3(_SECFiling):
         holdings = []
         for holding in section.find_all("nonderivativeholding"):
             title = holding.find("securitytitle").text.strip()
-            shares = int(holding.find("posttransactionamounts").find("sharesownedfollowingtransaction").find("value").text)
+            shares = int(float(holding.find("posttransactionamounts").find("sharesownedfollowingtransaction").find("value").text))
             abbr = holding.find("ownershipnature").find("directorindirectownership").find("value").text
             ownership = {
                 "abbr": abbr,
