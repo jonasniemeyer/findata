@@ -303,14 +303,12 @@ class _SECFiling:
         if len(fiscal_year_end) == 0:
             fiscal_year_end = None
         else:
-            year = dt.date.fromisoformat(self.date_filed).year
             month = int(fiscal_year_end[0][:2])
             day = int(fiscal_year_end[0][2:])
-            fiscal_year_end = dt.date(
-                year=year,
-                month=month,
-                day=day
-            ).isoformat()
+            fiscal_year_end = {
+                "month": month,
+                "day": day
+            }
         
         business_address, mail_address = self._parse_addresses(section)
         
@@ -508,10 +506,9 @@ class Filing3(_SECFiling):
     def __init__(self, file):
         super().__init__(file)
 
+        self._parse_data()
         assert len(self.reporting_owner) != 0
         assert self.issuer is not None
-
-        self._parse_data()
 
     @property
     def reporting_owner(self) -> list:
