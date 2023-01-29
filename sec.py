@@ -594,12 +594,13 @@ class Filing3(_SECFiling):
     def _parse_non_derivative_securities(self) -> list:
         section = self._soup.find("nonderivativetable")
         if section is None:
-            return None
+            return []
 
         holdings = []
         for holding in section.find_all("nonderivativeholding"):
             title = holding.find("securitytitle").text.strip()
             shares = holding.find("posttransactionamounts").find("sharesownedfollowingtransaction")
+
             if shares is not None:
                 shares = int(float(shares.find("value").text))
                 amount = {
@@ -618,11 +619,13 @@ class Filing3(_SECFiling):
                         "name": "Principal Amount"
                     }
                 }
+
             abbr = holding.find("ownershipnature").find("directorindirectownership").find("value").text
             ownership_type = {
                 "abbr": abbr,
                 "name": self._ownership_codes[abbr]
             }
+
             ownership_nature = holding.find("natureofownership")
             if ownership_nature is None:
                 nature = None
@@ -635,6 +638,7 @@ class Filing3(_SECFiling):
                     "value": value,
                     "footnote_id": footnote_id
                 }
+
             holdings.append(
                  {
                      "title": title,
@@ -650,6 +654,49 @@ class Filing3(_SECFiling):
 
     def _parse_derivative_securities(self) -> list:
         section = self._soup.find("derivativetable")
+        if section is None:
+            return []
+
+        holdings = []
+        for holding in section.find_all("derivativeholding"):
+            title = holding.find("securitytitle").text.strip()
+            exercise_price = float(holding.find("conversionorexerciseprice").find("value").text)
+            exercise_date = holding.find("exercisedate").find("footnoteid").get("id")
+            expiration_date = holding.find("expirationdate").find("value")
+            if expiration_date is not None:
+                expiration_date = expiration_date.text
+            else:
+                expiration_date = holding.find("expirationdate").find("footnoteid").get("id")
+            exercise_date = {
+                "price": exercise_price,
+                "date": exercise_date
+            }
+
+            underlying = holding.find("underlyingsecurity")
+            underlying_title = underlying.find("underlyingsecuritytitle").text.strip()
+            underlying_shares = int(underlying.find("underlyingsecurityshares").find("value").text)
+            underlying = {
+                "title": underlying_title,
+                "shares": underlying_shares
+            }
+
+            abbr = holding.find("ownershipnature").find("directorindirectownership").find("value").text
+            ownership_type = {
+                "abbr": abbr,
+                "name": self._ownership_codes[abbr]
+            }
+
+            holdings.append(
+                 {
+                     "title": title,
+                     "expiration_date": expiration_date,
+                     "exercise_data": exercise_date,
+                     "underlying": underlying,
+                     "ownership_type": ownership_type
+                 }
+            )
+
+        return holdings
 
     def _parse_footnotes(self) -> dict:
         footnote_section = self._soup.find("footnotes")
