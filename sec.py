@@ -580,9 +580,17 @@ class Filing3(_SECFiling):
         if section is None:
             return None
 
+        section_str = str(section)
+        for name in ("nonderivativeholding", "securitytitle", "directorindirectownership"):
+            section_str = re.sub(
+                pattern="\s?".join(tuple(name)),
+                repl=name,
+                string=section_str
+            )
+        section = BeautifulSoup(section_str, "lxml")
+
         holdings = []
         for holding in section.find_all("nonderivativeholding"):
-            holding = BeautifulSoup(re.sub("s\s?e\s?c\s?u\s?r\s?i\s?t\s?y\s?t\s?i\s?t\s?l\s?e\s?", "securitytitle", str(holding)))
             title = holding.find("securitytitle").text.strip()
             shares = holding.find("posttransactionamounts").find("sharesownedfollowingtransaction")
             if shares is not None:
