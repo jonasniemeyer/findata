@@ -603,15 +603,30 @@ class Filing3(_SECFiling):
                     }
                 }
             abbr = holding.find("ownershipnature").find("directorindirectownership").find("value").text
-            ownership = {
+            ownership_type = {
                 "abbr": abbr,
                 "name": self._ownership_codes[abbr]
             }
+            ownership_nature = holding.find("natureofownership")
+            if ownership_nature is None:
+                nature = None
+            else:
+                value = ownership_nature.find("value").text
+                footnote_id = ownership_nature.find("footnoteid")
+                if footnote_id is not None:
+                    footnote_id = footnote_id.get("id")
+                nature = {
+                    "value": value,
+                    "footnote_id": footnote_id
+                }
             holdings.append(
                  {
                      "title": title,
                      "amount": amount,
-                     "ownership": ownership
+                     "ownership": {
+                         "type": ownership_type,
+                         "nature": nature
+                     }
                  }
             )
 
