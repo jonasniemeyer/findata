@@ -582,6 +582,7 @@ class Filing3(_SECFiling):
 
         holdings = []
         for holding in section.find_all("nonderivativeholding"):
+            holding = BeautifulSoup(re.sub("s\s?e\s?c\s?u\s?r\s?i\s?t\s?y\s?t\s?i\s?t\s?l\s?e\s?", "securitytitle", str(holding)))
             title = holding.find("securitytitle").text.strip()
             shares = holding.find("posttransactionamounts").find("sharesownedfollowingtransaction")
             if shares is not None:
