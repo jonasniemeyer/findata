@@ -551,7 +551,8 @@ class Filing3(_SECFiling):
             "ownersignature",
             "nonderivativeholding",
             "securitytitle",
-            "directorindirectownership"
+            "directorindirectownership",
+            "underlyingsecurityshares"
         ):
             document = re.sub(
                 pattern="\s?".join(tuple(name)),
@@ -660,13 +661,24 @@ class Filing3(_SECFiling):
         holdings = []
         for holding in section.find_all("derivativeholding"):
             title = holding.find("securitytitle").text.strip()
-            exercise_price = float(holding.find("conversionorexerciseprice").find("value").text)
-            exercise_date = holding.find("exercisedate").find("footnoteid").get("id")
+            exercise_price = holding.find("conversionorexerciseprice").find("value")
+            if exercise_price is not None:
+                exercise_price = float(exercise_price.text)
+            else:
+                exercise_price = holding.find("conversionorexerciseprice").find("footnoteid").get("id")
+
+            exercise_date = holding.find("exercisedate").find("value")
+            if exercise_date is not None:
+                exercise_date = pd.to_datetime(exercise_date.text).date().isoformat()
+            else:
+                exercise_date = holding.find("exercisedate").find("footnoteid").get("id")
+
             expiration_date = holding.find("expirationdate").find("value")
             if expiration_date is not None:
-                expiration_date = expiration_date.text
+                expiration_date = pd.to_datetime(expiration_date.text).date().isoformat()
             else:
                 expiration_date = holding.find("expirationdate").find("footnoteid").get("id")
+
             exercise_date = {
                 "price": exercise_price,
                 "date": exercise_date
@@ -674,7 +686,12 @@ class Filing3(_SECFiling):
 
             underlying = holding.find("underlyingsecurity")
             underlying_title = underlying.find("underlyingsecuritytitle").text.strip()
-            underlying_shares = int(underlying.find("underlyingsecurityshares").find("value").text)
+            underlying_shares = underlying.find("underlyingsecurityshares").find("value")
+            if underlying_shares is not None:
+                underlying_shares = int(float(underlying_shares.text))
+            else:
+                underlying_shares = underlying.find("underlyingsecurityshares").find("footnoteid").get("id")
+
             underlying = {
                 "title": underlying_title,
                 "shares": underlying_shares
