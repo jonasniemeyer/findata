@@ -542,7 +542,7 @@ class Filing3(_SECFiling):
         if not self.is_xml:
             raise NotImplementedError("Filing 3 classes can only be called on XML compliant files")
 
-        document = str(BeautifulSoup(self.document, "lxml"))
+        document = str(BeautifulSoup(self.document, "html.parser"))
         for name in (
             "reportingowner",
             "nonderivativetable",
@@ -558,7 +558,7 @@ class Filing3(_SECFiling):
                 repl=name,
                 string=document
             )
-        self._soup = BeautifulSoup(document, "lxml")
+        self._soup = BeautifulSoup(document, "html.parser")
 
         self._parse_owner()
         self._non_derivative_securities = self._parse_non_derivative_securities()
