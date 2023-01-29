@@ -583,7 +583,25 @@ class Filing3(_SECFiling):
         holdings = []
         for holding in section.find_all("nonderivativeholding"):
             title = holding.find("securitytitle").text.strip()
-            shares = int(float(holding.find("posttransactionamounts").find("sharesownedfollowingtransaction").find("value").text))
+            shares = holding.find("posttransactionamounts").find("sharesownedfollowingtransaction")
+            if shares is not None:
+                shares = int(float(shares.find("value").text))
+                amount = {
+                    "value": shares,
+                    "type": {
+                        "abbr": "SH",
+                        "name": "Shares"
+                    }
+                }
+            else:
+                value = float(holding.find("posttransactionamounts").find("valueownedfollowingtransaction").find("value").text)
+                amount = {
+                    "value": value,
+                    "type": {
+                        "abbr": "PA",
+                        "name": "Principal Amount"
+                    }
+                }
             abbr = holding.find("ownershipnature").find("directorindirectownership").find("value").text
             ownership = {
                 "abbr": abbr,
@@ -592,7 +610,7 @@ class Filing3(_SECFiling):
             holdings.append(
                  {
                      "title": title,
-                     "shares": shares,
+                     "amount": amount,
                      "ownership": ownership
                  }
             )
