@@ -686,15 +686,31 @@ class Filing3(_SECFiling):
 
             underlying = holding.find("underlyingsecurity")
             underlying_title = underlying.find("underlyingsecuritytitle").text.strip()
-            underlying_shares = underlying.find("underlyingsecurityshares").find("value")
-            if underlying_shares is not None:
-                underlying_shares = int(float(underlying_shares.text))
+            underlying_amount = underlying.find("underlyingsecurityshares")
+            if underlying_amount is not None:
+                amount_abbr = "SH"
+                amount_name = "Shares"
             else:
-                underlying_shares = underlying.find("underlyingsecurityshares").find("footnoteid").get("id")
+                underlying_amount = underlying.find("underlyingsecurityvalue")
+                amount_abbr = "PA"
+                amount_name = "Principal Amount"
+
+            value = underlying_amount.find("value")
+            if value is not None:
+                value = int(float(value.text))
+            else:
+                value = underlying_amount.find("footnoteid").get("id")
+            underlying_amount = {
+                "value": value,
+                "type": {
+                    "abbr": amount_abbr,
+                    "name": amount_name
+                }
+            }
 
             underlying = {
                 "title": underlying_title,
-                "shares": underlying_shares
+                "amount": underlying_amount
             }
 
             abbr = holding.find("ownershipnature").find("directorindirectownership").find("value").text
