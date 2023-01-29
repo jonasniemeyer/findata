@@ -542,7 +542,23 @@ class Filing3(_SECFiling):
         if not self.is_xml:
             raise NotImplementedError("Filing 3 classes can only be called on XML compliant files")
 
-        self._soup = BeautifulSoup(self.document, "lxml")
+        document = str(BeautifulSoup(self.document, "lxml"))
+        for name in (
+            "reportingowner",
+            "nonderivativetable",
+            "derivativetable",
+            "footnotes",
+            "ownersignature",
+            "nonderivativeholding",
+            "securitytitle",
+            "directorindirectownership"
+        ):
+            document = re.sub(
+                pattern="\s?".join(tuple(name)),
+                repl=name,
+                string=document
+            )
+        self._soup = BeautifulSoup(document, "lxml")
 
         self._parse_owner()
         self._non_derivative_securities = self._parse_non_derivative_securities()
@@ -579,15 +595,6 @@ class Filing3(_SECFiling):
         section = self._soup.find("nonderivativetable")
         if section is None:
             return None
-
-        section_str = str(section)
-        for name in ("nonderivativeholding", "securitytitle", "directorindirectownership"):
-            section_str = re.sub(
-                pattern="\s?".join(tuple(name)),
-                repl=name,
-                string=section_str
-            )
-        section = BeautifulSoup(section_str, "lxml")
 
         holdings = []
         for holding in section.find_all("nonderivativeholding"):
