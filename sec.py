@@ -787,29 +787,73 @@ class Filing4(Filing3):
                 "abbr": abbr,
                 "name": self._transaction_codes[abbr]
             }
-            swap_involved = int(code.find("equityswapinvolved").text)
-            if swap_involved == 1:
+            swap_involved = code.find("equityswapinvolved").text
+            if swap_involved in ("1", "true"):
                 swap_involved = True
-            elif swap_involved == 0:
+            elif swap_involved in ("0", "false"):
                 swap_involved = False
             assert isinstance(swap_involved, bool)
-            footnote_id = code.find("footnoteid").get("id")
+            footnote_id = code.find("footnoteid")
+            if footnote_id is not None:
+                footnote_id = footnote_id.get("id")
 
             amount = holding.find("transactionamounts")
-            shares = int(amount.find("transactionshares").find("value").text)
-            price = float(amount.find("transactionpricepershare").find("value").text)
+            shares = amount.find("transactionshares")
+            if shares is not None:
+                shares = int(shares.find("value").text.replace(".", ""))
+                value = {
+                    "value": shares,
+                    "type": {
+                        "abbr": "SH",
+                        "name": "Shares"
+                    }
+                }
+            else:
+                value = float(amount.find("transactiontotalvalue").find("value").text)
+                value = {
+                    "value": value,
+                    "type": {
+                        "abbr": "PA",
+                        "name": "Principal Amount"
+                    }
+                }
+
+            price = amount.find("transactionpricepershare").find("value")
+            if price is not None:
+                price = float(price.text)
+            else:
+                price = amount.find("transactionpricepershare").find("footnoteid").get("id")
             direction_abbr = amount.find("transactionacquireddisposedcode").find("value").text
             direction = {
                 "abbr": direction_abbr,
                 "name": self._transaction_codes[direction_abbr]
             }
 
-            shares_owned = int(holding.find("posttransactionamounts").find("sharesownedfollowingtransaction").find("value").text)
+            shares_owned = holding.find("posttransactionamounts").find("sharesownedfollowingtransaction")
+            shares = amount.find("transactionshares")
+            if shares is not None:
+                shares = int(shares.find("value").text.replace(".", ""))
+                post_transaction_owned = {
+                    "value": shares,
+                    "type": {
+                        "abbr": "SH",
+                        "name": "Shares"
+                    }
+                }
+            else:
+                value = float(holding.find("valueownedfollowingtransaction").find("value").text)
+                post_transaction_owned = {
+                    "value": value,
+                    "type": {
+                        "abbr": "PA",
+                        "name": "Principal Amount"
+                    }
+                }
 
             abbr = holding.find("ownershipnature").find("directorindirectownership").find("value").text
             ownership_type = {
                 "abbr": abbr,
-                "name": self._direction_codes[abbr]
+                "name": self._ownership_codes[abbr]
             }
 
             holdings.append(
@@ -902,6 +946,7 @@ class Filing4(Filing3):
                         "name": "Principal Amount"
                     }
                 }
+
             price = amount.find("transactionpricepershare").find("value")
             if price is not None:
                 price = float(price.text)
