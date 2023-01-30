@@ -643,7 +643,6 @@ class Filing3(_SECFiling):
 
         holdings = []
         for holding in section.find_all("derivativeholding"):
-
             title = holding.find("securitytitle").find("value").text.strip()
             exercise_price = holding.find("conversionorexerciseprice").find("value")
             if exercise_price is not None:
@@ -663,7 +662,7 @@ class Filing3(_SECFiling):
             else:
                 expiration_date = holding.find("expirationdate").find("footnoteid").get("id")
 
-            exercise_date = {
+            exercise_data = {
                 "price": exercise_price,
                 "date": exercise_date
             }
@@ -707,7 +706,7 @@ class Filing3(_SECFiling):
                  {
                      "title": title,
                      "expiration_date": expiration_date,
-                     "exercise_data": exercise_date,
+                     "exercise_data": exercise_data,
                      "underlying": underlying,
                      "ownership_type": ownership_type
                  }
