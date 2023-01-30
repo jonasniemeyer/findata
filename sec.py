@@ -586,7 +586,7 @@ class Filing3(_SECFiling):
             shares = holding.find("posttransactionamounts").find("sharesownedfollowingtransaction")
 
             if shares is not None:
-                shares = int(float(shares.find("value").text))
+                shares = int(shares.find("value").text.replace(".", ""))
                 amount = {
                     "value": shares,
                     "type": {
@@ -680,7 +680,7 @@ class Filing3(_SECFiling):
 
             value = underlying_amount.find("value")
             if value is not None:
-                value = int(float(value.text))
+                value = int(value.text.replace(".", ""))
             else:
                 value = underlying_amount.find("footnoteid").get("id")
             underlying_amount = {
