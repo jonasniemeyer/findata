@@ -583,8 +583,8 @@ class Filing3(_SECFiling):
         holdings = []
         for holding in section.find_all("nonderivativeholding"):
             title = holding.find("securitytitle").find("value").text.strip()
-            shares = holding.find("posttransactionamounts").find("sharesownedfollowingtransaction")
 
+            shares = holding.find("posttransactionamounts").find("sharesownedfollowingtransaction")
             if shares is not None:
                 shares = int(shares.find("value").text.replace(".", ""))
                 amount = {
@@ -840,6 +840,143 @@ class Filing4(Filing3):
         holdings = []
         for holding in section.find_all("derivativetransaction"):
             title = holding.find("securitytitle").find("value").text.strip()
+            exercise_price = holding.find("conversionorexerciseprice").find("value")
+            if exercise_price is not None:
+                exercise_price = float(exercise_price.text)
+            else:
+                exercise_price = holding.find("conversionorexerciseprice").find("footnoteid").get("id")
+
+            exercise_date = holding.find("exercisedate").find("value")
+            if exercise_date is not None:
+                exercise_date = pd.to_datetime(exercise_date.text).date().isoformat()
+            else:
+                exercise_date = holding.find("exercisedate").find("footnoteid").get("id")
+
+            expiration_date = holding.find("expirationdate").find("value")
+            if expiration_date is not None:
+                expiration_date = pd.to_datetime(expiration_date.text).date().isoformat()
+            else:
+                expiration_date = holding.find("expirationdate").find("footnoteid").get("id")
+
+            exercise_data = {
+                "price": exercise_price,
+                "date": exercise_date
+            }
+            
+            date = holding.find("transactiondate").find("value").text
+            
+            code = holding.find("transactioncoding")
+            form_type = code.find("transactionformtype").text
+            abbr = code.find("transactioncode").text
+            transaction_type = {
+                "abbr": abbr,
+                "name": self._transaction_codes[abbr]
+            }
+            swap_involved = code.find("equityswapinvolved").text
+            if swap_involved in ("1", "true"):
+                swap_involved = True
+            elif swap_involved in ("0", "false"):
+                swap_involved = False
+            assert isinstance(swap_involved, bool)
+            footnote_id = code.find("footnoteid")
+            if footnote_id is not None:
+                footnote_id = footnote_id.get("id")
+
+            amount = holding.find("transactionamounts")
+            shares = amount.find("transactionshares")
+            if shares is not None:
+                shares = int(shares.find("value").text.replace(".", ""))
+                value = {
+                    "value": shares,
+                    "type": {
+                        "abbr": "SH",
+                        "name": "Shares"
+                    }
+                }
+            else:
+                value = float(amount.find("transactiontotalvalue").find("value").text)
+                value = {
+                    "value": value,
+                    "type": {
+                        "abbr": "PA",
+                        "name": "Principal Amount"
+                    }
+                }
+            price = amount.find("transactionpricepershare").find("value")
+            if price is not None:
+                price = float(price.text)
+            else:
+                price = amount.find("transactionpricepershare").find("footnoteid").get("id")
+            direction_abbr = amount.find("transactionacquireddisposedcode").find("value").text
+            direction = {
+                "abbr": direction_abbr,
+                "name": self._transaction_codes[direction_abbr]
+            }
+
+            underlying = holding.find("underlyingsecurity")
+            underlying_title = underlying.find("underlyingsecuritytitle").text.strip()
+            underlying_amount = underlying.find("underlyingsecurityshares")
+            if underlying_amount is not None:
+                amount_abbr = "SH"
+                amount_name = "Shares"
+            else:
+                underlying_amount = underlying.find("underlyingsecurityvalue")
+                amount_abbr = "PA"
+                amount_name = "Principal Amount"
+
+            value = underlying_amount.find("value")
+            if value is not None:
+                value = int(value.text.replace(".", ""))
+            else:
+                value = underlying_amount.find("footnoteid").get("id")
+            underlying_amount = {
+                "value": value,
+                "type": {
+                    "abbr": amount_abbr,
+                    "name": amount_name
+                }
+            }
+            
+            underlying = {
+                "title": underlying_title,
+                "amount": underlying_amount
+            }
+
+            shares = holding.find("posttransactionamounts").find("sharesownedfollowingtransaction")
+            if shares is not None:
+                shares = int(shares.find("value").text.replace(".", ""))
+                post_transaction_owned = {
+                    "value": shares,
+                    "type": {
+                        "abbr": "SH",
+                        "name": "Shares"
+                    }
+                }
+            else:
+                value = float(holding.find("posttransactionamounts").find("valueownedfollowingtransaction").find("value").text)
+                post_transaction_owned = {
+                    "value": value,
+                    "type": {
+                        "abbr": "PA",
+                        "name": "Principal Amount"
+                    }
+                }
+
+            abbr = holding.find("ownershipnature").find("directorindirectownership").find("value").text
+            ownership_type = {
+                "abbr": abbr,
+                "name": self._ownership_codes[abbr]
+            }
+
+            holdings.append(
+                 {
+                     "title": title,
+                     "expiration_date": expiration_date,
+                     "exercise_data": exercise_data,
+                     "underlying": underlying,
+                     "ownership_type": ownership_type
+                 }
+            )
 
         return holdings
 
