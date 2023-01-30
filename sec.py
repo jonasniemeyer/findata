@@ -740,7 +740,109 @@ class Filing3(_SECFiling):
 
 
 class Filing4(Filing3):
-    pass
+    _direction_codes = {
+        "A": "Acquired",
+        "D": "Disposed"
+    }
+
+    _transaction_codes = {
+        "P": "Open market or private purchase of non-derivative or derivative security ",
+        "S": "Open market or private sale of non-derivative or derivative security",
+        "V": "Transaction voluntarily reported earlier than required",
+        "A": "Grant, award or other acquisition pursuant to Rule 16b-3(d)",
+        "D": "Disposition to the issuer of issuer equity securities pursuant to Rule 16b-3(e)",
+        "F": "Payment of exercise price or tax liability by delivering or withholding securities incident to the receipt, exercise or vesting of a security issued in accordance with Rule 16b-3",
+        "I": "Discretionary transaction in accordance with Rule 16b-3(f) resulting in acquisition or disposition of issuer securities",
+        "M": "Exercise or conversion of derivative security exempted pursuant to Rule 16b-3",
+        "C": "Conversion of derivative security",
+        "E": "Expiration of short derivative position",
+        "H": "Expiration (or cancellation) of long derivative position with value received",
+        "O": "Exercise of out-of-the-money derivative security",
+        "X": "Exercise of in-the-money or at-the-money derivative security",
+        "G": "Bona fide gift",
+        "L": "Small acquisition under Rule 16a-6",
+        "W": "Acquisition or disposition by will or the laws of descent and distribution",
+        "Z": "Deposit into or withdrawal from voting trust",
+        "J": "Other acquisition or disposition (describe transaction)",
+        "K": "Transaction in equity swap or instrument with similar characteristics",
+        "U": "Disposition pursuant to a tender of shares in a change of control transaction"
+    }
+
+    def __init__(self, file: str):
+        super().__init__(file)
+
+    def _parse_non_derivative_securities(self) -> list:
+        section = self._soup.find("nonderivativetable")
+        if section is None:
+            return []
+
+        holdings = []
+        for holding in section.find_all("nonderivativetransaction"):
+            title = holding.find("securitytitle").find("value").text.strip()
+            date = holding.find("transactiondate").find("value").text
+
+            code = holding.find("transactioncoding")
+            form_type = code.find("transactionformtype").text
+            abbr = code.find("transactioncode").text
+            transaction_type = {
+                "abbr": abbr,
+                "name": self._transaction_codes[abbr]
+            }
+            swap_involved = int(code.find("equityswapinvolved").text)
+            if swap_involved == 1:
+                swap_involved = True
+            elif swap_involved == 0:
+                swap_involved = False
+            assert isinstance(swap_involved, bool)
+            footnote_id = code.find("footnoteid").get("id")
+
+            amount = holding.find("transactionamounts")
+            shares = int(amount.find("transactionshares").find("value").text)
+            price = float(amount.find("transactionpricepershare").find("value").text)
+            direction_abbr = amount.find("transactionacquireddisposedcode").find("value").text
+            direction = {
+                "abbr": direction_abbr,
+                "name": self._transaction_codes[direction_abbr]
+            }
+
+            shares_owned = int(holding.find("posttransactionamounts").find("sharesownedfollowingtransaction").find("value").text)
+
+            abbr = holding.find("ownershipnature").find("directorindirectownership").find("value").text
+            ownership_type = {
+                "abbr": abbr,
+                "name": self._direction_codes[abbr]
+            }
+
+            holdings.append(
+                {
+                    "title": title,
+                    "date": date,
+                    "transaction": {
+                        "form_type": form_type,
+                        "type": transaction_type,
+                        "shares": shares,
+                        "price": price,
+                        "swap_involved": swap_involved,
+                        "footnote_id": footnote_id
+                    },
+                    "post_transaction_owned": shares_owned,
+                    "direction": direction,
+                    "ownership_type": ownership_type
+                }
+            )
+
+        return holdings
+
+    def _parse_derivative_securities(self) -> list:
+        section = self._soup.find("derivativetable")
+        if section is None:
+            return []
+
+        holdings = []
+        for holding in section.find_all("derivativetransaction"):
+            title = holding.find("securitytitle").find("value").text.strip()
+
+        return holdings
 
 
 class Filing5(Filing4):
