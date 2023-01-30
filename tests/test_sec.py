@@ -135,7 +135,7 @@ class TestFilingNPORT:
         assert filer["sic"]["code"] is None
         assert filer["irs_number"] == 510396525
         assert filer["state"] == "MD"
-        assert filer["fiscal_year_end"] == "2022-08-31"
+        assert filer["fiscal_year_end"] == {"day": 31, "month": 8}
         business_address = filer["business_address"]
         assert business_address["street1"] == "400 HOWARD STREET"
         assert business_address["street2"] is None
