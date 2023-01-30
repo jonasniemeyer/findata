@@ -381,12 +381,12 @@ class _SECFiling:
     
     def _parse_single_address(self, section) -> dict:
         if "STREET 1:" in section:
-            street1 = re.findall("STREET 1:\t{2}(.+)", section)[0]
+            street1 = re.findall("STREET 1:\t{2}(.*)", section)[0]
         else:
             street1 = None
         
         if "STREET 2:" in section:
-            street2 = re.findall("STREET 2:\t{2}(.+)", section)[0]
+            street2 = re.findall("STREET 2:\t{2}(.*)", section)[0]
         else:
             street2 = None
         
