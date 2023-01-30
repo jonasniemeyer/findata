@@ -582,7 +582,7 @@ class Filing3(_SECFiling):
 
         holdings = []
         for holding in section.find_all("nonderivativeholding"):
-            title = holding.find("securitytitle").text.strip()
+            title = holding.find("securitytitle").find("value").text.strip()
             shares = holding.find("posttransactionamounts").find("sharesownedfollowingtransaction")
 
             if shares is not None:
@@ -644,7 +644,7 @@ class Filing3(_SECFiling):
         holdings = []
         for holding in section.find_all("derivativeholding"):
 
-            title = holding.find("securitytitle").text.strip()
+            title = holding.find("securitytitle").find("value").text.strip()
             exercise_price = holding.find("conversionorexerciseprice").find("value")
             if exercise_price is not None:
                 exercise_price = float(exercise_price.text)
