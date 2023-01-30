@@ -138,7 +138,7 @@ class _SECFiling:
         else:
             raise DatasetError(f"Could not find a header section")
         self._header = self._file[self.file.find(header_open):self.file.find(header_close)] + header_close
-        self._document = self.file[self.file.find("<DOCUMENT>"):self.file.find("</SEC-DOCUMENT>")]
+        self._document = self.file[self.file.find("<DOCUMENT>"):]
         
         self._is_html = True if ("<html>" in self.file or "<HTML>" in self.file) else False
         self._is_xml = True if ("<xml>" in self.file or "<XML>" in self.file) else False
@@ -542,24 +542,7 @@ class Filing3(_SECFiling):
         if not self.is_xml:
             raise NotImplementedError("Filing 3 classes can only be called on XML compliant files")
 
-        document = str(BeautifulSoup(self.document, "html.parser"))
-        for name in (
-            "reportingowner",
-            "nonderivativetable",
-            "derivativetable",
-            "footnotes",
-            "ownersignature",
-            "nonderivativeholding",
-            "securitytitle",
-            "directorindirectownership",
-            "underlyingsecurityshares"
-        ):
-            document = re.sub(
-                pattern="\s?".join(tuple(name)),
-                repl=name,
-                string=document
-            )
-        self._soup = BeautifulSoup(document, "html.parser")
+        self._soup = BeautifulSoup(self.document.replace("\n", ""), "html.parser")
 
         self._parse_owner()
         self._non_derivative_securities = self._parse_non_derivative_securities()
@@ -660,6 +643,7 @@ class Filing3(_SECFiling):
 
         holdings = []
         for holding in section.find_all("derivativeholding"):
+
             title = holding.find("securitytitle").text.strip()
             exercise_price = holding.find("conversionorexerciseprice").find("value")
             if exercise_price is not None:
