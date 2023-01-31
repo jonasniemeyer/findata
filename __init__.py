@@ -58,6 +58,7 @@ __all__ = [
     "sec_mutualfunds",
     "SECFundamentals",
     "shiller_data",
+    "sp_index_data",
     "TickerError",
     "TipranksAnalystReader",
     "TipranksStockReader",
