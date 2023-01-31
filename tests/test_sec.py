@@ -79,36 +79,33 @@ class TestSECFiling:
         assert self.file.is_html is True
         assert self.file.is_xml is False
         assert self.file.submission_type == "SC 13G"
-
-    def test_from_url(self):
-        assert _SECFiling.from_url("https://www.sec.gov/Archives/edgar/data/320193/000119312519041014/0001193125-19-041014.txt")
     
     def test_date_of_period(self):
-        file = _SECFiling.from_url("https://www.sec.gov/Archives/edgar/data/320193/000032019322000063/0000320193-22-000063.txt")
+        file = _SECFiling(url="https://www.sec.gov/Archives/edgar/data/320193/000032019322000063/0000320193-22-000063.txt")
         assert file.date_of_period == "2022-05-06"
     
     def test_effectiveness_date(self):
-        file = _SECFiling.from_url("https://www.sec.gov/Archives/edgar/data/1336528/000117266122002568/0001172661-22-002568.txt")
+        file = _SECFiling(url="https://www.sec.gov/Archives/edgar/data/1336528/000117266122002568/0001172661-22-002568.txt")
         assert file.effectiveness_date == "2022-11-14"
 
     def test_amendment(self):
-        file = _SECFiling.from_url("https://www.sec.gov/Archives/edgar/data/102909/000093247118004625/0000932471-18-004625.txt")
+        file = _SECFiling(url="https://www.sec.gov/Archives/edgar/data/102909/000093247118004625/0000932471-18-004625.txt")
         assert file.is_amendment is True
 
     def test_text_file(self):
-        file = _SECFiling.from_url("https://www.sec.gov/Archives/edgar/data/315066/000031506610001412/0000315066-10-001412.txt")
+        file = _SECFiling(url="https://www.sec.gov/Archives/edgar/data/315066/000031506610001412/0000315066-10-001412.txt")
         assert file.is_html is False
 
     def test_xml_file(self):
-        file = _SECFiling.from_url("https://www.sec.gov/Archives/edgar/data/320193/000032019322000113/0000320193-22-000113.txt")
+        file = _SECFiling(url="https://www.sec.gov/Archives/edgar/data/320193/000032019322000113/0000320193-22-000113.txt")
         assert file.is_xml is True
 
 
 class TestFilingNPORT:
     @classmethod
     def setup_class(cls):
-        cls.file = FilingNPORT.from_url("https://www.sec.gov/Archives/edgar/data/930667/000175272422234894/0001752724-22-234894.txt")
-        cls.derivative_file = FilingNPORT.from_url("https://www.sec.gov/Archives/edgar/data/1444822/000175272422264732/0001752724-22-264732.txt")
+        cls.file = FilingNPORT(url="https://www.sec.gov/Archives/edgar/data/930667/000175272422234894/0001752724-22-234894.txt")
+        cls.derivative_file = FilingNPORT(url="https://www.sec.gov/Archives/edgar/data/1444822/000175272422264732/0001752724-22-264732.txt")
 
     def test_attributes(self):
         assert self.file.accession_number  == "0001752724-22-234894"
@@ -305,7 +302,7 @@ class TestFilingNPORT:
             assert isinstance(item["securities_lending"]["loaned"], (float, NoneType))
 
     def test_debt_security(self):
-        portfolio = FilingNPORT.from_url("https://www.sec.gov/Archives/edgar/data/1100663/000175272422234846/0001752724-22-234846.txt").portfolio()
+        portfolio = FilingNPORT(url="https://www.sec.gov/Archives/edgar/data/1100663/000175272422234846/0001752724-22-234846.txt").portfolio()
         portfolio = [security for security in portfolio if security["debt_information"] is not None]
         
         info = portfolio[0]["debt_information"]
@@ -328,7 +325,7 @@ class TestFilingNPORT:
             assert isinstance(info["convertible_information"], NoneType)
 
     def test_debt_convertible(self):
-        portfolio = FilingNPORT.from_url("https://www.sec.gov/Archives/edgar/data/1100663/000175272422218333/0001752724-22-218333.txt").portfolio()
+        portfolio = FilingNPORT(url="https://www.sec.gov/Archives/edgar/data/1100663/000175272422218333/0001752724-22-218333.txt").portfolio()
         portfolio = [security for security in portfolio if security["debt_information"] is not None]
 
         info = portfolio[0]["debt_information"]
@@ -437,7 +434,7 @@ class TestFilingNPORT:
             assert isinstance(info["unrealized_appreciation"], float)
 
     def test_derivative_option(self):
-        portfolio = FilingNPORT.from_url("https://www.sec.gov/Archives/edgar/data/1432353/000175272422218231/0001752724-22-218231.txt").portfolio()
+        portfolio = FilingNPORT(url="https://www.sec.gov/Archives/edgar/data/1432353/000175272422218231/0001752724-22-218231.txt").portfolio()
         portfolio = [security for security in portfolio if security["derivative_information"] is not None and security["derivative_information"]["type"]["name"] == "Option"]
         info = portfolio[0]["derivative_information"]
         assert info["type"]["name"] == "Option"
@@ -494,7 +491,7 @@ class TestFilingNPORT:
         portfolio = [security for security in portfolio if security["derivative_information"] is not None and security["derivative_information"]["type"]["name"] == "Swap"]
 
     def test_derivative_swaption(self):
-        portfolio = FilingNPORT.from_url("https://www.sec.gov/Archives/edgar/data/1810747/000175272422261043/0001752724-22-261043.txt").portfolio()
+        portfolio = FilingNPORT(url="https://www.sec.gov/Archives/edgar/data/1810747/000175272422261043/0001752724-22-261043.txt").portfolio()
         portfolio = [security for security in portfolio if security["derivative_information"] is not None and security["derivative_information"]["type"]["name"] == "Swaption"]
 
     def test_derivative_warrant(self):

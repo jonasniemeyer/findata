@@ -125,12 +125,32 @@ class _SECFiling:
         is_html: bool
         is_xml: bool
         submission_type: str
-    
-    If only the url is available and not the file string, the classmethod from_url can be called to pull the data from the web first.
     """
-    
-    def __init__(self, file: str) -> None:
+
+    def __init__(
+        self,
+        **kwargs
+    ) -> None:
+        if "file" in kwargs:
+            file = kwargs["file"].replace("&nbsp;", " ")
+            url = None
+        elif "url" in kwargs:
+            url = kwargs["url"]
+        elif all(param in kwargs for param in ("identifier", "year", "quarter")):
+            raise NotImplementedError
+        else:
+            raise ValueError("SEC Filing classes have to be called with the file string, the file url or an identifier (CIK, ticker, name, etc.) and a year and quarter")
+
+        if url is not None:
+            file = requests.get(
+                url=url,
+                headers=HEADERS
+            ).text
+            if "<Message>The specified key does not exist.</Message>" in file:
+                raise DatasetError(f"No filing exists for url '{url}'")
+        
         self._file = file.replace("&nbsp;", " ")
+
         if "<SEC-HEADER>" in self.file:
             header_open, header_close = "<SEC-HEADER>", "</SEC-HEADER>"
         elif "<IMS-HEADER>" in self.file:
@@ -484,17 +504,6 @@ class _SECFiling:
     @property
     def submission_type(self) -> str:
         return self._submission_type
-    
-    @classmethod
-    def from_url(cls, url: str):
-        file = requests.get(
-            url=url,
-            headers=HEADERS
-        ).text
-        
-        if "<Message>The specified key does not exist.</Message>" in file:
-            raise DatasetError(f"No filing exists for url '{url}'")
-        return cls(file)
 
 
 class Filing3(_SECFiling):
@@ -503,8 +512,8 @@ class Filing3(_SECFiling):
         "I": "Indirect Ownership"
     }
 
-    def __init__(self, file):
-        super().__init__(file)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
         self._parse_data()
         assert len(self.reporting_owner) != 0
@@ -767,8 +776,8 @@ class Filing4(Filing3):
         "U": "Disposition pursuant to a tender of shares in a change of control transaction"
     }
 
-    def __init__(self, file: str):
-        super().__init__(file)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def _parse_non_derivative_securities(self) -> list:
         section = self._soup.find("nonderivativetable")
@@ -1039,8 +1048,8 @@ class Filing13D(Filing13G):
 
 
 class Filing13F(_SECFiling):
-    def __init__(self, file: str):
-        super().__init__(file)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         
         assert self.filer is not None
         self._parse_document()
@@ -1351,8 +1360,8 @@ class FilingNPORT(_SECFiling):
         "PA": "Principal amount"
     }
     
-    def __init__(self, file: str) -> None:
-        super().__init__(file)
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
         
         self._filer = self._filer[0]
         assert len(self.filer) != 0
