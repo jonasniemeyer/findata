@@ -712,8 +712,8 @@ class YahooReader:
             raise DatasetError(f"no fund holdings found for ticker {self.ticker}")
             
         data = {
-            "equity_share": data["stockPosition"],
-            "bond_share": data["bondPosition"],
+            "equity_share": round(data["stockPosition"], 4),
+            "bond_share": round(data["bondPosition"], 4),
             "holdings": [
                 {
                     "ticker": entry["symbol"],
