@@ -139,14 +139,16 @@ class CMEReader:
             data[int(date.timestamp())] = self._parse_table()
         else:
             data[date.date().isoformat()] = self._parse_table()
-        
+
+        self.driver.execute_script(f"window.scrollBy(0, 200)")
+        time.sleep(1)
         for index, option in enumerate(options):
             if index == 0:
                 continue
             date = pd.to_datetime(option.get("value"))
-            button_dates = self.driver.find_element(by=By.XPATH, value="/html/body/main/div/div[3]/div[2]/div/div/div/div/div/div[2]/div/div/div/div/div/div[4]/div/div/div/div/select")
+            button_dates = self.driver.find_element(by=By.XPATH, value="/html/body/main/div/div[3]/div[3]/div/div/div/div/div/div[2]/div/div/div/div/div/div[5]/div/div/div/div/select")
             button_dates.click()
-            button_refresh = self.driver.find_element(by=By.XPATH, value=f"/html/body/main/div/div[3]/div[2]/div/div/div/div/div/div[2]/div/div/div/div/div/div[4]/div/div/div/div/select/option[{index+1}]")
+            button_refresh = self.driver.find_element(by=By.XPATH, value=f"/html/body/main/div/div[3]/div[3]/div/div/div/div/div/div[2]/div/div/div/div/div/div[5]/div/div/div/div/select/option[{index+1}]")
             button_refresh.click()
             if self.timestamps:
                 data[int(date.timestamp())] = self._parse_table()
