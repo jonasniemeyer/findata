@@ -119,6 +119,7 @@ class CMEReader:
             time.sleep(1)
             button_expand.click()
 
+        self.driver.execute_script(f"window.scrollBy(0, 200)")
         deleted = False
         index = 0
         while not deleted and index < 20:
@@ -140,7 +141,6 @@ class CMEReader:
         else:
             data[date.date().isoformat()] = self._parse_table()
 
-        self.driver.execute_script(f"window.scrollBy(0, 200)")
         time.sleep(1)
         for index, option in enumerate(options):
             if index == 0:
