@@ -397,25 +397,27 @@ class NasdaqNews:
         
         articles = []
         for tag in tags:
-            header = tag.find("title").text
+            header = tag.find("title").text.strip()
+            description = tag.find("description").text.strip()
             datetime = pd.to_datetime(tag.find("pubdate").text)
             if timestamps:
                 datetime = int(datetime.timestamp())
             else:
                 datetime = datetime.isoformat()
-            source = tag.find("dc:creator").text
+            source = tag.find("dc:creator").text.strip()
             categories = tag.find("category").text
             categories = [category.strip() for category in categories.split(",")]
             related_tickers = tag.find("nasdaq:tickers")
             if related_tickers is None:
                 related_tickers = []
             else:
-                related_tickers = related_tickers.text
+                related_tickers = related_tickers.text.strip()
                 related_tickers = [ticker.strip() for ticker in related_tickers.split(",")]
-            url = tag.find("guid").text
+            url = tag.find("guid").text.strip()
             article = {
                 "header": header,
                 "datetime": datetime,
+                "description": description,
                 "source": source,
                 "categories": categories,
                 "related_tickers": related_tickers,
