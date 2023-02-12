@@ -192,3 +192,26 @@ class StratosphereReader:
             "low": round(data["targetLow"], 2)
         }
         return data
+
+    @staticmethod
+    def fund_letters(timestamps=False) -> list:
+        html = requests.get(
+            url="https://www.stratosphere.io/fund-letters/",
+            headers=HEADERS
+        ).text
+        json_str = html.split('type="application/json">')[1].split("</script></body></html>")[0]
+        data = json.loads(json_str)["props"]["pageProps"]["letters"]
+        data = [
+            {
+                "title": item["title"],
+                "date": (
+                    int(pd.to_datetime(f'{item["date"]} {item["year"]}').timestamp()) if timestamps
+                    else pd.to_datetime(f'{item["date"]} {item["year"]}').date().isoformat()
+                ),
+                "year": item["year"],
+                "quarter": item["quarter"],
+                "url": item["link"] 
+            }
+            for item in data
+        ]
+        return data
