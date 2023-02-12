@@ -128,3 +128,14 @@ class StratosphereReader:
             "quarterly": {var: values for var, values in data["quarterly"].items() if var in variables}
         }
         return data
+
+    def analyst_estimates(self, timestamps=False) -> dict:
+        if not hasattr(self, "_estimates_data"):
+            self._estimates_data = self._get_data("analysts/estimates")        
+            if "data" not in self._estimates_data["props"]["pageProps"].keys():
+                return {}
+        data = self._parse_fundamental_data(
+            self._estimates_data["props"]["pageProps"]["data"]["estimates"],
+            timestamps
+        )
+        return data
