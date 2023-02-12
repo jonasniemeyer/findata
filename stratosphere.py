@@ -104,3 +104,27 @@ class StratosphereReader:
             self._ratios_data = self._get_data("ratios/valuation")
         data = self._parse_fundamental_data(self._ratios_data["props"]["pageProps"]["financials"], timestamps)
         return data
+
+    def segment_information(self, timestamps=False) -> dict:
+        if not hasattr(self, "_segment_kpi_data"):
+            self._segment_kpi_data = self._get_data("kpis")
+        dct = self._segment_kpi_data["props"]["pageProps"]["financials"]
+        variables = {item["label"] for item in dct["labels"] if not item["isSegment"]}
+        data = self._parse_fundamental_data(dct["financials"], timestamps)
+        data = {
+            "annual": {var: values for var, values in data["annual"].items() if var in variables},
+            "quarterly": {var: values for var, values in data["quarterly"].items() if var in variables}
+        }
+        return data
+
+    def kpi_information(self, timestamps=False) -> dict:
+        if not hasattr(self, "_segment_kpi_data"):
+            self._segment_kpi_data = self._get_data("kpis")
+        dct = self._segment_kpi_data["props"]["pageProps"]["financials"]
+        variables = {item["label"] for item in dct["labels"] if not item["isSegment"]}
+        data = self._parse_fundamental_data(dct["financials"], timestamps)
+        data = {
+            "annual": {var: values for var, values in data["annual"].items() if var in variables},
+            "quarterly": {var: values for var, values in data["quarterly"].items() if var in variables}
+        }
+        return data
