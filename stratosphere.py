@@ -139,3 +139,56 @@ class StratosphereReader:
             timestamps
         )
         return data
+
+    def prices(self, timestamps=False) -> dict:
+        if not hasattr(self, "_price_target_data"):
+            self._price_target_data = self._get_data("analysts/price-targets")
+
+        if "prices" not in self._price_target_data["props"]["pageProps"].keys():
+            return {}
+
+        data = self._price_target_data["props"]["pageProps"]["prices"]
+        data = {
+            (int(pd.to_datetime(item["date"]).timestamp()) if timestamps else item["date"]): item["close"]
+            for item in data
+        }
+        return data
+    
+    def price_targets(self, timestamps=False) -> list:
+        if not hasattr(self, "_price_target_data"):
+            self._price_target_data = self._get_data("analysts/price-targets")
+        
+        if "priceTargets" not in self._price_target_data["props"]["pageProps"].keys():
+            return {}
+
+        data = self._price_target_data["props"]["pageProps"]["priceTargets"]
+        data = [
+             {
+                 "price_target": item["priceTarget"],
+                 "date": int(pd.to_datetime(item["publishedDate"]).timestamp()) if timestamps else item["publishedDate"],
+                 "analyst_company": item["analystCompany"],
+                 "analyst_name": item["analystName"],
+                 "news_title": item["newsTitle"],
+                 "news_source": item["newsPublisher"],
+                 "news_url": item["newsURL"],
+                 "price_when_rated": item["priceWhenPosted"]
+             }
+            for item in data
+        ]
+        return data
+
+    def price_target_consensus(self) -> dict:
+        if not hasattr(self, "_price_target_data"):
+            self._price_target_data = self._get_data("analysts/price-targets")
+        
+        if "priceTargetConsensus" not in self._price_target_data["props"]["pageProps"].keys():
+            return {}
+
+        data = self._price_target_data["props"]["pageProps"]["priceTargetConsensus"]
+        data = {
+            "average": round(data["targetConsensus"], 2),
+            "median": round(data["targetMedian"], 2),
+            "high": round(data["targetHigh"], 2),
+            "low": round(data["targetLow"], 2)
+        }
+        return data
