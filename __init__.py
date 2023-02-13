@@ -26,6 +26,7 @@ from .sec import (
     FilingNPORT,
     SECFundamentals
 )
+from .stratosphere import StratosphereReader
 from .tipranks import TipranksAnalystReader, TipranksStockReader
 from .yahoo import YahooReader
 from .functions import finra_margin_debt, shiller_data, sp_index_data
@@ -59,6 +60,7 @@ __all__ = [
     "SECFundamentals",
     "shiller_data",
     "sp_index_data",
+    "StratosphereReader",
     "TickerError",
     "TipranksAnalystReader",
     "TipranksStockReader",
