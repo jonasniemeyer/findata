@@ -31,6 +31,51 @@ def sec_mutualfunds() -> list:
     ]
     return items
 
+def sec_filings(
+    cik=None,
+    form_types=None,
+    start="1900-01-01",
+    end=pd.to_datetime("today").date().isoformat()
+) -> list:
+    base_url = "https://efts.sec.gov/LATEST/search-index"
+    params = {
+        'startdt': start,
+        'enddt': end,
+        'forms': form_types
+    }
+
+    # If the given cik string is a valid mutualfund-series or -class cik,
+    # the POST request has to change the entityName parameter to q to fetch filings
+    if isinstance(cik, str) and re.match("(S|C)[0-9]{9}", cik):
+        params["q"] = cik
+    else:
+        if isinstance(cik, int):
+            params["entityName"] = f"{cik:010}"
+        else:
+            params["entityName"] = cik
+
+    files = requests.post(base_url, json=params, headers=HEADERS).json()["hits"]["hits"]
+    filings = []
+    for file in files:
+        info = file["_source"]
+        accession_number = info["adsh"]
+        filing_url = f"https://www.sec.gov/Archives/edgar/data/{cik}/{accession_number.replace('-', '')}/{accession_number}-index.htm"
+        document_url = filing_url.replace("-index.htm", ".txt")
+        filings.append(
+            {
+                "type": info["file_type"],
+                "filing_url": filing_url,
+                "document_url": document_url,
+                "date_filed": info["file_date"],
+                "date_of_period": info["period_ending"],
+                "accession_number": accession_number,
+                "file_number": info["file_num"][0] if len(info["file_num"]) != 0 else None,
+                "film_number": int(info["film_num"][0]) if len(info["film_num"]) != 0 else None
+            }
+        )
+
+    return filings
+
 def latest_sec_filings(start=pd.to_datetime("today").isoformat(), timestamps=False) -> list:
     filings = []
     start_reached = False
