@@ -5,8 +5,6 @@ from finance_data.utils import HEADERS
 
 NoneType = type(None)
 
-NoneType = type(None)
-
 class StratosphereReader:
     _base_url = "https://www.stratosphere.io/company/{}/{}"
     
