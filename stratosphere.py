@@ -1,8 +1,9 @@
 import requests
 import json
-from bs4 import BeautifulSoup
+import pandas as pd
 from finance_data.utils import HEADERS
-from typing import Union
+
+NoneType = type(None)
 
 NoneType = type(None)
 
@@ -20,7 +21,7 @@ class StratosphereReader:
     def ticker(self) -> str:
         return self._ticker
 
-    def profile(self) -> Union[dict, None]:
+    def profile(self) -> dict:
         if self._profile is None:
             self.income_statement()
         return self._profile
@@ -153,7 +154,7 @@ class StratosphereReader:
             for item in data
         }
         return data
-    
+
     def price_targets(self, timestamps=False) -> list:
         if not hasattr(self, "_price_target_data"):
             self._price_target_data = self._get_data("analysts/price-targets")
@@ -214,4 +215,43 @@ class StratosphereReader:
             }
             for item in data
         ]
+        return data
+
+    @staticmethod
+    def investors() -> list:
+        html = requests.get(
+            url="https://www.stratosphere.io/super-investors/",
+            headers=HEADERS
+        ).text
+        json_str = html.split('type="application/json">')[1].split("</script></body></html>")[0]
+        investors = json.loads(json_str)["props"]["pageProps"]["superinvestors"]
+        data = []
+        for item in investors:
+            portfolio = [
+                {
+                    "ticker": position["ticker"],
+                    "cusip": position["cusip"],
+                    "type": position["putCall"],
+                    "weight": round(position["weight"]/100, 6)
+                }
+                for position in item["positions"]
+            ]
+            statistics = {
+                "market_value": item["stats"]["marketValue"],
+                "no_holdings": item["stats"]["portfolioSize"],
+                "purchased": item["stats"]["securitiesAdded"],
+                "sold": item["stats"]["securitiesRemoved"],
+                "average_holding_period": item["stats"]["averageHoldingPeriod"],
+                "concentration": round(item["stats"]["concentration"]/100, 6),
+                "turnover": item["stats"]["turnover"]
+            }
+            data.append(
+                {
+                    "name": item["name"],
+                    "manager": item["owner"],
+                    "cik": int(item["cik"]),
+                    "statistics": statistics,
+                    "portfolio": portfolio,
+                }
+            )
         return data
