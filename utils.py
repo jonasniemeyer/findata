@@ -19,8 +19,10 @@ HEADERS = {
         "(KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36"
     )
 }
-TIPRANKS_HEADERS = deepcopy(HEADERS)
+HEADERS_FAKE = deepcopy(HEADERS)
+HEADERS_FAKE["User-Agent"] = "JohnDoe@gmail.com"
 
+TIPRANKS_HEADERS = deepcopy(HEADERS)
 if "private.cfg" in os.listdir(Path(__file__).parent):
     cfg = configparser.ConfigParser()
     cfg.read(rf"{Path(__file__).parent}\private.cfg")
