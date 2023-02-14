@@ -2,7 +2,11 @@ import requests
 import re
 import datetime as dt
 import pandas as pd
-from finance_data.utils import HEADERS, DatasetError
+from finance_data.utils import (
+    HEADERS,
+    HEADERS_FAKE,
+    DatasetError
+)
 from typing import Union
 from bs4 import BeautifulSoup
 
@@ -30,51 +34,6 @@ def sec_mutualfunds() -> list:
         for item in items
     ]
     return items
-
-def sec_filings(
-    cik=None,
-    form_types=None,
-    start="1900-01-01",
-    end=pd.to_datetime("today").date().isoformat()
-) -> list:
-    base_url = "https://efts.sec.gov/LATEST/search-index"
-    params = {
-        'startdt': start,
-        'enddt': end,
-        'forms': form_types
-    }
-
-    # If the given cik string is a valid mutualfund-series or -class cik,
-    # the POST request has to change the entityName parameter to q to fetch filings
-    if isinstance(cik, str) and re.match("(S|C)[0-9]{9}", cik):
-        params["q"] = cik
-    else:
-        if isinstance(cik, int):
-            params["entityName"] = f"{cik:010}"
-        else:
-            params["entityName"] = cik
-
-    files = requests.post(base_url, json=params, headers=HEADERS).json()["hits"]["hits"]
-    filings = []
-    for file in files:
-        info = file["_source"]
-        accession_number = info["adsh"]
-        filing_url = f"https://www.sec.gov/Archives/edgar/data/{cik}/{accession_number.replace('-', '')}/{accession_number}-index.htm"
-        document_url = filing_url.replace("-index.htm", ".txt")
-        filings.append(
-            {
-                "type": info["file_type"],
-                "filing_url": filing_url,
-                "document_url": document_url,
-                "date_filed": info["file_date"],
-                "date_of_period": info["period_ending"],
-                "accession_number": accession_number,
-                "file_number": info["file_num"][0] if len(info["file_num"]) != 0 else None,
-                "film_number": int(info["film_num"][0]) if len(info["film_num"]) != 0 else None
-            }
-        )
-
-    return filings
 
 def latest_sec_filings(start=pd.to_datetime("today").isoformat(), timestamps=False) -> list:
     filings = []
@@ -139,7 +98,53 @@ def latest_sec_filings(start=pd.to_datetime("today").isoformat(), timestamps=Fal
                 }
             )
         page_counter += 100
+    return filings
 
+def sec_filings(
+    cik=None,
+    form_types=None,
+    start="1900-01-01",
+    end=pd.to_datetime("today").date().isoformat()
+) -> list:
+    base_url = "https://efts.sec.gov/LATEST/search-index"
+    params = {
+        "startdt": start,
+        "enddt": end
+    }
+    if isinstance(form_types, list):
+        params["forms"] = form_types
+    elif isinstance(form_types, str) and form_types not in ("all", "any"):
+        params["forms"] = [form_types]
+
+    # If the given cik string is a valid mutualfund-series or -class cik,
+    # the POST request has to change the entityName parameter to q to fetch filings
+    if isinstance(cik, str) and re.match("(S|C)[0-9]{9}", cik):
+        params["q"] = cik
+    else:
+        if isinstance(cik, int):
+            params["entityName"] = f"{cik:010}"
+        else:
+            params["entityName"] = cik
+
+    files = requests.post(base_url, json=params, headers=HEADERS_FAKE).json()["hits"]["hits"]
+    filings = []
+    for file in files:
+        info = file["_source"]
+        accession_number = info["adsh"]
+        filing_url = f"https://www.sec.gov/Archives/edgar/data/{cik}/{accession_number.replace('-', '')}/{accession_number}-index.htm"
+        document_url = filing_url.replace("-index.htm", ".txt")
+        filings.append(
+            {
+                "type": info["file_type"],
+                "filing_url": filing_url,
+                "document_url": document_url,
+                "date_filed": info["file_date"],
+                "date_of_period": info["period_ending"],
+                "accession_number": accession_number,
+                "file_number": info["file_num"][0] if len(info["file_num"]) != 0 else None,
+                "film_number": int(info["film_num"][0]) if len(info["film_num"]) != 0 else None
+            }
+        )
     return filings
 
 
@@ -174,25 +179,29 @@ class _SECFiling:
 
     def __init__(
         self,
+        form_type="all",
         **kwargs
     ) -> None:
         if "file" in kwargs:
-            file = kwargs["file"].replace("&nbsp;", " ")
-            url = None
+            file = kwargs["file"]
         elif "url" in kwargs:
-            url = kwargs["url"]
-        elif all(param in kwargs for param in ("identifier", "year", "quarter")):
-            raise NotImplementedError
+            file = self._from_url(kwargs["url"])
+        elif all(param in kwargs for param in ("cik", "date")):
+            filings = sec_filings(cik=kwargs["cik"], start=kwargs["date"], end=kwargs["date"], form_types=form_type)
+            if len(filings) == 0:
+                raise ValueError(f'No filing found for cik "{kwargs["cik"]}" and date "{kwargs["date"]}"')
+            elif len(filings) > 1:
+                filings = "\n".join([filing["document_url"]  for filing in filings])
+                raise ValueError(
+                    f"""
+                    File identification is ambigous for cik "{kwargs["cik"]}" and date "{kwargs["date"]}"
+                    Files: {filings}
+                    """
+                )
+            else:
+                file = self._from_url(filings[0]["document_url"])
         else:
-            raise ValueError("SEC Filing classes have to be called with the file string, the file url or an identifier (CIK, ticker, name, etc.) and a year and quarter")
-
-        if url is not None:
-            file = requests.get(
-                url=url,
-                headers=HEADERS
-            ).text
-            if "<Message>The specified key does not exist.</Message>" in file:
-                raise DatasetError(f"No filing exists for url '{url}'")
+            raise ValueError("SEC Filing classes have to be called with the file string, the file url or a cik and a filing data")
         
         self._file = file.replace("&nbsp;", " ")
 
@@ -550,6 +559,17 @@ class _SECFiling:
     def submission_type(self) -> str:
         return self._submission_type
 
+    @staticmethod
+    def _from_url(url: str) -> str:
+        file = requests.get(
+            url=url,
+            headers=HEADERS
+        ).text
+        if "<Message>The specified key does not exist.</Message>" in file:
+            raise DatasetError(f'No filing exists for url "{url}"')
+
+        return file
+
 
 class Filing3(_SECFiling):
     _ownership_codes = {
@@ -557,8 +577,8 @@ class Filing3(_SECFiling):
         "I": "Indirect Ownership"
     }
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, filing_type="3", **kwargs):
+        super().__init__(filing_type, **kwargs)
 
         self._parse_data()
         assert len(self.reporting_owner) != 0
@@ -1093,8 +1113,8 @@ class Filing13D(Filing13G):
 
 
 class Filing13F(_SECFiling):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, filing_type="13F-HR", **kwargs):
+        super().__init__(filing_type, **kwargs)
         
         assert self.filer is not None
         self._parse_document()
@@ -1405,8 +1425,8 @@ class FilingNPORT(_SECFiling):
         "PA": "Principal amount"
     }
     
-    def __init__(self, **kwargs) -> None:
-        super().__init__(**kwargs)
+    def __init__(self, filing_type="NPORT-P", **kwargs) -> None:
+        super().__init__(filing_type, **kwargs)
         
         self._filer = self._filer[0]
         assert len(self.filer) != 0
