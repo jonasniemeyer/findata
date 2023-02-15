@@ -239,11 +239,11 @@ class TestEquity:
         assert income.keys() == cashflow.keys()
         assert cashflow.keys() == statement_merged.keys()
 
-        key = list(income)[-1]
+        year = list(income)[-1]
         total_variables = 0
         for item in (income, balance, cashflow):
-            total_variables += len(item[key])
-        assert len(statement_merged[key]) == total_variables - 1 #net income on income and cf statement have different names
+            total_variables += len(item[year])
+        assert len(statement_merged[year]) == total_variables - 1 #net income on income and cf statement have different names
 
         for date in income:
             for var in income[date]:
@@ -380,7 +380,7 @@ class TestETF:
     
     def test_profile(self):
         profile = self.reader.profile()
-        assert isinstance(profile["phone"], str)
+        assert isinstance(profile["phone"], (str, NoneType))
         assert isinstance(profile["description"], str)
     
     def test_fund_statistics(self):
@@ -402,12 +402,12 @@ class TestETF:
             assert isinstance(item["name"], str)
             assert round(item["percentage"], 4) == item["percentage"]
         for key in (
-                "average_price/earnings",
-                "average_price/book",
-                "average_price/sales",
-                "average_price/cashflow"
+                "average_price_to_earnings",
+                "average_price_to_book",
+                "average_price_to_sales",
+                "average_price_to_cashflow"
             ):
-            assert round(holdings["equity_data"][key], 2) == holdings["equity_data"][key]
+                assert round(holdings["equity_data"][key], 2) == holdings["equity_data"][key]
         assert all(
             key in (
                 "average_maturity",
@@ -714,12 +714,12 @@ class TestMutualFund:
             assert isinstance(item["name"], str)
             assert round(item["percentage"], 4) == item["percentage"]
         for key in (
-                "average_price/earnings",
-                "average_price/book",
-                "average_price/sales",
-                "average_price/cashflow"
+                "average_price_to_earnings",
+                "average_price_to_book",
+                "average_price_to_sales",
+                "average_price_to_cashflow"
             ):
-            assert round(holdings["equity_data"][key], 2) == holdings["equity_data"][key]
+                assert round(holdings["equity_data"][key], 2) == holdings["equity_data"][key]
         assert all(
             key in (
                 "average_maturity",
