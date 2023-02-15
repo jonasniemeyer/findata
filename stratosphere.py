@@ -104,6 +104,25 @@ class StratosphereReader:
         data = self._parse_fundamental_data(self._ratios_data["props"]["pageProps"]["financials"], timestamps)
         return data
 
+    def financial_statement(self, timestamps=False, merged=False):
+        income = self.income_statement(timestamps)
+        balance = self.balance_sheet(timestamps)
+        cashflow = self.cashflow_statement(timestamps)
+        ratios = self.financial_ratios(timestamps)
+
+        if merged:
+            return {
+                "annual": {**income["annual"], **balance["annual"], **cashflow["annual"], **ratios["annual"]},
+                "quarterly": {**income["quarterly"], **balance["quarterly"], **cashflow["quarterly"], **ratios["quarterly"]}
+            }
+        else:
+            return {
+                "income_statement": income,
+                "balance_sheet": balance,
+                "cashflow_cashflow": cashflow,
+                "financial_ratios": ratios
+            }
+
     def segment_information(self, timestamps=False) -> dict:
         if not hasattr(self, "_segment_kpi_data"):
             self._segment_kpi_data = self._get_data("kpis")
