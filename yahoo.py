@@ -723,10 +723,10 @@ class YahooReader:
                 for entry in data["holdings"]
             ],
             "equity_data": {
-                "average_price/earnings": data["equityHoldings"]["priceToEarnings"],
-                "average_price/book": data["equityHoldings"]["priceToBook"],
-                "average_price/sales": data["equityHoldings"]["priceToSales"],
-                "average_price/cashflow": data["equityHoldings"]["priceToCashflow"]
+                "average_price_to_earnings": data["equityHoldings"]["priceToEarnings"],
+                "average_price_to_book": data["equityHoldings"]["priceToBook"],
+                "average_price_to_sales": data["equityHoldings"]["priceToSales"],
+                "average_price_to_cashflow": data["equityHoldings"]["priceToCashflow"]
             },
             "bond_data": {
                 "average_maturity": data["bondHoldings"]["maturity"] if "maturity" in data["bondHoldings"] else None,
@@ -836,7 +836,12 @@ class YahooReader:
         cashflow = self.cashflow_statement(quarterly=quarterly, timestamps=timestamps)
 
         if merged:
-            return {**income, **balance, **cashflow}
+            for key in income:
+                if key in balance:
+                    income[key].update(balance[key])
+                if key in cashflow:
+                    income[key].update(cashflow[key])
+            return income
         else:
             return {
                 "income_statement": income,
