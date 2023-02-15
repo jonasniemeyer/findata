@@ -831,22 +831,17 @@ class YahooReader:
             default : False
         
         """
-        income_data = self.income_statement(quarterly=quarterly, timestamps=timestamps)
-        balance_sheet_data = self.balance_sheet(quarterly=quarterly, timestamps=timestamps)
-        cashflow_data = self.cashflow_statement(quarterly=quarterly, timestamps=timestamps)
+        income = self.income_statement(quarterly=quarterly, timestamps=timestamps)
+        balance = self.balance_sheet(quarterly=quarterly, timestamps=timestamps)
+        cashflow = self.cashflow_statement(quarterly=quarterly, timestamps=timestamps)
 
         if merged:
-            for key in income_data:
-                if key in balance_sheet_data:
-                    income_data[key].update(balance_sheet_data[key])
-                if key in cashflow_data:
-                    income_data[key].update(cashflow_data[key])
-            return income_data
+            return {**income, **balance, **cashflow}
         else:
             return {
-                "income_statement": income_data,
-                "balance_sheet": balance_sheet_data,
-                "cashflow_statement": cashflow_data
+                "income_statement": income,
+                "balance_sheet": balance,
+                "cashflow_statement": cashflow
             }
         
     def income_statement(
