@@ -221,13 +221,13 @@ class StratosphereReader:
         data = json.loads(json_str)["props"]["pageProps"]["letters"]
         data = [
             {
-                "title": item["title"],
+                "company": item["title"],
                 "date": (
                     int(pd.to_datetime(f'{item["date"]} {item["year"]}').timestamp()) if timestamps
                     else pd.to_datetime(f'{item["date"]} {item["year"]}').date().isoformat()
                 ),
-                "year": item["year"],
-                "quarter": item["quarter"],
+                "year": int(item["year"]),
+                "quarter": int(item["quarter"].replace("Q", "")),
                 "url": item["link"] 
             }
             for item in data
@@ -259,8 +259,8 @@ class StratosphereReader:
                 "purchased": item["stats"]["securitiesAdded"],
                 "sold": item["stats"]["securitiesRemoved"],
                 "average_holding_period": item["stats"]["averageHoldingPeriod"],
-                "concentration": round(item["stats"]["concentration"]/100, 6),
-                "turnover": item["stats"]["turnover"]
+                "concentration": round(item["stats"]["concentration"]/100, 4),
+                "turnover": round(item["stats"]["turnover"], 4)
             }
             data.append(
                 {
