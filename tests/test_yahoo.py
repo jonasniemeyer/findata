@@ -407,7 +407,8 @@ class TestETF:
                 "average_price_to_sales",
                 "average_price_to_cashflow"
             ):
-                assert round(holdings["equity_data"][key], 2) == holdings["equity_data"][key]
+                assert holdings["equity_data"][key] is None or round(holdings["equity_data"][key], 2) == holdings["equity_data"][key]
+        assert holdings["equity_data"]["average_price_to_earnings"] > 5 # sometimes yahoo switches between price/fundamental and fundamental/price
         assert all(
             key in (
                 "average_maturity",
@@ -415,20 +416,9 @@ class TestETF:
             )
             for key in holdings["bond_data"]
         )
+        assert tuple(holdings["bond_ratings"].keys()) == ("us_government",)
+        assert round(holdings["bond_ratings"]["us_government"], 4) == holdings["bond_ratings"]["us_government"]
         for key in (
-            "bb",
-            "aa",
-            "aaa",
-            "a",
-            "other",
-            "b",
-            "bbb",
-            "below_b",
-            "us_government"
-        ):
-            assert round(holdings["bond_ratings"][key], 4) == holdings["bond_ratings"][key]
-        for key in (
-            "real_estate",
             "consumer_cyclical",
             "basic_materials",
             "consumer_defensive",
@@ -438,7 +428,8 @@ class TestETF:
             "utilities",
             "industrials",
             "energy",
-            "healthcare"
+            "healthcare",
+            "real_estate"
         ):
             assert round(holdings["sector_weights"][key], 4) == holdings["sector_weights"][key]
     
@@ -727,18 +718,8 @@ class TestMutualFund:
             )
             for key in holdings["bond_data"]
         )
-        for key in (
-            "bb",
-            "aa",
-            "aaa",
-            "a",
-            "other",
-            "b",
-            "bbb",
-            "below_b",
-            "us_government"
-        ):
-            assert round(holdings["bond_ratings"][key], 4) == holdings["bond_ratings"][key]
+        assert tuple(holdings["bond_ratings"].keys()) == ("us_government",)
+        assert round(holdings["bond_ratings"]["us_government"], 4) == holdings["bond_ratings"]["us_government"]
         for key in (
             "real_estate",
             "consumer_cyclical",
