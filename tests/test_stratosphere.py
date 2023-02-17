@@ -56,6 +56,58 @@ class TestUSEquity:
         assert profile["currency"]["exchange_rate"] == 1
         assert isinstance(profile["market_cap"], int)
 
+    def test_segment_information(self):
+        segment_data = self.reader.segment_information()
+        for freq in ("annual", "quarterly"):
+            for segment in segment_data[freq]:
+                assert segment in (
+                    "Mac Revenue (M)",
+                    "Services Gross Profit (M)",
+                    "Products Gross Profit (M)",
+                    "Wearables, Home and Accessories Revenue (M)",
+                    "Products Revenue (M)",
+                    "iPhone Revenue (M)",
+                    "Services Revenue (M)",
+                    "iPad Revenue (M)"
+                )
+                for date, value in segment_data[freq][segment].items():
+                    assert dt.date.fromisoformat(date)
+                    assert isinstance(value, (int, float, NoneType))
+
+        segment_data = self.reader.kpi_information(timestamps=True)
+        for freq in ("annual", "quarterly"):
+            for segment in segment_data[freq]:
+                for date, value in segment_data[freq][segment].items():
+                    assert isinstance(date, int)
+
+    def test_kpi_information(self):
+        kpi_data = self.reader.kpi_information()
+        for freq in ("annual", "quarterly"):
+            assert tuple(kpi_data[freq].keys()) == ("iPhone Installed User Base (M)",)
+            for date, value in kpi_data[freq]["iPhone Installed User Base (M)"].items():
+                assert dt.date.fromisoformat(date)
+                assert isinstance(value, (int, float, NoneType))
+
+        kpi_data = self.reader.kpi_information(timestamps=True)
+        for freq in ("annual", "quarterly"):
+            for date, value in kpi_data[freq]["iPhone Installed User Base (M)"].items():
+                assert isinstance(date, int)
+
+    def test_analyst_estimates(self):
+        estimates = self.reader.analyst_estimates()
+        for freq in ("annual", "quarterly"):
+            for var in estimates[freq]:
+                assert isinstance(var, str)
+                for date, value in estimates[freq][var].items():
+                    assert dt.date.fromisoformat(date)
+                    assert isinstance(value, (int, float))
+
+        estimates = self.reader.analyst_estimates(timestamps=True)
+        for freq in ("annual", "quarterly"):
+            for var in estimates[freq]:
+                for date, value in estimates[freq][var].items():
+                    assert isinstance(date, int)
+
     def test_prices(self):
         prices = self.reader.prices()
         for date, price in prices.items():
