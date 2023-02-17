@@ -723,10 +723,22 @@ class YahooReader:
                 for entry in data["holdings"]
             ],
             "equity_data": {
-                "average_price_to_earnings": data["equityHoldings"]["priceToEarnings"],
-                "average_price_to_book": data["equityHoldings"]["priceToBook"],
-                "average_price_to_sales": data["equityHoldings"]["priceToSales"],
-                "average_price_to_cashflow": data["equityHoldings"]["priceToCashflow"]
+                "average_price_to_earnings": (
+                    round(1/data["equityHoldings"]["priceToEarnings"], 2) if data["equityHoldings"]["priceToEarnings"] != 0
+                    else None
+                ),
+                "average_price_to_book": (
+                    round(1/data["equityHoldings"]["priceToBook"], 2) if data["equityHoldings"]["priceToBook"] != 0
+                    else None
+                ),
+                "average_price_to_sales": (
+                    round(1/data["equityHoldings"]["priceToSales"], 2) if data["equityHoldings"]["priceToSales"] != 0
+                    else None
+                ),
+                "average_price_to_cashflow": (
+                    round(1/data["equityHoldings"]["priceToCashflow"], 2) if data["equityHoldings"]["priceToCashflow"] != 0
+                    else None
+                )
             },
             "bond_data": {
                 "average_maturity": data["bondHoldings"]["maturity"] if "maturity" in data["bondHoldings"] else None,
@@ -739,7 +751,8 @@ class YahooReader:
                 key: round(entry[key], 4) for entry in data["sectorWeightings"] for key in entry
             }
         }
-        data["sector_weights"]["real_estate"] = round(data["sector_weights"].pop("realestate"), 4)
+        if "realestate" in data["sector_weights"]:
+            data["sector_weights"]["real_estate"] = round(data["sector_weights"].pop("realestate"), 4)
 
         return data
     
