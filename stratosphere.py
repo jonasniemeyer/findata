@@ -129,7 +129,7 @@ class StratosphereReader:
         if not hasattr(self, "_segment_kpi_data"):
             self._segment_kpi_data = self._get_data("kpis")
         dct = self._segment_kpi_data["props"]["pageProps"]["financials"]
-        variables = {item["label"] for item in dct["labels"] if not item["isSegment"]}
+        variables = {item["label"] for item in dct["labels"] if item["isSegment"]}
         data = self._parse_fundamental_data(dct["financials"], timestamps)
         data = {
             "annual": {var: values for var, values in data["annual"].items() if var in variables},
