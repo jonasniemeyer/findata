@@ -181,16 +181,16 @@ class StratosphereReader:
 
         data = self._price_target_data["props"]["pageProps"]["priceTargets"]
         data = [
-             {
-                 "price_target": item["priceTarget"],
-                 "date": int(pd.to_datetime(item["publishedDate"]).timestamp()) if timestamps else item["publishedDate"],
-                 "analyst_company": item["analystCompany"],
-                 "analyst_name": item["analystName"],
-                 "news_title": item["newsTitle"],
-                 "news_source": item["newsPublisher"],
-                 "news_url": item["newsURL"],
-                 "price_when_rated": item["priceWhenPosted"]
-             }
+            {
+                "price_target": item["priceTarget"],
+                "datetime": int(pd.to_datetime(item["publishedDate"]).timestamp()) if timestamps else item["publishedDate"][:-1],
+                "analyst_company": item["analystCompany"],
+                "analyst_name": item["analystName"],
+                "news_title": item["newsTitle"],
+                "news_source": item["newsPublisher"],
+                "news_url": item["newsURL"],
+                "price_when_rated": item["priceWhenPosted"]
+            }
             for item in data
         ]
         return data
