@@ -61,6 +61,8 @@ class StratosphereReader:
                 date = item["date"]
                 if date == "TTM":
                     continue
+                if timestamps:
+                    date = int(pd.to_datetime(date).timestamp())
                 for var in item.keys():
                     if var in (
                         "date",
