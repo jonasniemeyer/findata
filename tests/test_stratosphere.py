@@ -56,6 +56,98 @@ class TestUSEquity:
         assert profile["currency"]["exchange_rate"] == 1
         assert isinstance(profile["market_cap"], int)
 
+    def test_income_statement(self):
+        income_data = self.reader.income_statement()
+        for freq in ("annual", "quarterly"):
+            for segment in income_data[freq]:
+                assert isinstance(segment, str)
+                for date, value in income_data[freq][segment].items():
+                    assert dt.date.fromisoformat(date)
+                    assert isinstance(value, (int, float, NoneType))
+
+        income_data = self.reader.income_statement(timestamps=True)
+        for freq in ("annual", "quarterly"):
+            for segment in income_data[freq]:
+                for date, value in income_data[freq][segment].items():
+                    assert isinstance(date, int)
+
+    def test_balance_sheet(self):
+        balance_data = self.reader.balance_sheet()
+        for freq in ("annual", "quarterly"):
+            for segment in balance_data[freq]:
+                assert isinstance(segment, str)
+                for date, value in balance_data[freq][segment].items():
+                    assert dt.date.fromisoformat(date)
+                    assert isinstance(value, (int, float, NoneType))
+
+        balance_data = self.reader.income_statement(timestamps=True)
+        for freq in ("annual", "quarterly"):
+            for segment in balance_data[freq]:
+                for date, value in balance_data[freq][segment].items():
+                    assert isinstance(date, int)
+
+    def test_cashflow_statement(self):
+        cashflow_data = self.reader.cashflow_statement()
+        for freq in ("annual", "quarterly"):
+            for segment in cashflow_data[freq]:
+                assert isinstance(segment, str)
+                for date, value in cashflow_data[freq][segment].items():
+                    assert dt.date.fromisoformat(date)
+                    assert isinstance(value, (int, float, NoneType))
+
+        cashflow_data = self.reader.income_statement(timestamps=True)
+        for freq in ("annual", "quarterly"):
+            for segment in cashflow_data[freq]:
+                for date, value in cashflow_data[freq][segment].items():
+                    assert isinstance(date, int)
+
+    def test_financial_ratios(self):
+        ratios_data = self.reader.financial_ratios()
+        for freq in ("annual", "quarterly"):
+            for segment in ratios_data[freq]:
+                assert isinstance(segment, str)
+                for date, value in ratios_data[freq][segment].items():
+                    assert dt.date.fromisoformat(date)
+                    assert isinstance(value, (int, float, NoneType))
+
+        ratios_data = self.reader.income_statement(timestamps=True)
+        for freq in ("annual", "quarterly"):
+            for segment in ratios_data[freq]:
+                for date, value in ratios_data[freq][segment].items():
+                    assert isinstance(date, int)
+
+    def test_financial_statement(self):
+        income_data = self.reader.income_statement()
+        balance_data = self.reader.balance_sheet()
+        cashflow_data = self.reader.cashflow_statement()
+        ratios_data = self.reader.financial_ratios()
+
+        financial_data = self.reader.financial_statement()
+        for key, data in {
+            "income_statement": income_data,
+            "balance_sheet": balance_data,
+            "cashflow_cashflow": cashflow_data,
+            "financial_ratios": ratios_data
+        }.items():
+            assert financial_data[key] == data
+
+        financial_data = self.reader.financial_statement(merged=True)
+        for freq in financial_data:
+            assert freq in ("annual", "quarterly")
+
+        vars = set(
+            var for item in (
+                income_data["annual"],
+                balance_data["annual"],
+                cashflow_data["annual"],
+                ratios_data["annual"]
+            )
+            for var in item
+        )
+        for freq in ("annual", "quarterly"):
+            for var in financial_data[freq]:
+                assert var in vars
+
     def test_segment_information(self):
         segment_data = self.reader.segment_information()
         for freq in ("annual", "quarterly"):
