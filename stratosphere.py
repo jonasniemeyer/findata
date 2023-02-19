@@ -128,6 +128,10 @@ class StratosphereReader:
     def segment_information(self, timestamps=False) -> dict:
         if not hasattr(self, "_segment_kpi_data"):
             self._segment_kpi_data = self._get_data("kpis")
+
+        if "financials" not in self._segment_kpi_data["props"]["pageProps"]:
+            return {}
+
         dct = self._segment_kpi_data["props"]["pageProps"]["financials"]
         variables = {item["label"] for item in dct["labels"] if item["isSegment"]}
         data = self._parse_fundamental_data(dct["financials"], timestamps)
@@ -140,6 +144,10 @@ class StratosphereReader:
     def kpi_information(self, timestamps=False) -> dict:
         if not hasattr(self, "_segment_kpi_data"):
             self._segment_kpi_data = self._get_data("kpis")
+
+        if "financials" not in self._segment_kpi_data["props"]["pageProps"]:
+            return {}
+
         dct = self._segment_kpi_data["props"]["pageProps"]["financials"]
         variables = {item["label"] for item in dct["labels"] if not item["isSegment"]}
         data = self._parse_fundamental_data(dct["financials"], timestamps)
@@ -151,9 +159,11 @@ class StratosphereReader:
 
     def analyst_estimates(self, timestamps=False) -> dict:
         if not hasattr(self, "_estimates_data"):
-            self._estimates_data = self._get_data("analysts/estimates")        
-            if "data" not in self._estimates_data["props"]["pageProps"].keys():
-                return {}
+            self._estimates_data = self._get_data("analysts/estimates")
+
+        if "data" not in self._estimates_data["props"]["pageProps"]:
+            return {}
+
         data = self._parse_fundamental_data(
             self._estimates_data["props"]["pageProps"]["data"]["estimates"],
             timestamps
@@ -164,7 +174,7 @@ class StratosphereReader:
         if not hasattr(self, "_price_target_data"):
             self._price_target_data = self._get_data("analysts/price-targets")
 
-        if "prices" not in self._price_target_data["props"]["pageProps"].keys():
+        if "prices" not in self._price_target_data["props"]["pageProps"]:
             return {}
 
         data = self._price_target_data["props"]["pageProps"]["prices"]
@@ -177,8 +187,8 @@ class StratosphereReader:
     def price_targets(self, timestamps=False) -> list:
         if not hasattr(self, "_price_target_data"):
             self._price_target_data = self._get_data("analysts/price-targets")
-        
-        if "priceTargets" not in self._price_target_data["props"]["pageProps"].keys():
+
+        if "priceTargets" not in self._price_target_data["props"]["pageProps"]:
             return {}
 
         data = self._price_target_data["props"]["pageProps"]["priceTargets"]
@@ -200,8 +210,8 @@ class StratosphereReader:
     def price_target_consensus(self) -> dict:
         if not hasattr(self, "_price_target_data"):
             self._price_target_data = self._get_data("analysts/price-targets")
-        
-        if "priceTargetConsensus" not in self._price_target_data["props"]["pageProps"].keys():
+
+        if "priceTargetConsensus" not in self._price_target_data["props"]["pageProps"]:
             return {}
 
         data = self._price_target_data["props"]["pageProps"]["priceTargetConsensus"]
