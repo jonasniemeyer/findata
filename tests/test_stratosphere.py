@@ -39,6 +39,7 @@ def test_investors():
             assert security["type"] in ("Share", "Call", "Put")
             assert security["weight"] == round(security["weight"], 6)
 
+
 class TestUSEquity:
     @classmethod
     def setup_class(cls):
@@ -230,3 +231,148 @@ class TestUSEquity:
         consensus = self.reader.price_target_consensus()
         for key in ("average", "median", "high", "low"):
             assert isinstance(consensus[key], (int, float))
+
+
+class TestNonUSEquity:
+    @classmethod
+    def setup_class(cls):
+        cls.reader = StratosphereReader("BMW.DE")
+
+    def test_profile(self):
+        profile = self.reader.profile()
+        assert profile["ticker"] == "BMW.DE"
+        assert profile["name"] == "Bayerische Motoren Werke Aktiengesellschaft"
+        assert profile["cik"] is None
+        assert profile["website"] == "https://www.bmwgroup.com"
+        assert profile["exchange"] == "XETRA"
+        assert profile["country"] == "DE"
+        assert profile["currency"]["name"] == "EUR"
+        assert isinstance(profile["currency"]["exchange_rate"], float)
+        assert isinstance(profile["market_cap"], int)
+
+    def test_income_statement(self):
+        income_data = self.reader.income_statement()
+        for freq in ("annual", "quarterly"):
+            for segment in income_data[freq]:
+                assert isinstance(segment, str)
+                for date, value in income_data[freq][segment].items():
+                    assert dt.date.fromisoformat(date)
+                    assert isinstance(value, (int, float, NoneType))
+
+        income_data = self.reader.income_statement(timestamps=True)
+        for freq in ("annual", "quarterly"):
+            for segment in income_data[freq]:
+                for date, value in income_data[freq][segment].items():
+                    assert isinstance(date, int)
+
+    def test_balance_sheet(self):
+        balance_data = self.reader.balance_sheet()
+        for freq in ("annual", "quarterly"):
+            for segment in balance_data[freq]:
+                assert isinstance(segment, str)
+                for date, value in balance_data[freq][segment].items():
+                    assert dt.date.fromisoformat(date)
+                    assert isinstance(value, (int, float, NoneType))
+
+        balance_data = self.reader.income_statement(timestamps=True)
+        for freq in ("annual", "quarterly"):
+            for segment in balance_data[freq]:
+                for date, value in balance_data[freq][segment].items():
+                    assert isinstance(date, int)
+
+    def test_cashflow_statement(self):
+        cashflow_data = self.reader.cashflow_statement()
+        for freq in ("annual", "quarterly"):
+            for segment in cashflow_data[freq]:
+                assert isinstance(segment, str)
+                for date, value in cashflow_data[freq][segment].items():
+                    assert dt.date.fromisoformat(date)
+                    assert isinstance(value, (int, float, NoneType))
+
+        cashflow_data = self.reader.income_statement(timestamps=True)
+        for freq in ("annual", "quarterly"):
+            for segment in cashflow_data[freq]:
+                for date, value in cashflow_data[freq][segment].items():
+                    assert isinstance(date, int)
+
+    def test_financial_ratios(self):
+        ratios_data = self.reader.financial_ratios()
+        for freq in ("annual", "quarterly"):
+            for segment in ratios_data[freq]:
+                assert isinstance(segment, str)
+                for date, value in ratios_data[freq][segment].items():
+                    assert dt.date.fromisoformat(date)
+                    assert isinstance(value, (int, float, NoneType))
+
+        ratios_data = self.reader.income_statement(timestamps=True)
+        for freq in ("annual", "quarterly"):
+            for segment in ratios_data[freq]:
+                for date, value in ratios_data[freq][segment].items():
+                    assert isinstance(date, int)
+
+    def test_financial_statement(self):
+        income_data = self.reader.income_statement()
+        balance_data = self.reader.balance_sheet()
+        cashflow_data = self.reader.cashflow_statement()
+        ratios_data = self.reader.financial_ratios()
+
+        financial_data = self.reader.financial_statement()
+        for key, data in {
+            "income_statement": income_data,
+            "balance_sheet": balance_data,
+            "cashflow_cashflow": cashflow_data,
+            "financial_ratios": ratios_data
+        }.items():
+            assert financial_data[key] == data
+
+        financial_data = self.reader.financial_statement(merged=True)
+        for freq in financial_data:
+            assert freq in ("annual", "quarterly")
+
+        vars = set(
+            var for item in (
+                income_data["annual"],
+                balance_data["annual"],
+                cashflow_data["annual"],
+                ratios_data["annual"]
+            )
+            for var in item
+        )
+        for freq in ("annual", "quarterly"):
+            for var in financial_data[freq]:
+                assert var in vars
+
+    def test_segment_information(self):
+        segment_data = self.reader.segment_information()
+        assert segment_data == {}
+
+    def test_kpi_information(self):
+        kpi_data = self.reader.kpi_information()
+        assert kpi_data == {}
+
+    def test_analyst_estimates(self):
+        estimates = self.reader.analyst_estimates()
+        for freq in ("annual", "quarterly"):
+            for var in estimates[freq]:
+                assert isinstance(var, str)
+                for date, value in estimates[freq][var].items():
+                    assert dt.date.fromisoformat(date)
+                    assert isinstance(value, (int, float))
+
+        estimates = self.reader.analyst_estimates(timestamps=True)
+        for freq in ("annual", "quarterly"):
+            for var in estimates[freq]:
+                for date, value in estimates[freq][var].items():
+                    assert isinstance(date, int)
+
+    def test_prices(self):
+        prices = self.reader.prices()
+        assert prices == {}
+
+    def test_price_targets(self):
+        price_targets = self.reader.price_targets()
+        assert price_targets == {}
+
+    def test_price_target_consensus(self):
+        consensus = self.reader.price_target_consensus()
+        assert consensus == {}
