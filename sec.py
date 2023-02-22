@@ -420,7 +420,6 @@ class _SECFiling:
         return data
     
     def _parse_addresses(self, section) -> tuple:
-        
         business_index = section.find("BUSINESS ADDRESS:")
         mail_index = section.find("MAIL ADDRESS:")
         
@@ -2993,7 +2992,7 @@ class SECFundamentals:
 
     def get_variable(self, name: str) -> dict:
         if name not in self._popular_variables:
-            raise ValueError(f"Variable name has to be in {tuple(self._popular_variables.keys())}")
+            raise ValueError(f"Variable name has to be in {tuple(self._popular_variables)}")
 
         data = {"yearly": {}, "quarterly": {}}
 
@@ -3019,12 +3018,12 @@ class SECFundamentals:
         self._name = json["entityName"]
         facts = json["facts"]
 
-        if "ifrs-full" in facts.keys():
+        if "ifrs-full" in facts:
             raise ValueError
 
-        if "ifrs-full" in facts.keys():
+        if "ifrs-full" in facts:
             self._accounting_standard = "IFRS"
-        elif "us-gaap" in facts.keys():
+        elif "us-gaap" in facts:
             self._accounting_standard = "US-GAAP"
 
         for key, dct in facts["us-gaap"].items():
@@ -3046,6 +3045,7 @@ class SECFundamentals:
                 "yearly_data": yearly_parsed_data,
                 "quarterly_data": quarterly_parsed_data
             }
+
     def _parse_quarterly_data(self, entries: dict) -> dict:
         if not any("start" in item for item in entries): # stock variables
             data = [item for item in entries if "end" in item]
