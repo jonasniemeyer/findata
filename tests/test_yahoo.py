@@ -1,8 +1,8 @@
-from finance_data import YahooReader, DatasetError
 import numpy as np
 import pandas as pd
 import datetime as dt
 import pytest
+from finance_data import YahooReader, DatasetError
 
 NoneType = type(None)
 
@@ -772,7 +772,7 @@ class TestMutualFund:
 class TestOption:
     @classmethod
     def setup_class(cls):
-        cls.reader = YahooReader("AAPL230317C00100000")
+        cls.reader = YahooReader("AAPL240621C00060000")
 
     def test_security_type(self):
         assert self.reader.security_type == "OPTION"
