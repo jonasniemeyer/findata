@@ -2,6 +2,7 @@ import requests
 import datetime as dt
 import numpy as np
 import pandas as pd
+from pandas.tseries.offsets import BDay
 from bs4 import BeautifulSoup
 from finance_data.utils import HEADERS
 
@@ -14,7 +15,7 @@ class MSCIReader:
         index_variant="NETR",
         index_currency="USD",
         start=dt.date(1969, 1, 1),
-        end=dt.date.today(),
+        end=dt.date.today()-BDay(1),
         frequency="DAILY",
         normalize=False,
         returns=True,

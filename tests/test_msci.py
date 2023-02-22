@@ -1,6 +1,6 @@
 from finance_data import MSCIReader
 import pandas as pd
-import datetime as dt
+from pandas.tseries.offsets import BDay
 
 def test_indices_list():
     data = MSCIReader.indices()
@@ -19,7 +19,7 @@ def test_indices_list():
     assert data["code"].dtype == "int64"
 
 def test_historical_data_default():
-    end_date = dt.date.today().isoformat().replace("-","")
+    end_date = (pd.to_datetime("today")-BDay(1)).date().isoformat().replace("-", "")
     data = MSCIReader(139245).historical_data()
     info = data["information"]
     assert info["index_code"] == 139245
