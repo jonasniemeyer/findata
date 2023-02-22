@@ -41,7 +41,7 @@ class StratosphereReader:
         self._profile = {"ticker": self.ticker}
         profile_data = data["props"]["pageProps"]["company"]
         self._profile["name"] = profile_data["name"]
-        self._profile["cik"] = None if profile_data["cik"] is None else int(profile_data["cik"])
+        self._profile["cik"] = None if profile_data["cik"] in (None, "") else int(profile_data["cik"])
         self._profile["website"] = f'https://www.{profile_data["website"]}'
         self._profile["exchange"] = profile_data["exchange"]
         self._profile["country"] = profile_data["country"]
