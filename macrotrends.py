@@ -6,19 +6,15 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from finance_data.utils import (
-    TickerError,
-    MACROTRENDS_CONVERSION
-)
+from finance_data.utils import TickerError
 
 class MacrotrendsReader:
-    
     base_url = "https://www.macrotrends.net/stocks/charts/{}/{}/{}?freq={}"
 
     conversion = {
-        "income-statement": "income statement",
-        "balance-sheet": "balance sheet",
-        "cash-flow-statement": "cashflow statement"
+        "income-statement": "income_statement",
+        "balance-sheet": "balance_sheet",
+        "cash-flow-statement": "cashflow_statement"
     }
 
     def __init__(
@@ -155,7 +151,7 @@ class MacrotrendsReader:
                 var_name = cell.find("a").text
             except:
                 var_name = cell.find("span").text
-            data[MACROTRENDS_CONVERSION[var_name]] = {}
+            data[var_name] = {}
             variables.append(var_name)
         loop_control = 0
         while self._scrollbar_width > 0:
@@ -184,13 +180,13 @@ class MacrotrendsReader:
                     var_name = variables[row_index]
                     if value == "-":
                         value = None
-                        data[MACROTRENDS_CONVERSION[var_name]][date] = value
+                        data[var_name][date] = value
                         continue
                     if var_name not in ("Basic EPS", "EPS - Earnings Per Share"):
                         value = int(float(value.strip("$").replace(".", "").replace(",", ".")) * 1_000_000)
                     else:
                         value = float(value.strip("$"))
-                    data[MACROTRENDS_CONVERSION[var_name]][date] = value
+                    data[var_name][date] = value
             if self._slider_sensitivity is None:
                 break
         return data

@@ -1,4 +1,3 @@
-import re
 import configparser
 import os
 from copy import deepcopy
@@ -31,88 +30,6 @@ if "private.cfg" in os.listdir(Path(__file__).parent):
     TIPRANKS_HEADERS["cookie"] = cfg.get("COOKIES", "tipranks_cookies")
 else:
     FRED_API_KEY = None
-
-MACROTRENDS_CONVERSION = {
-    # Income Statement
-    "Revenue": "Total Revenue",
-    "Cost Of Goods Sold": "Cost Of Goods Sold",
-    "Gross Profit": "Gross Profit",
-    "Research And Development Expenses": "Research & Development Expenses",
-    "SG&A Expenses": "Selling, General & Administrative Expenses",
-    "Other Operating Income Or Expenses": "Other Operating Income/Expenses",
-    "Operating Expenses": "Total Operating Expenses",
-    "Operating Income": "Operating Income",
-    "Total Non-Operating Income/Expense": "Non-Operating Income/Expenses",
-    "Pre-Tax Income": "Income Before Taxes",
-    "Income Taxes": "Income Taxes",
-    "Income After Taxes": "Income After Taxes",
-    "Other Income": "Other Income",
-    "Income From Continuous Operations": "Income from Continuous Operations",
-    "Income From Discontinued Operations": "Income from Discontinued Operations",
-    "Net Income": "Net Income",
-    "EBITDA": "EBITDA",
-    "EBIT": "EBIT",
-    "Basic Shares Outstanding": "Basic Shares Outstanding",
-    "Shares Outstanding": "Diluted Shares Outstanding",
-    "Basic EPS": "Basic EPS",
-    "EPS - Earnings Per Share": "Diluted EPS",
-
-    # Balance Sheet
-    "Cash On Hand": "Cash and Cash Equivalents",
-    "Receivables": "Accounts Receivable",
-    "Inventory": "Inventories",
-    "Pre-Paid Expenses": "Prepaid Expenses",
-    "Other Current Assets": "Other Current Assets",
-    "Total Current Assets": "Total Current Assets",
-    "Property, Plant, And Equipment": "Property, Plant and Equipment",
-    "Long-Term Investments": "Long-Term Investments",
-    "Goodwill And Intangible Assets": "Intangible Assets",
-    "Other Long-Term Assets": "Other Non-Current Assets",
-    "Total Long-Term Assets": "Total Non-Current Assets",
-    "Total Assets": "Total Assets",
-    "Total Current Liabilities": "Total Current Liabilities",
-    "Long Term Debt": "Non-Current Debt",
-    "Other Non-Current Liabilities": "Other Non-Current Liabilities",
-    "Total Long Term Liabilities": "Total Non-Current Liabilities",
-    "Total Liabilities": "Total Liabilities",
-    "Common Stock Net": "Common Stock and Additional Paid-In Capital",
-    "Retained Earnings (Accumulated Deficit)": "Retained Earnings",
-    "Comprehensive Income": "comprehensive income",
-    "Other Share Holders Equity": "Other Shareholders Equity",
-    "Share Holder Equity": "Total Shareholders Equity",
-    "Total Liabilities And Share Holders Equity": "Total Liabilities and Shareholders Equity",
-
-    # Cashflow Statement
-    "Net Income/Loss": "Net Income Cashflow Statement",
-    "Total Depreciation And Amortization - Cash Flow": "Depreciation and Amortization",
-    "Other Non-Cash Items": "Other Non-Cash Items",
-    "Total Non-Cash Items": "Total Non-Cash Items",
-    "Change In Accounts Receivable": "Change in Accounts Receivable",
-    "Change In Inventories": "Change in Inventories",
-    "Change In Accounts Payable": "Change in Accounts Payable",
-    "Change In Assets/Liabilities": "Change in Other Assets/Liabilities",
-    "Total Change In Assets/Liabilities": "Total Change in Assets/Liabilities",
-    "Cash Flow From Operating Activities": "Total Cashflow from Operating Activities",
-    "Net Change In Property, Plant, And Equipment": "Capital Expenditures",
-    "Net Change In Intangible Assets": "Change in Intangible Assets",
-    "Net Acquisitions/Divestitures": "Acquisitions/Divestitures",
-    "Net Change In Short-term Investments": "Change in Current Investments",
-    "Net Change In Long-Term Investments": "Change in Non-Current Investments",
-    "Net Change In Investments - Total": "Change in Total Investments",
-    "Investing Activities - Other": "Other Investing Activities",
-    "Cash Flow From Investing Activities": "Total Cashflow from Investing Activities",
-    "Net Long-Term Debt": "Non-Current Debt Issued/Retired",
-    "Net Current Debt": "Current Debt Issued/Retired",
-    "Debt Issuance/Retirement Net - Total": "Total Debt Issued/Retired",
-    "Net Common Equity Issued/Repurchased": "Common Stock Issued/Repurchased",
-    "Net Total Equity Issued/Repurchased": "Total Stock Issued/Repurchased",
-    "Total Common And Preferred Stock Dividends Paid": "Total Dividends paid",
-    "Financial Activities - Other": "Other Financing Activities",
-    "Cash Flow From Financial Activities": "Total Cashflow from Financing Activities",
-    "Net Cash Flow": "Change in Cash and Cash Equivalents",
-    "Stock-Based Compensation": "Stock-Based Compensation",
-    "Common Stock Dividends Paid": "Dividends Paid"
-}
 
 SERVER_ERROR_MESSAGE = b"<?xml version='1.0' encoding='UTF-8'?><Error><Code>AccessDenied</Code><Message>Access denied.</Message><Details>Anonymous caller does not have storage.objects.get access to the Google Cloud Storage object. Permission 'storage.objects.get' denied on resource (or it may not exist).</Details></Error>"
 
