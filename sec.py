@@ -1369,12 +1369,13 @@ class Filing13F(_SECFiling):
 
 class FilingNPORT(_SECFiling):
     _asset_types = {
-        "AMBS": "Agency mortgage-backed securities",
         "ABS-APCP": "ABS-asset backed commercial paper",
         "ABS-CBDO": "ABS-collateralized bond/debt obligation",
         "ABS-MBS": "ABS-mortgage backed security",
         "ABS-O": "ABS-other",
+        "ADAS": "Agency debentures and agency strips",
         "ADR": "American Repository Receipt",
+        "AMBS": "Agency mortgage-backed securities",
         "COMM": "Commodity",
         "DBT": "Debt",
         "DCO": "Derivative-commodity",
@@ -1629,7 +1630,7 @@ class FilingNPORT(_SECFiling):
             fair_value_level = None if fair_value_level == "N/A" else int(fair_value_level)
             
             debt_information = self._get_debt_information(entry)
-            repurchase_information = None
+            repurchase_information = self._get_repurchase_information(entry)
             derivative_information = self._get_derivative_information(entry)
             securities_lending = self._get_lending_information(entry)
             
@@ -1758,6 +1759,60 @@ class FilingNPORT(_SECFiling):
             "coupon_payments_deferred": coupon_payments_deferred,
             "paid_in_kind": paid_in_kind,
             "convertible_information": convertible_information
+        }
+
+    def _get_repurchase_information(self, entry) -> Union[dict, None]:
+        repurchase_section = entry.find("repurchaseagrmt")
+        if repurchase_section is None:
+            return None
+
+        transaction_type = repurchase_section.find("transcat").text
+        central_party = repurchase_section.find("notclearedcentcparty").get("iscleared")
+        if central_party == "Y":
+            raise ValueError("central party is Y")
+        else:
+            counterparty = repurchase_section.find("notclearedcentcparty").find("counterpartyinfos")
+            counterparty_lei = counterparty.get("lei")
+            counterparty_name = counterparty.get("name")
+            counterparty = {
+                "name": counterparty_name,
+                "lei": counterparty_lei
+            }
+
+        tri_party = repurchase_section.find("istriparty").text
+        tri_party = True if tri_party == "Y" else False
+        repurchase_rate = float(repurchase_section.find("repurchasert").text)
+        maturity_date = repurchase_section.find("maturitydt").text
+
+        collaterals = []
+        collateral_section = repurchase_section.find("repurchasecollaterals")
+        for collateral in collateral_section.find_all("repurchasecollateral"):
+            principal_value = float(collateral.find("principalamt").text)
+            principal_currency = collateral.find("principalcd").text
+            principal_data = {"value": principal_value, "currency": principal_currency}
+
+            collateral_value = float(collateral.find("collateralval").text)
+            collateral_currency = collateral.find("collateralcd").text
+            collateral_data = {"value": collateral_value, "currency": collateral_currency}
+
+            asset_type_abbr = collateral.find("invstcat").text
+            asset_type = {"name": self._asset_types[asset_type_abbr], "abbr": asset_type_abbr}
+
+            collaterals.append(
+                {
+                    "principal": principal_data,
+                    "collateral": collateral_data,
+                    "asset_type": asset_type
+                }
+            )
+
+        return {
+            "type": transaction_type,
+            "counterparty": counterparty,
+            "tri_party": tri_party,
+            "repurchase_rate": repurchase_rate,
+            "maturity_date": maturity_date,
+            "collaterals": collaterals
         }
     
     def _get_derivative_information(self, entry) -> Union[dict, None]:
