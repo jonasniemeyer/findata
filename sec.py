@@ -26,7 +26,7 @@ def sec_mutualfunds() -> list:
     items = requests.get("https://www.sec.gov/files/company_tickers_mf.json", headers=HEADERS).json()["data"]
     items = [
         {
-            "ticker": item[3].replace("(", "").replace(")", "").upper(),
+            "ticker": item[3].replace("(", "").replace(")", "").upper() if item[3] != "" else None,
             "class_cik": item[2].upper(),
             "series_cik": item[1].upper(),
             "entity_cik": item[0]
@@ -1369,13 +1369,16 @@ class Filing13F(_SECFiling):
 
 class FilingNPORT(_SECFiling):
     _asset_types = {
+        "ABS": "Asset-backed securities",
         "ABS-APCP": "ABS-asset backed commercial paper",
         "ABS-CBDO": "ABS-collateralized bond/debt obligation",
         "ABS-MBS": "ABS-mortgage backed security",
         "ABS-O": "ABS-other",
+        "ACMO": "Agency collateralized mortgage obligations",
         "ADAS": "Agency debentures and agency strips",
         "ADR": "American Repository Receipt",
         "AMBS": "Agency mortgage-backed securities",
+        "CDS": "Corporate debt securities",
         "COMM": "Commodity",
         "DBT": "Debt",
         "DCO": "Derivative-commodity",
@@ -1388,8 +1391,10 @@ class FilingNPORT(_SECFiling):
         "EDR": "Equity-Depositary Receipt",
         "EP": "Equity-preferred",
         "ETF": "Exchange Traded Fund",
+        "EQT": "Equity",
         "GDR": "Global depositary receipt",
         "LON": "Loan",
+        "PLCMO": "Private label collateralized mortgage obligations",
         "RA": "Repurchase agreement",
         "RE": "Real estate",
         "SN": "Structured note",
@@ -1767,17 +1772,25 @@ class FilingNPORT(_SECFiling):
             return None
 
         transaction_type = repurchase_section.find("transcat").text
-        central_party = repurchase_section.find("notclearedcentcparty").get("iscleared")
-        if central_party == "Y":
-            raise ValueError("central party is Y")
+
+        central_party = repurchase_section.find("clearedcentcparty")
+        if central_party is not None:
+            assert central_party.get("iscleared") == "Y"
+            central_counterparty = True
+            counterparty_name = central_party.get("centralcounterparty")
+            counterparty_lei = None
         else:
-            counterparty = repurchase_section.find("notclearedcentcparty").find("counterpartyinfos")
+            central_party = repurchase_section.find("notclearedcentcparty")
+            assert central_party.get("iscleared") == "N"
+            counterparty = central_party.find("counterpartyinfos")
+            central_counterparty = False
             counterparty_lei = counterparty.get("lei")
             counterparty_name = counterparty.get("name")
-            counterparty = {
-                "name": counterparty_name,
-                "lei": counterparty_lei
-            }
+        counterparty = {
+            "central_counterparty": central_counterparty,
+            "name": counterparty_name,
+            "lei": counterparty_lei
+        }
 
         tri_party = repurchase_section.find("istriparty").text
         tri_party = True if tri_party == "Y" else False
@@ -1795,8 +1808,13 @@ class FilingNPORT(_SECFiling):
             collateral_currency = collateral.find("collateralcd").text
             collateral_data = {"value": collateral_value, "currency": collateral_currency}
 
-            asset_type_abbr = collateral.find("invstcat").text
-            asset_type = {"name": self._asset_types[asset_type_abbr], "abbr": asset_type_abbr}
+            asset_type = entry.find("invstcat")
+            if asset_type is not None:
+                asset_type_abbr = asset_type.text
+                asset_type = {"name": self._asset_types[asset_type_abbr], "abbr": asset_type_abbr}
+            else:
+                asset_type_name = entry.find("invstcatconditional").get("desc")
+                asset_type = {"name": asset_type_name, "abbr": "OTH"}
 
             collaterals.append(
                 {
@@ -2236,10 +2254,10 @@ class FilingNPORT(_SECFiling):
                 information = self._parse_future_information(reference_section)
             elif abbr == "SWP":
                 information = self._parse_swap_information(reference_section)
-            elif abbr == "SWO":
+            elif abbr in ("SWO", "WAR"):
                 information = self._parse_option_information(reference_section)
             else:
-                raise ValueError()
+                raise ValueError(abbr)
 
             derivative_name = self._derivative_types[abbr]
 
@@ -2325,17 +2343,30 @@ class FilingNPORT(_SECFiling):
         amount = section.get("pmntamt")
         amount = None if amount == "N/A" else float(amount)
 
-        reset_tenor = section.find("rtresettenors").find_all("rtresettenor")
-        assert len(reset_tenor) == 1
-        reset_tenor = reset_tenor[0]
+        reset_tenors = section.find("rtresettenors").find_all("rtresettenor")
+        tenors = []
+        for reset_tenor in reset_tenors:
 
-        payment_unit = reset_tenor.get("ratetenor")
-        payment_frequency = reset_tenor.get("ratetenorunit")
-        payment_frequency = None if payment_frequency == "N/A" else float(payment_frequency)
+            rate_tenor = reset_tenor.get("ratetenor")
+            rate_frequency = reset_tenor.get("ratetenorunit")
+            rate_frequency = None if rate_frequency == "N/A" else float(rate_frequency)
 
-        reset_unit = reset_tenor.get("resetdt")
-        reset_frequency = reset_tenor.get("resetdtunit")
-        reset_frequency = None if reset_frequency == "N/A" else float(reset_frequency)
+            reset_date = reset_tenor.get("resetdt")
+            reset_frequency = reset_tenor.get("resetdtunit")
+            reset_frequency = None if reset_frequency == "N/A" else float(reset_frequency)
+
+            tenors.append(
+                {
+                    "rate": {
+                        "unit": rate_tenor,
+                        "frequency": rate_frequency
+                    },
+                    "reset": {
+                        "date": reset_date,
+                        "frequency": reset_frequency
+                    }
+                }
+            )
 
         return {
             "currency": currency,
@@ -2343,14 +2374,7 @@ class FilingNPORT(_SECFiling):
             "index": index,
             "spread": spread,
             "amount": amount,
-            "payment_frequency": {
-                "unit": payment_unit,
-                "frequency": payment_frequency
-            },
-            "reset_frequency": {
-                "unit": reset_unit,
-                "frequency": reset_frequency
-            },
+            "tenors": tenors
         }
 
     def _parse_fixed_leg(self, section):
