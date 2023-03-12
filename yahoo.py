@@ -46,7 +46,8 @@ class YahooReader:
         self._name = self._stored_data["quoteType"]["longName"]
         if self._name is None:
             self._name =  self._stored_data["quoteType"]["shortName"]
-        self._name = unescape(self._name)
+        if self._name is not None:
+            self._name = unescape(self._name)
 
     def __repr__(self):
         return f"YahooReader({self.security_type}|{self.name}|{self.ticker})"
@@ -215,7 +216,6 @@ class YahooReader:
                 raise ValueError("60-minute data is only available for the last 730 days")
         elif (end - start) > 60*60*24*365*100:
             raise ValueError("daily and monthly data can only be fetched for 100 years per request")
-            
 
         parameters = {
             "period1": start,
@@ -234,15 +234,17 @@ class YahooReader:
         url = data.url
         data = data.json()
         
-        meta_data = data["chart"]["result"][0]["meta"]
-        currency = meta_data["currency"]
-        type_ = meta_data["instrumentType"]
-        utc_offset = meta_data["gmtoffset"]
-        timezone = meta_data["timezone"]
-        exchange_timezone = meta_data["exchangeTimezoneName"]
-        
-        ts = data["chart"]["result"][0]["timestamp"]
-        history = data["chart"]["result"][0]["indicators"]["quote"][0]
+        try:
+            meta_data = data["chart"]["result"][0]["meta"]
+            currency = meta_data["currency"]
+            type_ = meta_data["instrumentType"]
+            utc_offset = meta_data["gmtoffset"]
+            timezone = meta_data["timezone"]
+            exchange_timezone = meta_data["exchangeTimezoneName"]
+            ts = data["chart"]["result"][0]["timestamp"]
+            history = data["chart"]["result"][0]["indicators"]["quote"][0]
+        except (KeyError, TypeError):
+            raise DatasetError(f'No prices for security with ticker "{self.ticker}"')
         
         # dividend and split data
         if "events" in data["chart"]["result"][0]:
