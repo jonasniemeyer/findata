@@ -16,6 +16,7 @@ from .news import (
 from .sec import (
     latest_sec_filings,
     sec_companies,
+    sec_filings,
     sec_mutualfunds,
     Filing3,
     Filing4,
@@ -56,6 +57,7 @@ __all__ = [
     "NasdaqNews",
     "SANews",
     "sec_companies",
+    "sec_filings",
     "sec_mutualfunds",
     "SECFundamentals",
     "shiller_data",
