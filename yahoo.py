@@ -1348,7 +1348,7 @@ class YahooReader:
             ticker = re.findall(f"{cls.quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response.url)[0].strip()
             return ticker
         except IndexError as e:
-            raise TickerError(f'cannot find a ticker that belongs to the isin "{identifier}"')
+            raise TickerError(f'cannot find a ticker that belongs to the identifier "{identifier}"')
 
     @staticmethod
     def currencies() -> list:
