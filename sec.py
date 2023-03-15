@@ -1233,7 +1233,7 @@ class Filing13F(_SECFiling):
             name = entry.find(f"{prefix}nameofissuer").text
             title = entry.find(f"{prefix}titleofclass").text
             cusip = entry.find(f"{prefix}cusip").text
-            market_value = int(float(entry.find(f"{prefix}value").text)) * 1000
+            market_value = int(float(entry.find(f"{prefix}value").text))
             amount = int(float(entry.find(f"{prefix}sshprnamt").text))
             amount_type = entry.find(f"{prefix}sshprnamttype").text
             quantity = {
