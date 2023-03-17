@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import requests
 import re
+import time
 from bs4 import BeautifulSoup
 from html import unescape
 from finance_data.utils import (
@@ -20,7 +21,7 @@ class YahooReader:
     _estimates_url = "https://finance.yahoo.com/quote{}/analysis"
     _options_url = "https://query1.finance.yahoo.com/v7/finance/options/{}"
     _esg_ts_url = "https://query1.finance.yahoo.com/v1/finance/esgChart"
-    quote_url = "https://finance.yahoo.com/quote/"
+    _quote_url = "https://finance.yahoo.com/quote/"
 
     def __init__(
         self,
@@ -1337,18 +1338,33 @@ class YahooReader:
         return data
 
     @classmethod
-    def get_ticker(cls, identifier: str) -> str:
+    def get_ticker(cls, identifier: str, pause: int = 60) -> str:
         """
         This classmethod takes an isin or other identifier and returns the corresponding Yahoo ticker if it exists.
         If there is no corresponding ticker found, a TickerError is raised instead.
         """
         params = {"yfin-usr-qry": identifier}
-        response = requests.get(cls.quote_url, params=params, headers=HEADERS)
+        response = requests.get(cls._quote_url, params=params, headers=HEADERS)
         try:
-            ticker = re.findall(f"{cls.quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response.url)[0].strip()
+            ticker = re.findall(f"{cls._quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response.url)[0].strip()
             return ticker
-        except IndexError as e:
-            raise TickerError(f'cannot find a ticker that belongs to the identifier "{identifier}"')
+        except IndexError:
+            # check if the http requests are rate limited or if the ticker does not exist
+            limited = True
+            while limited:
+                try:
+                    params_appl = {"yfin-usr-qry": "US0378331005"}
+                    response_appl = requests.get(cls._quote_url, params=params_appl, headers=HEADERS)
+                    ticker = re.findall(f"{cls._quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response_appl.url)[0].strip()
+                    limited = False
+                except IndexError:
+                    print(f"Rate limited: Pause {pause} seconds")
+                    time.sleep(pause)
+            try:
+                ticker = re.findall(f"{cls._quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response.url)[0].strip()
+                return ticker
+            except IndexError:
+                raise TickerError(f'Cannot find a Ticker that belongs to the identifier "{identifier}"')
 
     @staticmethod
     def currencies() -> list:
