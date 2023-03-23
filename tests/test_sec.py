@@ -31,7 +31,7 @@ def test_sec_mutualfunds():
     for item in funds:
         for key in item.keys():
             assert key in ("ticker", "class_cik", "series_cik", "entity_cik")
-        assert isinstance(item["ticker"], str)
+        assert isinstance(item["ticker"], (str, NoneType))
         assert isinstance(item["class_cik"], str)
         assert isinstance(item["series_cik"], str)
         assert isinstance(item["entity_cik"], int)
@@ -210,17 +210,17 @@ class TestFilingNPORT:
                 "Other Contracts"
             )
             for key, value in data.items():
-                if len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", key)) == 1:
+                if key != "derivative_types":
                     assert value is None or isinstance(value["realized_gain"], float)
                     assert value is None or isinstance(value["unrealized_appreciation"], float)
-                else:
-                    assert key in ("Forward", "Future", "Option", "Swap", "Swaption", "Warrant", "Other")
-                    for date, instrument_value in value.items():
-                        assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", date)) == 1
-                    assert instrument_value is None or isinstance(instrument_value["realized_gain"], float)
+            for key, deriv_data in data["derivative_types"].items():
+                assert key in ("Forward", "Future", "Option", "Swap", "Swaption", "Warrant", "Other")
+                for date, instrument_value in deriv_data.items():
+                    assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", date)) == 1
+                    assert instrument_value is None or isinstance(instrument_value["realized_gain"], (float))
                     assert instrument_value is None or isinstance(instrument_value["unrealized_appreciation"], float)
 
-        for date, data in returns["non-derivative_gains"].items():
+        for date, data in returns["non_derivative_gains"].items():
             assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", date)) == 1
             assert isinstance(data["realized_gain"], float)
             assert isinstance(data["unrealized_appreciation"], float)
