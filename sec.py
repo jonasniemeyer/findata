@@ -2728,10 +2728,10 @@ class FilingNPORT(_SECFiling):
                 months[1]: None,
                 months[2]: None,
                 months[3]: None,
-                "contract_types": {}
+                "derivative_types": {}
             }
             for instrument in tag_derivative_instrument_match.values():
-                derivative_gains[contract]["contract_types"][instrument] = {
+                derivative_gains[contract]["derivative_types"][instrument] = {
                     months[1]: None,
                     months[2]: None,
                     months[3]: None
@@ -2759,14 +2759,14 @@ class FilingNPORT(_SECFiling):
                         }
                     else:
                         instrument_name = tag_derivative_instrument_match[instrument_tag.name]
-                        derivative_gains[contract_name]["contract_types"][instrument_name] = {}
+                        derivative_gains[contract_name]["derivative_types"][instrument_name] = {}
                         for month in range(1, 4):
                             month_tag = instrument_tag.find(f"instrmon{month}")
                             realized_gain = month_tag.get("netrealizedgain")
                             realized_gain = None if realized_gain == "N/A" else float(realized_gain)
                             unrealized_appreciation = month_tag.get("netunrealizedappr")
                             unrealized_appreciation = None if unrealized_appreciation == "N/A" else float(unrealized_appreciation)
-                            derivative_gains[contract_name]["contract_types"][instrument_name][months[month]] = {
+                            derivative_gains[contract_name]["derivative_types"][instrument_name][months[month]] = {
                                 "realized_gain": realized_gain,
                                 "unrealized_appreciation": unrealized_appreciation
                             }
