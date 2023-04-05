@@ -154,14 +154,14 @@ class TestUSEquity:
         for freq in ("annual", "quarterly"):
             for segment in segment_data[freq]:
                 assert segment in (
-                    "Mac Revenue (M)",
-                    "Services Gross Profit (M)",
-                    "Products Gross Profit (M)",
-                    "Wearables, Home and Accessories Revenue (M)",
-                    "Products Revenue (M)",
-                    "iPhone Revenue (M)",
-                    "Services Revenue (M)",
-                    "iPad Revenue (M)"
+                    "Mac Revenue",
+                    "Services Gross Profit",
+                    "Products Gross Profit",
+                    "Wearables, Home and Accessories Revenue",
+                    "Products Revenue",
+                    "iPhone Revenue",
+                    "Services Revenue",
+                    "iPad Revenue"
                 )
                 for date, value in segment_data[freq][segment].items():
                     assert dt.date.fromisoformat(date)
@@ -176,14 +176,14 @@ class TestUSEquity:
     def test_kpi_information(self):
         kpi_data = self.reader.kpi_information()
         for freq in ("annual", "quarterly"):
-            assert tuple(kpi_data[freq].keys()) == ("iPhone Installed User Base (M)",)
-            for date, value in kpi_data[freq]["iPhone Installed User Base (M)"].items():
+            assert tuple(kpi_data[freq].keys()) == ("iPhone Installed User Base",)
+            for date, value in kpi_data[freq]["iPhone Installed User Base"].items():
                 assert dt.date.fromisoformat(date)
                 assert isinstance(value, (int, float, NoneType))
 
         kpi_data = self.reader.kpi_information(timestamps=True)
         for freq in ("annual", "quarterly"):
-            for date, value in kpi_data[freq]["iPhone Installed User Base (M)"].items():
+            for date, value in kpi_data[freq]["iPhone Installed User Base"].items():
                 assert isinstance(date, int)
 
     def test_analyst_estimates(self):
