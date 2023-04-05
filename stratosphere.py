@@ -1,6 +1,7 @@
 import requests
 import json
 import pandas as pd
+import re
 from finance_data.utils import HEADERS
 
 NoneType = type(None)
@@ -52,10 +53,7 @@ class StratosphereReader:
         self._profile["market_cap"] = int(data["props"]["pageProps"]["marketCap"])
     
     def _parse_fundamental_data(self, data, timestamps=False):
-        dct = {
-            "annual": {},
-            "quarterly": {}
-        }
+        dct = {"annual": {}, "quarterly": {}}
         for freq in ("annual", "quarterly"):
             for item in data[freq]:
                 date = item["date"]
@@ -81,6 +79,27 @@ class StratosphereReader:
                         dct[freq][var] = {}
                     dct[freq][var][date] = round(item[var], 6) if not isinstance(item[var], (str, NoneType)) else None
         return dct
+
+    def _uncompress_variables(self, old: dict) -> dict:
+        new = {"annual": {}, "quarterly": {}}
+        for freq in ("annual", "quarterly"):
+            for var in old[freq]:
+                if re.findall("(\([mM]\))", var):
+                    uncompressed_var = re.sub("( \([mM]\))", "", var)
+                    multiplicator = 1_000_000
+                elif re.findall("(\([tT]housands\))", var):
+                    uncompressed_var = re.sub("( \([tT]housands\))", "", var)
+                    multiplicator = 1_000
+                else:
+                    uncompressed_var = var
+                    multiplicator = 1
+
+                if uncompressed_var not in new[freq]:
+                    new[freq][uncompressed_var] = {}
+
+                for date in old[freq][var]:
+                    new[freq][uncompressed_var][date] = round(old[freq][var][date]*multiplicator, 6) if not isinstance(old[freq][var][date], (str, NoneType)) else None
+        return new
     
     def income_statement(self, timestamps=False) -> dict:
         if not hasattr(self, "_income_data"):
@@ -139,6 +158,7 @@ class StratosphereReader:
             "annual": {var: values for var, values in data["annual"].items() if var in variables},
             "quarterly": {var: values for var, values in data["quarterly"].items() if var in variables}
         }
+        data = self._uncompress_variables(data)
         return data
 
     def kpi_information(self, timestamps=False) -> dict:
@@ -155,6 +175,7 @@ class StratosphereReader:
             "annual": {var: values for var, values in data["annual"].items() if var in variables},
             "quarterly": {var: values for var, values in data["quarterly"].items() if var in variables}
         }
+        data = self._uncompress_variables(data)
         return data
 
     def analyst_estimates(self, timestamps=False) -> dict:
