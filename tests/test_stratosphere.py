@@ -127,7 +127,7 @@ class TestUSEquity:
         for key, data in {
             "income_statement": income_data,
             "balance_sheet": balance_data,
-            "cashflow_cashflow": cashflow_data,
+            "cashflow_statement": cashflow_data,
             "financial_ratios": ratios_data
         }.items():
             assert financial_data[key] == data
@@ -214,7 +214,7 @@ class TestUSEquity:
     def test_price_targets(self):
         price_targets = self.reader.price_targets()
         for item in price_targets:
-            assert isinstance(item["price_target"], (int, float))
+            assert round(item["price_target"], 2) == item["price_target"]
             assert dt.datetime.fromisoformat(item["datetime"])
             assert isinstance(item["analyst_company"], (str, NoneType))
             assert isinstance(item["analyst_name"], (str, NoneType))
@@ -320,7 +320,7 @@ class TestNonUSEquity:
         for key, data in {
             "income_statement": income_data,
             "balance_sheet": balance_data,
-            "cashflow_cashflow": cashflow_data,
+            "cashflow_statement": cashflow_data,
             "financial_ratios": ratios_data
         }.items():
             assert financial_data[key] == data
@@ -344,27 +344,41 @@ class TestNonUSEquity:
 
     def test_segment_information(self):
         segment_data = self.reader.segment_information()
-        assert segment_data == {}
+        assert segment_data is None
 
     def test_kpi_information(self):
         kpi_data = self.reader.kpi_information()
-        assert kpi_data == {}
+        assert kpi_data is None
 
     def test_analyst_estimates(self):
         estimates = self.reader.analyst_estimates()
-        assert estimates == {}
+        assert estimates is None
 
         estimates = self.reader.analyst_estimates(timestamps=True)
-        assert estimates == {}
+        assert estimates is None
 
     def test_prices(self):
         prices = self.reader.prices()
-        assert prices == {}
+        assert prices is None
 
     def test_price_targets(self):
         price_targets = self.reader.price_targets()
-        assert price_targets == {}
+        assert price_targets is None
 
     def test_price_target_consensus(self):
         consensus = self.reader.price_target_consensus()
-        assert consensus == {}
+        assert consensus is None
+
+def test_nonexistent_ticker():
+    reader = StratosphereReader("Thisisnotaticker")
+    assert reader.profile() is None
+    assert reader.income_statement() is None
+    assert reader.balance_sheet() is None
+    assert reader.cashflow_statement() is None
+    assert reader.financial_ratios() is None
+    assert reader.segment_information() is None
+    assert reader.kpi_information() is None
+    assert reader.prices() is None
+    assert reader.price_targets() is None
+    assert reader.price_target_consensus() is None
+    assert reader.analyst_estimates() is None
