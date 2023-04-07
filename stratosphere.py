@@ -3,6 +3,7 @@ import json
 import pandas as pd
 import re
 from finance_data.utils import HEADERS
+from typing import Optional
 
 NoneType = type(None)
 
@@ -10,7 +11,7 @@ class StratosphereReader:
     _base_url = "https://www.stratosphere.io/company/{}/{}"
     
     def __init__(self, ticker: str) -> None:
-        self._ticker = ticker
+        self._ticker = ticker.upper()
         self._profile = None
     
     def __repr__(self) -> str:
@@ -20,7 +21,7 @@ class StratosphereReader:
     def ticker(self) -> str:
         return self._ticker
 
-    def profile(self) -> dict:
+    def profile(self) -> Optional[dict]:
         if self._profile is None:
             self.income_statement()
         return self._profile
@@ -39,6 +40,8 @@ class StratosphereReader:
         return data
     
     def _populate_profile(self, data) -> None:
+        if "company" not in data["props"]["pageProps"]:
+            return None
         self._profile = {"ticker": self.ticker}
         profile_data = data["props"]["pageProps"]["company"]
         self._profile["name"] = profile_data["name"]
@@ -51,8 +54,8 @@ class StratosphereReader:
             "exchange_rate": round(1/data["props"]["pageProps"]["exchangeRate"], 4)
         }
         self._profile["market_cap"] = int(data["props"]["pageProps"]["marketCap"])
-    
-    def _parse_fundamental_data(self, data, timestamps=False):
+
+    def _parse_fundamental_data(self, data, timestamps=False) -> dict:
         dct = {"annual": {}, "quarterly": {}}
         for freq in ("annual", "quarterly"):
             for item in data[freq]:
@@ -101,31 +104,47 @@ class StratosphereReader:
                     new[freq][uncompressed_var][date] = round(old[freq][var][date]*multiplicator, 6) if not isinstance(old[freq][var][date], (str, NoneType)) else None
         return new
     
-    def income_statement(self, timestamps=False) -> dict:
+    def income_statement(self, timestamps=False) -> Optional[dict]:
         if not hasattr(self, "_income_data"):
             self._income_data = self._get_data("")
+
+        if "financials" not in self._income_data["props"]["pageProps"]:
+            return None
+
         data = self._parse_fundamental_data(self._income_data["props"]["pageProps"]["financials"], timestamps)
         return data
     
-    def balance_sheet(self, timestamps=False) -> dict:
+    def balance_sheet(self, timestamps=False) -> Optional[dict]:
         if not hasattr(self, "_balance_data"):
             self._balance_data = self._get_data("balance-sheet")
+
+        if "financials" not in self._balance_data["props"]["pageProps"]:
+            return None
+
         data = self._parse_fundamental_data(self._balance_data["props"]["pageProps"]["financials"], timestamps)
         return data
     
-    def cashflow_statement(self, timestamps=False) -> dict:
+    def cashflow_statement(self, timestamps=False) -> Optional[dict]:
         if not hasattr(self, "_cashflow_data"):
             self._cashflow_data = self._get_data("cash-flow-statement")
+
+        if "financials" not in self._cashflow_data["props"]["pageProps"]:
+            return None
+
         data = self._parse_fundamental_data(self._cashflow_data["props"]["pageProps"]["financials"], timestamps)
         return data
     
-    def financial_ratios(self, timestamps=False) -> dict:
+    def financial_ratios(self, timestamps=False) -> Optional[dict]:
         if not hasattr(self, "_ratios_data"):
             self._ratios_data = self._get_data("ratios/valuation")
+
+        if "financials" not in self._ratios_data["props"]["pageProps"]:
+            return None
+
         data = self._parse_fundamental_data(self._ratios_data["props"]["pageProps"]["financials"], timestamps)
         return data
 
-    def financial_statement(self, timestamps=False, merged=False):
+    def financial_statement(self, timestamps=False, merged=False) -> dict:
         income = self.income_statement(timestamps)
         balance = self.balance_sheet(timestamps)
         cashflow = self.cashflow_statement(timestamps)
@@ -140,16 +159,16 @@ class StratosphereReader:
             return {
                 "income_statement": income,
                 "balance_sheet": balance,
-                "cashflow_cashflow": cashflow,
+                "cashflow_statement": cashflow,
                 "financial_ratios": ratios
             }
 
-    def segment_information(self, timestamps=False) -> dict:
+    def segment_information(self, timestamps=False) -> Optional[dict]:
         if not hasattr(self, "_segment_kpi_data"):
             self._segment_kpi_data = self._get_data("kpis")
 
         if "financials" not in self._segment_kpi_data["props"]["pageProps"]:
-            return {}
+            return None
 
         dct = self._segment_kpi_data["props"]["pageProps"]["financials"]
         variables = {item["label"] for item in dct["labels"] if item["isSegment"]}
@@ -161,12 +180,12 @@ class StratosphereReader:
         data = self._uncompress_variables(data)
         return data
 
-    def kpi_information(self, timestamps=False) -> dict:
+    def kpi_information(self, timestamps=False) -> Optional[dict]:
         if not hasattr(self, "_segment_kpi_data"):
             self._segment_kpi_data = self._get_data("kpis")
 
         if "financials" not in self._segment_kpi_data["props"]["pageProps"]:
-            return {}
+            return None
 
         dct = self._segment_kpi_data["props"]["pageProps"]["financials"]
         variables = {item["label"] for item in dct["labels"] if not item["isSegment"]}
@@ -178,12 +197,12 @@ class StratosphereReader:
         data = self._uncompress_variables(data)
         return data
 
-    def analyst_estimates(self, timestamps=False) -> dict:
+    def analyst_estimates(self, timestamps=False) -> Optional[dict]:
         if not hasattr(self, "_estimates_data"):
             self._estimates_data = self._get_data("analysts/estimates")
 
         if "data" not in self._estimates_data["props"]["pageProps"]:
-            return {}
+            return None
 
         data = self._parse_fundamental_data(
             self._estimates_data["props"]["pageProps"]["data"]["estimates"],
@@ -191,12 +210,12 @@ class StratosphereReader:
         )
         return data
 
-    def prices(self, timestamps=False) -> dict:
+    def prices(self, timestamps=False) -> Optional[dict]:
         if not hasattr(self, "_price_target_data"):
             self._price_target_data = self._get_data("analysts/price-targets")
 
         if "prices" not in self._price_target_data["props"]["pageProps"]:
-            return {}
+            return None
 
         data = self._price_target_data["props"]["pageProps"]["prices"]
         data = {
@@ -205,17 +224,17 @@ class StratosphereReader:
         }
         return data
 
-    def price_targets(self, timestamps=False) -> list:
+    def price_targets(self, timestamps=False) -> Optional[list]:
         if not hasattr(self, "_price_target_data"):
             self._price_target_data = self._get_data("analysts/price-targets")
 
         if "priceTargets" not in self._price_target_data["props"]["pageProps"]:
-            return {}
+            return None
 
         data = self._price_target_data["props"]["pageProps"]["priceTargets"]
         data = [
             {
-                "price_target": item["priceTarget"],
+                "price_target": round(item["priceTarget"], 2),
                 "datetime": int(pd.to_datetime(item["publishedDate"]).timestamp()) if timestamps else item["publishedDate"][:-1],
                 "analyst_company": item["analystCompany"],
                 "analyst_name": item["analystName"],
@@ -233,7 +252,7 @@ class StratosphereReader:
             self._price_target_data = self._get_data("analysts/price-targets")
 
         if "priceTargetConsensus" not in self._price_target_data["props"]["pageProps"]:
-            return {}
+            return None
 
         data = self._price_target_data["props"]["pageProps"]["priceTargetConsensus"]
         data = {
