@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import datetime as dt
 import pytest
-from finance_data import YahooReader, DatasetError
+from finance_data import YahooReader
 
 NoneType = type(None)
 
@@ -285,12 +285,10 @@ class TestEquity:
                 assert isinstance(date, int)
 
     def test_fund_statistics(self):
-        with pytest.raises(DatasetError) as exception:
-            self.reader.fund_statistics()
+        assert self.reader.fund_statistics() is None
 
     def test_holdings(self):
-        with pytest.raises(DatasetError) as exception:
-            self.reader.holdings()
+        self.reader.holdings() is None
     
     def test_historical_data(self):
         for freq in ("1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"):
@@ -308,7 +306,7 @@ def test_logo_clearbit():
     assert isinstance(logo, bytes)
 
 def test_logo_missing():
-    assert YahooReader("ACU").logo() == b"\n"
+    assert YahooReader("ACU").logo() is None
 
 class TestHistoricalData:
     def test_default(self):
@@ -441,33 +439,21 @@ class TestETF:
             assert df.index.is_unique == True
     
     def test_logo(self):
-        assert self.reader.logo != b"\n"
+        assert self.reader.logo is not None
     
     def test_missing_data(self):
-        with pytest.raises(DatasetError):
-            self.reader.analyst_recommendations()
-        with pytest.raises(DatasetError):
-            self.reader.recommendation_trend()
-        with pytest.raises(DatasetError):
-            self.reader.institutional_ownership()
-        with pytest.raises(DatasetError):
-            self.reader.fund_ownership()
-        with pytest.raises(DatasetError):
-            self.reader.insider_ownership()
-        with pytest.raises(DatasetError):
-            self.reader.ownership_breakdown()
-        with pytest.raises(DatasetError):
-            self.reader.insider_trades()
-        with pytest.raises(DatasetError):
-            self.reader.esg_scores()
-        with pytest.raises(DatasetError):
-            self.reader.sec_filings()
-        with pytest.raises(DatasetError):
-            self.reader.income_statement()
-        with pytest.raises(DatasetError):
-            self.reader.balance_sheet()
-        with pytest.raises(DatasetError):
-            self.reader.cashflow_statement()
+        assert self.reader.analyst_recommendations() is None
+        assert self.reader.recommendation_trend() is None
+        assert self.reader.institutional_ownership() is None
+        assert self.reader.fund_ownership() is None
+        assert self.reader.insider_ownership() is None
+        assert self.reader.ownership_breakdown() is None
+        assert self.reader.insider_trades() is None
+        assert self.reader.esg_scores() is None
+        assert self.reader.sec_filings() is None
+        assert self.reader.income_statement() is None
+        assert self.reader.balance_sheet() is None
+        assert self.reader.cashflow_statement() is None
 
 class TestFuture:
     @classmethod
@@ -485,37 +471,22 @@ class TestFuture:
             assert df.index.is_unique == True
 
     def test_missing_data(self):
-        assert self.reader.profile() == {}
-        with pytest.raises(DatasetError):
-            self.reader.analyst_recommendations()
-        with pytest.raises(DatasetError):
-            self.reader.recommendation_trend()
-        with pytest.raises(DatasetError):
-            self.reader.institutional_ownership()
-        with pytest.raises(DatasetError):
-            self.reader.fund_ownership()
-        with pytest.raises(DatasetError):
-            self.reader.insider_ownership()
-        with pytest.raises(DatasetError):
-            self.reader.ownership_breakdown()
-        with pytest.raises(DatasetError):
-            self.reader.insider_trades()
-        with pytest.raises(DatasetError):
-            self.reader.esg_scores()
-        with pytest.raises(DatasetError):
-            self.reader.sec_filings()
-        with pytest.raises(DatasetError):
-            self.reader.income_statement()
-        with pytest.raises(DatasetError):
-            self.reader.balance_sheet()
-        with pytest.raises(DatasetError):
-            self.reader.cashflow_statement()
-        with pytest.raises(DatasetError):
-            self.reader.fund_statistics()
-        with pytest.raises(DatasetError):
-            self.reader.holdings()
-        assert self.reader.logo() == b"\n"
-
+        assert self.reader.profile() is None
+        assert self.reader.analyst_recommendations() is None
+        assert self.reader.recommendation_trend() is None
+        assert self.reader.institutional_ownership() is None
+        assert self.reader.fund_ownership() is None
+        assert self.reader.insider_ownership() is None
+        assert self.reader.ownership_breakdown() is None
+        assert self.reader.insider_trades() is None
+        assert self.reader.esg_scores() is None
+        assert self.reader.sec_filings() is None
+        assert self.reader.income_statement() is None
+        assert self.reader.balance_sheet() is None
+        assert self.reader.cashflow_statement() is None
+        assert self.reader.fund_statistics() is None
+        assert self.reader.holdings() is None
+        assert self.reader.logo() is None
 
 class TestCurrency:
     @classmethod
@@ -533,36 +504,22 @@ class TestCurrency:
             assert df.index.is_unique == True
 
     def test_missing_data(self):
-        assert self.reader.profile() == {}
-        with pytest.raises(DatasetError):
-            self.reader.analyst_recommendations()
-        with pytest.raises(DatasetError):
-            self.reader.recommendation_trend()
-        with pytest.raises(DatasetError):
-            self.reader.institutional_ownership()
-        with pytest.raises(DatasetError):
-            self.reader.fund_ownership()
-        with pytest.raises(DatasetError):
-            self.reader.insider_ownership()
-        with pytest.raises(DatasetError):
-            self.reader.ownership_breakdown()
-        with pytest.raises(DatasetError):
-            self.reader.insider_trades()
-        with pytest.raises(DatasetError):
-            self.reader.esg_scores()
-        with pytest.raises(DatasetError):
-            self.reader.sec_filings()
-        with pytest.raises(DatasetError):
-            self.reader.income_statement()
-        with pytest.raises(DatasetError):
-            self.reader.balance_sheet()
-        with pytest.raises(DatasetError):
-            self.reader.cashflow_statement()
-        with pytest.raises(DatasetError):
-            self.reader.fund_statistics()
-        with pytest.raises(DatasetError):
-            self.reader.holdings()
-        assert self.reader.logo() == b"\n"
+        assert self.reader.profile() is None
+        assert self.reader.analyst_recommendations() is None
+        assert self.reader.recommendation_trend() is None
+        assert self.reader.institutional_ownership() is None
+        assert self.reader.fund_ownership() is None
+        assert self.reader.insider_ownership() is None
+        assert self.reader.ownership_breakdown() is None
+        assert self.reader.insider_trades() is None
+        assert self.reader.esg_scores() is None
+        assert self.reader.sec_filings() is None
+        assert self.reader.income_statement() is None
+        assert self.reader.balance_sheet() is None
+        assert self.reader.cashflow_statement() is None
+        assert self.reader.fund_statistics() is None
+        assert self.reader.holdings() is None
+        assert self.reader.logo() is None
 
 class TestCrypto:
     @classmethod
@@ -585,35 +542,21 @@ class TestCrypto:
             assert df.index.is_unique == True
     
     def test_missing_data(self):
-        with pytest.raises(DatasetError):
-            self.reader.analyst_recommendations()
-        with pytest.raises(DatasetError):
-            self.reader.recommendation_trend()
-        with pytest.raises(DatasetError):
-            self.reader.institutional_ownership()
-        with pytest.raises(DatasetError):
-            self.reader.fund_ownership()
-        with pytest.raises(DatasetError):
-            self.reader.insider_ownership()
-        with pytest.raises(DatasetError):
-            self.reader.ownership_breakdown()
-        with pytest.raises(DatasetError):
-            self.reader.insider_trades()
-        with pytest.raises(DatasetError):
-            self.reader.esg_scores()
-        with pytest.raises(DatasetError):
-            self.reader.sec_filings()
-        with pytest.raises(DatasetError):
-            self.reader.income_statement()
-        with pytest.raises(DatasetError):
-            self.reader.balance_sheet()
-        with pytest.raises(DatasetError):
-            self.reader.cashflow_statement()
-        with pytest.raises(DatasetError):
-            self.reader.fund_statistics()
-        with pytest.raises(DatasetError):
-            self.reader.holdings()
-        assert self.reader.logo() == b"\n"
+        assert self.reader.analyst_recommendations() is None
+        assert self.reader.recommendation_trend() is None
+        assert self.reader.institutional_ownership() is None
+        assert self.reader.fund_ownership() is None
+        assert self.reader.insider_ownership() is None
+        assert self.reader.ownership_breakdown() is None
+        assert self.reader.insider_trades() is None
+        assert self.reader.esg_scores() is None
+        assert self.reader.sec_filings() is None
+        assert self.reader.income_statement() is None
+        assert self.reader.balance_sheet() is None
+        assert self.reader.cashflow_statement() is None
+        assert self.reader.fund_statistics() is None
+        assert self.reader.holdings() is None
+        assert self.reader.logo() is None
 
 class TestIndex:
     @classmethod
@@ -631,36 +574,22 @@ class TestIndex:
             assert df.index.is_unique == True
     
     def test_missing_data(self):
-        assert self.reader.profile() == {}
-        with pytest.raises(DatasetError):
-            self.reader.analyst_recommendations()
-        with pytest.raises(DatasetError):
-            self.reader.recommendation_trend()
-        with pytest.raises(DatasetError):
-            self.reader.institutional_ownership()
-        with pytest.raises(DatasetError):
-            self.reader.fund_ownership()
-        with pytest.raises(DatasetError):
-            self.reader.insider_ownership()
-        with pytest.raises(DatasetError):
-            self.reader.ownership_breakdown()
-        with pytest.raises(DatasetError):
-            self.reader.insider_trades()
-        with pytest.raises(DatasetError):
-            self.reader.esg_scores()
-        with pytest.raises(DatasetError):
-            self.reader.sec_filings()
-        with pytest.raises(DatasetError):
-            self.reader.income_statement()
-        with pytest.raises(DatasetError):
-            self.reader.balance_sheet()
-        with pytest.raises(DatasetError):
-            self.reader.cashflow_statement()
-        with pytest.raises(DatasetError):
-            self.reader.fund_statistics()
-        with pytest.raises(DatasetError):
-            self.reader.holdings()
-        assert self.reader.logo() == b"\n"
+        assert self.reader.profile() is None
+        assert self.reader.analyst_recommendations() is None
+        assert self.reader.recommendation_trend() is None
+        assert self.reader.institutional_ownership() is None
+        assert self.reader.fund_ownership() is None
+        assert self.reader.insider_ownership() is None
+        assert self.reader.ownership_breakdown() is None
+        assert self.reader.insider_trades() is None
+        assert self.reader.esg_scores() is None
+        assert self.reader.sec_filings() is None
+        assert self.reader.income_statement() is None
+        assert self.reader.balance_sheet() is None
+        assert self.reader.cashflow_statement() is None
+        assert self.reader.fund_statistics() is None
+        assert self.reader.holdings() is None
+        assert self.reader.logo() is None
 
 
 class TestMutualFund:
@@ -744,29 +673,18 @@ class TestMutualFund:
             assert df.index.is_unique == True
     
     def test_missing_data(self):
-        with pytest.raises(DatasetError):
-            self.reader.analyst_recommendations()
-        with pytest.raises(DatasetError):
-            self.reader.recommendation_trend()
-        with pytest.raises(DatasetError):
-            self.reader.institutional_ownership()
-        with pytest.raises(DatasetError):
-            self.reader.fund_ownership()
-        with pytest.raises(DatasetError):
-            self.reader.insider_ownership()
-        with pytest.raises(DatasetError):
-            self.reader.ownership_breakdown()
-        with pytest.raises(DatasetError):
-            self.reader.insider_trades()
-        with pytest.raises(DatasetError):
-            self.reader.sec_filings()
-        with pytest.raises(DatasetError):
-            self.reader.income_statement()
-        with pytest.raises(DatasetError):
-            self.reader.balance_sheet()
-        with pytest.raises(DatasetError):
-            self.reader.cashflow_statement()
-        assert self.reader.logo() == b"\n"
+        assert self.reader.analyst_recommendations() is None
+        assert self.reader.recommendation_trend() is None
+        assert self.reader.institutional_ownership() is None
+        assert self.reader.fund_ownership() is None
+        assert self.reader.insider_ownership() is None
+        assert self.reader.ownership_breakdown() is None
+        assert self.reader.insider_trades() is None
+        assert self.reader.sec_filings() is None
+        assert self.reader.income_statement() is None
+        assert self.reader.balance_sheet() is None
+        assert self.reader.cashflow_statement() is None
+        assert self.reader.logo() is None
 
 
 class TestOption:
@@ -782,33 +700,19 @@ class TestOption:
             assert self.reader.historical_data(frequency=freq) is None
     
     def test_missing_data(self):
-        assert self.reader.profile() == {}
-        with pytest.raises(DatasetError):
-            self.reader.analyst_recommendations()
-        with pytest.raises(DatasetError):
-            self.reader.recommendation_trend()
-        with pytest.raises(DatasetError):
-            self.reader.institutional_ownership()
-        with pytest.raises(DatasetError):
-            self.reader.fund_ownership()
-        with pytest.raises(DatasetError):
-            self.reader.insider_ownership()
-        with pytest.raises(DatasetError):
-            self.reader.ownership_breakdown()
-        with pytest.raises(DatasetError):
-            self.reader.insider_trades()
-        with pytest.raises(DatasetError):
-            self.reader.esg_scores()
-        with pytest.raises(DatasetError):
-            self.reader.sec_filings()
-        with pytest.raises(DatasetError):
-            self.reader.income_statement()
-        with pytest.raises(DatasetError):
-            self.reader.balance_sheet()
-        with pytest.raises(DatasetError):
-            self.reader.cashflow_statement()
-        with pytest.raises(DatasetError):
-            self.reader.fund_statistics()
-        with pytest.raises(DatasetError):
-            self.reader.holdings()
-        assert self.reader.logo() == b"\n"
+        assert self.reader.profile() is None
+        assert self.reader.analyst_recommendations() is None
+        assert self.reader.recommendation_trend() is None
+        assert self.reader.institutional_ownership() is None
+        assert self.reader.fund_ownership() is None
+        assert self.reader.insider_ownership() is None
+        assert self.reader.ownership_breakdown() is None
+        assert self.reader.insider_trades() is None
+        assert self.reader.esg_scores() is None
+        assert self.reader.sec_filings() is None
+        assert self.reader.income_statement() is None
+        assert self.reader.balance_sheet() is None
+        assert self.reader.cashflow_statement() is None
+        assert self.reader.fund_statistics() is None
+        assert self.reader.holdings() is None
+        assert self.reader.logo() is None
