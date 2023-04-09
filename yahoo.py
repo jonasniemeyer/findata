@@ -9,11 +9,11 @@ from bs4 import BeautifulSoup
 from html import unescape
 from finance_data.utils import (
     TickerError,
-    DatasetError,
     HEADERS,
     PLACEHOLDER_LOGO,
     SERVER_ERROR_MESSAGE
 )
+from typing import Optional
 
 class YahooReader:
     _main_url = "https://query1.finance.yahoo.com/v10/finance/quoteSummary/{}"
@@ -50,26 +50,26 @@ class YahooReader:
         if self._name is not None:
             self._name = unescape(self._name)
 
-    def __repr__(self):
-        return f"YahooReader({self.security_type}|{self.name}|{self.ticker})"
+    def __repr__(self) -> str:
+        return f"YahooReader({self.ticker}|{self.name}|{self.security_type})"
 
     @property
-    def ticker(self):
+    def ticker(self) -> str:
         return self._ticker
     
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
     
     @property
-    def security_type(self):
+    def security_type(self) -> str:
         return self._security_type
     
-    def profile(self) -> dict:        
+    def profile(self) -> Optional[dict]:
         try:
             data = self._stored_data["assetProfile"].copy()
         except:
-            return {}
+            return None
         
         if "phone" not in data.keys() or data["phone"] == "N/A":
             data["phone"] = None
@@ -126,19 +126,21 @@ class YahooReader:
                 data.pop(key)
         return data
 
-    def logo(self) -> bytes:
+    def logo(self) -> Optional[bytes]:
         response = requests.get(
             url=f"https://storage.googleapis.com/iexcloud-hl37opg/api/logos/{self.ticker.replace('-', '.')}.png",
             headers=HEADERS
         ).content
         if response == PLACEHOLDER_LOGO or response == SERVER_ERROR_MESSAGE:
-            if "website" in self.profile().keys():
+            if self.profile() is not None and "website" in self.profile().keys():
                 response = requests.get(
                     url=f"https://logo.clearbit.com/{self.profile()['website']}",
                     headers=HEADERS
                 ).content
             else:
-                response = b"\n"
+                response = None
+        if response == b"\n":
+            response = None
         return response
     
     def historical_data(
@@ -148,7 +150,7 @@ class YahooReader:
         end=dt.date.today(),
         returns=True,
         timestamps=False
-    ) -> dict:
+    ) -> Optional[dict]:
         """
         frequency : str
             1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo
@@ -245,7 +247,7 @@ class YahooReader:
             ts = data["chart"]["result"][0]["timestamp"]
             history = data["chart"]["result"][0]["indicators"]["quote"][0]
         except (KeyError, TypeError):
-            raise DatasetError(f'No prices for security with ticker "{self.ticker}"')
+            return None
         
         # dividend and split data
         if "events" in data["chart"]["result"][0]:
@@ -374,11 +376,11 @@ class YahooReader:
             }
         }
     
-    def analyst_recommendations(self, timestamps=False) -> list:
+    def analyst_recommendations(self, timestamps=False) -> Optional[list]:
         try:
             data = self._stored_data["upgradeDowngradeHistory"]["history"]
         except:
-            raise DatasetError(f"no analyst ratings found for ticker {self.ticker}")
+            return None
         for dct in data:
             assert dct["action"] in ("main", "reit", "init", "up", "down")
         data = [
@@ -394,11 +396,11 @@ class YahooReader:
         
         return data
     
-    def recommendation_trend(self) -> dict:
+    def recommendation_trend(self) -> Optional[dict]:
         try:
             data = self._stored_data["recommendationTrend"]["trend"]
         except:
-            raise DatasetError(f"no recommendation trend found for ticker {self.ticker}")
+            return None
         data = {
             entry["period"]: {
                 "count": int(entry["strongBuy"] + entry["buy"] + entry["hold"] + entry["sell"] + entry["strongSell"]),
@@ -432,7 +434,7 @@ class YahooReader:
         strike_min=None,
         strike_max=None,
         timestamps=False
-    ) -> dict:
+    ) -> Optional[dict]:
         """
         date : int
             If date is set to an integer, only options with that specific maturity date are returned
@@ -467,7 +469,7 @@ class YahooReader:
         try:
             options_list = options_list["optionChain"]["result"][0]["options"]
         except:
-            raise DatasetError(f"no options found for ticker {self.ticker}")
+            return None
         
         options = {"calls": [], "puts": []}
         for dct in options_list:
@@ -524,11 +526,11 @@ class YahooReader:
         
         return options
     
-    def institutional_ownership(self, timestamps=False) -> list:        
+    def institutional_ownership(self, timestamps=False) -> Optional[list]:
         try:
             data = self._stored_data["institutionOwnership"]["ownershipList"]
         except:
-            raise DatasetError(f"no institutional data found for ticker {self.ticker}")
+            return None
         
         data = [
             {
@@ -543,11 +545,11 @@ class YahooReader:
         
         return data
     
-    def fund_ownership(self, timestamps=False) -> list:        
+    def fund_ownership(self, timestamps=False) -> Optional[list]:
         try:
             data = self._stored_data["fundOwnership"]["ownershipList"]
         except:
-            raise DatasetError(f"no fund ownership data found for ticker {self.ticker}")
+            return None
         
         data = [
             {
@@ -562,11 +564,11 @@ class YahooReader:
         
         return data
     
-    def insider_ownership(self, timestamps=False) -> list:
+    def insider_ownership(self, timestamps=False) -> Optional[list]:
         try:
             data = self._stored_data["insiderHolders"]["holders"]
         except:
-            raise DatasetError(f"no insider holders found for ticker {self.ticker}")
+            return None
         
         data = [
             {
@@ -586,11 +588,11 @@ class YahooReader:
         
         return data
     
-    def ownership_breakdown(self) -> dict:        
+    def ownership_breakdown(self) -> Optional[dict]:
         try:
             data = self._stored_data["majorHoldersBreakdown"]
         except:
-            raise DatasetError(f"no ownership breakdown data found for ticker {self.ticker}")
+            return None
         
         data["insider_ownership"] = round(data.pop("insidersPercentHeld"), 4)
         data["institutions_ownership"] = round(data.pop("institutionsPercentHeld"), 4)
@@ -600,11 +602,11 @@ class YahooReader:
         data.pop("maxAge")
         return data
     
-    def insider_trades(self, timestamps=False) -> list:        
+    def insider_trades(self, timestamps=False) -> Optional[list]:
         try:
             data  = self._stored_data["insiderTransactions"]["transactions"]
         except:
-            raise DatasetError(f"no insider trades found for ticker {self.ticker}")
+            return None
             
         data = [
             {
@@ -621,11 +623,11 @@ class YahooReader:
         
         return data
     
-    def esg_scores(self, timestamps=False) -> dict:        
+    def esg_scores(self, timestamps=False) -> Optional[dict]:
         try:
             data = self._stored_data["esgScores"]
         except:
-            raise DatasetError(f"no esg scores found for ticker {self.ticker}")
+            return None
         
         scores = {
             "date": (
@@ -662,11 +664,11 @@ class YahooReader:
         
         return scores
     
-    def sec_filings(self, timestamps=False) -> dict:        
+    def sec_filings(self, timestamps=False) -> Optional[list]:
         try:
             data = self._stored_data["secFilings"]["filings"]
         except:
-            raise DatasetError(f"no sec filings found for ticker {self.ticker}")
+            return None
             
         data = [
             {
@@ -681,11 +683,11 @@ class YahooReader:
             
         return data
     
-    def fund_statistics(self) -> dict:        
+    def fund_statistics(self) -> Optional[dict]:
         try:
             data = self._stored_data["fundProfile"]
         except:
-            raise DatasetError(f"no fund holdings found for ticker {self.ticker}")
+            return None
         
         scores = {
             "company": data["family"],
@@ -708,11 +710,11 @@ class YahooReader:
             
         return scores
     
-    def holdings(self) -> dict:
+    def holdings(self) -> Optional[dict]:
         try:
             data = self._stored_data["topHoldings"]
         except:
-            raise DatasetError(f"no fund holdings found for ticker {self.ticker}")
+            return None
             
         data = {
             "equity_share": round(data["stockPosition"], 4),
@@ -759,8 +761,7 @@ class YahooReader:
 
         return data
     
-    def earnings_history(self, timestamps=False) -> list:
-        
+    def earnings_history(self, timestamps=False) -> Optional[list]:
         last_page_reached = False
         offset = 0
         earnings = []
@@ -781,7 +782,7 @@ class YahooReader:
             try:
                 assert len(tables) == 1
             except AssertionError:
-                raise DatasetError(f"no earnings history for ticker {self.ticker}")
+                return None
             table = tables[0]
 
             rows = table.find("tbody").find_all("tr")
@@ -869,7 +870,7 @@ class YahooReader:
         self,
         quarterly=False,
         timestamps=False
-    ) -> dict:
+    ) -> Optional[dict]:
         data = self._get_fundamental_data(
             statement_type="income_statement",
             quarterly=quarterly,
@@ -881,7 +882,7 @@ class YahooReader:
         self,
         quarterly=False,
         timestamps=False
-    ) -> dict:
+    ) -> Optional[dict]:
         data = self._get_fundamental_data(
             statement_type="balance_sheet",
             quarterly=quarterly,
@@ -893,7 +894,7 @@ class YahooReader:
         self,
         quarterly=False,
         timestamps=False
-    ) -> dict:
+    ) -> Optional[dict]:
         data = self._get_fundamental_data(
             statement_type="cashflow_statement",
             quarterly=quarterly,
@@ -906,7 +907,7 @@ class YahooReader:
         statement_type,
         quarterly=False,
         timestamps=False,
-    ) -> dict:
+    ) -> Optional[dict]:
         # parse json data
         try:
             if statement_type == "income_statement":
@@ -928,7 +929,7 @@ class YahooReader:
                 else:
                     raw_data = self._stored_data["cashflowStatementHistory"]["cashflowStatements"]
         except:
-            raise DatasetError(f"no {statement_type} data found for ticker {self.ticker}")
+            return None
 
         json_name_conversion = {
             "income_statement": {
@@ -1333,12 +1334,12 @@ class YahooReader:
         ).json()
         
         if data["quoteSummary"]["error"] is not None:
-            raise TickerError(f"no data found for ticker {self.ticker}")
+            raise TickerError(f"no data found for ticker '{self.ticker}'")
         data = data["quoteSummary"]["result"][0]
         return data
 
     @classmethod
-    def get_ticker(cls, identifier: str, pause: int = 60) -> str:
+    def get_ticker(cls, identifier: str, pause: int = 60) -> Optional[dict]:
         """
         This classmethod takes an isin or other identifier and returns the corresponding Yahoo ticker if it exists.
         If there is no corresponding ticker found, a TickerError is raised instead.
@@ -1362,9 +1363,9 @@ class YahooReader:
                     time.sleep(pause)
             try:
                 ticker = re.findall(f"{cls._quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response.url)[0].strip()
-                return ticker
             except IndexError:
-                raise TickerError(f'Cannot find a Ticker that belongs to the identifier "{identifier}"')
+                ticker = None
+            return ticker
 
     @staticmethod
     def currencies() -> list:
@@ -1382,5 +1383,4 @@ class YahooReader:
             }
             for item in data
         ]
-
         return data
