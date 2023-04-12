@@ -26,29 +26,14 @@ class YahooReader:
     def __init__(
         self,
         ticker=None,
-        isin=None,
         other_identifier=None
     ) -> None:
         if ticker:
             self._ticker = ticker.upper()
+        elif other_identifier:
+            self._ticker = YahooReader.get_ticker(other_identifier)
         else:
-            if isin:
-                search_input = isin.upper()
-            elif other_identifier:
-                search_input = other_identifier
-            else:
-                raise ValueError("YahooReader has to be called with ticker, isin or other_identifier")
-
-            self._ticker = YahooReader.get_ticker(search_input)
-        
-        self._stored_data = self._get_stored_data()
-        
-        self._security_type = self._stored_data["quoteType"]["quoteType"]
-        self._name = self._stored_data["quoteType"]["longName"]
-        if self._name is None:
-            self._name =  self._stored_data["quoteType"]["shortName"]
-        if self._name is not None:
-            self._name = unescape(self._name)
+            raise ValueError("YahooReader has to be called with ticker or other_identifier")
 
     def __repr__(self) -> str:
         return f"YahooReader({self.ticker}|{self.name}|{self.security_type})"
@@ -59,15 +44,27 @@ class YahooReader:
     
     @property
     def name(self) -> str:
-        return self._name
+        if not hasattr(self, "_raw_data"):
+            self._raw_data = self._request_data()
+        name = self._raw_data["quoteType"]["longName"]
+        if name is None:
+            name =  self._raw_data["quoteType"]["shortName"]
+        if name is not None:
+            name = unescape(name)
+        return name
     
     @property
     def security_type(self) -> str:
-        return self._security_type
+        if not hasattr(self, "_raw_data"):
+            self._raw_data = self._request_data()
+        return self._raw_data["quoteType"]["quoteType"]
     
     def profile(self) -> Optional[dict]:
+        if not hasattr(self, "_raw_data"):
+            self._raw_data = self._request_data()
+
         try:
-            data = self._stored_data["assetProfile"].copy()
+            data = self._raw_data["assetProfile"].copy()
         except:
             return None
         
@@ -228,14 +225,14 @@ class YahooReader:
             "includeAdjustedClose": True
         }
 
-        data = requests.get(
+        reponse = requests.get(
             url=self._price_url.format(self.ticker),
             params=parameters,
             headers=HEADERS
         )
 
-        url = data.url
-        data = data.json()
+        url = reponse.url
+        data = reponse.json()
         
         try:
             meta_data = data["chart"]["result"][0]["meta"]
@@ -377,10 +374,14 @@ class YahooReader:
         }
     
     def analyst_recommendations(self, timestamps=False) -> Optional[list]:
+        if not hasattr(self, "_raw_data"):
+            self._raw_data = self._request_data()
+
         try:
-            data = self._stored_data["upgradeDowngradeHistory"]["history"]
+            data = self._raw_data["upgradeDowngradeHistory"]["history"]
         except:
             return None
+
         for dct in data:
             assert dct["action"] in ("main", "reit", "init", "up", "down")
         data = [
@@ -397,10 +398,14 @@ class YahooReader:
         return data
     
     def recommendation_trend(self) -> Optional[dict]:
+        if not hasattr(self, "_raw_data"):
+            self._raw_data = self._request_data()
+
         try:
-            data = self._stored_data["recommendationTrend"]["trend"]
+            data = self._raw_data["recommendationTrend"]["trend"]
         except:
             return None
+
         data = {
             entry["period"]: {
                 "count": int(entry["strongBuy"] + entry["buy"] + entry["hold"] + entry["sell"] + entry["strongSell"]),
@@ -425,7 +430,7 @@ class YahooReader:
         data["-1month"] = data.pop("-1m")
         data["-2months"] = data.pop("-2m")
         data["-3months"] = data.pop("-3m")
-        
+
         return data
     
     def options(
@@ -527,8 +532,11 @@ class YahooReader:
         return options
     
     def institutional_ownership(self, timestamps=False) -> Optional[list]:
+        if not hasattr(self, "_raw_data"):
+            self._raw_data = self._request_data()
+
         try:
-            data = self._stored_data["institutionOwnership"]["ownershipList"]
+            data = self._raw_data["institutionOwnership"]["ownershipList"]
         except:
             return None
         
@@ -542,12 +550,15 @@ class YahooReader:
             }
             for entry in data
         ]
-        
+
         return data
     
     def fund_ownership(self, timestamps=False) -> Optional[list]:
+        if not hasattr(self, "_raw_data"):
+            self._raw_data = self._request_data()
+
         try:
-            data = self._stored_data["fundOwnership"]["ownershipList"]
+            data = self._raw_data["fundOwnership"]["ownershipList"]
         except:
             return None
         
@@ -561,12 +572,15 @@ class YahooReader:
             }
             for entry in data
         ]
-        
+
         return data
     
     def insider_ownership(self, timestamps=False) -> Optional[list]:
+        if not hasattr(self, "_raw_data"):
+            self._raw_data = self._request_data()
+
         try:
-            data = self._stored_data["insiderHolders"]["holders"]
+            data = self._raw_data["insiderHolders"]["holders"]
         except:
             return None
         
@@ -585,12 +599,15 @@ class YahooReader:
             }
             for entry in data
         ]
-        
+
         return data
     
     def ownership_breakdown(self) -> Optional[dict]:
+        if not hasattr(self, "_raw_data"):
+            self._raw_data = self._request_data()
+
         try:
-            data = self._stored_data["majorHoldersBreakdown"]
+            data = self._raw_data["majorHoldersBreakdown"]
         except:
             return None
         
@@ -603,8 +620,11 @@ class YahooReader:
         return data
     
     def insider_trades(self, timestamps=False) -> Optional[list]:
+        if not hasattr(self, "_raw_data"):
+            self._raw_data = self._request_data()
+
         try:
-            data  = self._stored_data["insiderTransactions"]["transactions"]
+            data  = self._raw_data["insiderTransactions"]["transactions"]
         except:
             return None
             
@@ -620,12 +640,15 @@ class YahooReader:
             }
             for entry in data
         ]
-        
+
         return data
     
     def esg_scores(self, timestamps=False) -> Optional[dict]:
+        if not hasattr(self, "_raw_data"):
+            self._raw_data = self._request_data()
+
         try:
-            data = self._stored_data["esgScores"]
+            data = self._raw_data["esgScores"]
         except:
             return None
         
@@ -661,12 +684,15 @@ class YahooReader:
         }.items():
             if old_key in data.keys():
                 scores["involvements"][new_key] = data[old_key]
-        
+
         return scores
     
     def sec_filings(self, timestamps=False) -> Optional[list]:
+        if not hasattr(self, "_raw_data"):
+            self._raw_data = self._request_data()
+
         try:
-            data = self._stored_data["secFilings"]["filings"]
+            data = self._raw_data["secFilings"]["filings"]
         except:
             return None
             
@@ -680,12 +706,15 @@ class YahooReader:
             }
             for entry in data
         ]
-            
+
         return data
     
     def fund_statistics(self) -> Optional[dict]:
+        if not hasattr(self, "_raw_data"):
+            self._raw_data = self._request_data()
+
         try:
-            data = self._stored_data["fundProfile"]
+            data = self._raw_data["fundProfile"]
         except:
             return None
         
@@ -707,12 +736,15 @@ class YahooReader:
             scores["aum"] = round(data["feesExpensesInvestment"]["totalNetAssets"] * 10_000, 2)
         except KeyError:
             pass
-            
+
         return scores
     
     def holdings(self) -> Optional[dict]:
+        if not hasattr(self, "_raw_data"):
+            self._raw_data = self._request_data()
+
         try:
-            data = self._stored_data["topHoldings"]
+            data = self._raw_data["topHoldings"]
         except:
             return None
             
@@ -831,7 +863,7 @@ class YahooReader:
                 last_page_reached = True
             elif next_page_button_disabled is None:
                 offset += 100
-        
+
         return earnings
     
     def financial_statement(
@@ -908,26 +940,29 @@ class YahooReader:
         quarterly=False,
         timestamps=False,
     ) -> Optional[dict]:
+        if not hasattr(self, "_raw_data"):
+            self._raw_data = self._request_data()
+
         # parse json data
         try:
             if statement_type == "income_statement":
                 suffix = "financials"
                 if quarterly:
-                    raw_data = self._stored_data["incomeStatementHistoryQuarterly"]["incomeStatementHistory"]
+                    raw_data = self._raw_data["incomeStatementHistoryQuarterly"]["incomeStatementHistory"]
                 else:
-                    raw_data = self._stored_data["incomeStatementHistory"]["incomeStatementHistory"]
+                    raw_data = self._raw_data["incomeStatementHistory"]["incomeStatementHistory"]
             elif statement_type == "balance_sheet":
                 suffix = "balance-sheet"
                 if quarterly:
-                    raw_data = self._stored_data["balanceSheetHistoryQuarterly"]["balanceSheetStatements"]
+                    raw_data = self._raw_data["balanceSheetHistoryQuarterly"]["balanceSheetStatements"]
                 else:
-                    raw_data = self._stored_data["balanceSheetHistory"]["balanceSheetStatements"]
+                    raw_data = self._raw_data["balanceSheetHistory"]["balanceSheetStatements"]
             elif statement_type == "cashflow_statement":
                 suffix = "cash-flow"
                 if quarterly:
-                    raw_data = self._stored_data["cashflowStatementHistoryQuarterly"]["cashflowStatements"]
+                    raw_data = self._raw_data["cashflowStatementHistoryQuarterly"]["cashflowStatements"]
                 else:
-                    raw_data = self._stored_data["cashflowStatementHistory"]["cashflowStatements"]
+                    raw_data = self._raw_data["cashflowStatementHistory"]["cashflowStatements"]
         except:
             return None
 
@@ -1283,7 +1318,7 @@ class YahooReader:
                     ordered_data[date][var] = None
         return ordered_data
     
-    def _get_stored_data(self) -> dict:
+    def _request_data(self) -> dict:
         parameters = {
             "modules": ",".join(
                 (
@@ -1342,7 +1377,7 @@ class YahooReader:
     def get_ticker(cls, identifier: str, pause: int = 60) -> Optional[dict]:
         """
         This classmethod takes an isin or other identifier and returns the corresponding Yahoo ticker if it exists.
-        If there is no corresponding ticker found, a TickerError is raised instead.
+        If there is no corresponding ticker found, None is returned instead.
         """
         params = {"yfin-usr-qry": identifier}
         response = requests.get(cls._quote_url, params=params, headers=HEADERS)
