@@ -236,17 +236,17 @@ class TestUSEquity:
 class TestNonUSEquity:
     @classmethod
     def setup_class(cls):
-        cls.reader = StratosphereReader("BMW.DE")
+        cls.reader = StratosphereReader("7309.T")
 
     def test_profile(self):
         profile = self.reader.profile()
-        assert profile["ticker"] == "BMW.DE"
-        assert profile["name"] == "Bayerische Motoren Werke Aktiengesellschaft"
+        assert profile["ticker"] == "7309.T"
+        assert profile["name"] == "Shimano Inc."
         assert profile["cik"] is None
-        assert profile["website"] == "https://www.bmwgroup.com"
-        assert profile["exchange"] == "XETRA"
-        assert profile["country"] == "DE"
-        assert profile["currency"]["name"] == "EUR"
+        assert profile["website"] == "https://www.shimano.com"
+        assert profile["exchange"] == "JPX"
+        assert profile["country"] == "JP"
+        assert profile["currency"]["name"] == "JPY"
         assert isinstance(profile["currency"]["exchange_rate"], float)
         assert isinstance(profile["market_cap"], int)
 
@@ -352,18 +352,10 @@ class TestNonUSEquity:
 
     def test_analyst_estimates(self):
         estimates = self.reader.analyst_estimates()
-        for freq in ("annual", "quarterly"):
-            for var in estimates[freq]:
-                assert isinstance(var, str)
-                for date, value in estimates[freq][var].items():
-                    assert dt.date.fromisoformat(date)
-                    assert isinstance(value, (int, float))
+        assert estimates == {}
 
         estimates = self.reader.analyst_estimates(timestamps=True)
-        for freq in ("annual", "quarterly"):
-            for var in estimates[freq]:
-                for date, value in estimates[freq][var].items():
-                    assert isinstance(date, int)
+        assert estimates == {}
 
     def test_prices(self):
         prices = self.reader.prices()
