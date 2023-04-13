@@ -128,17 +128,21 @@ class YahooReader:
             url=f"https://storage.googleapis.com/iexcloud-hl37opg/api/logos/{self.ticker.replace('-', '.')}.png",
             headers=HEADERS
         ).content
-        if response == PLACEHOLDER_LOGO or response == SERVER_ERROR_MESSAGE:
-            if self.profile() is not None and "website" in self.profile().keys():
-                response = requests.get(
-                    url=f"https://logo.clearbit.com/{self.profile()['website']}",
-                    headers=HEADERS
-                ).content
-            else:
-                response = None
-        if response == b"\n":
-            response = None
-        return response
+        if response != PLACEHOLDER_LOGO and response != SERVER_ERROR_MESSAGE:
+            if response == b"\n":
+                return None
+            return response
+
+        if self.profile() is not None and "website" in self.profile().keys():
+            response = requests.get(
+                url=f"https://logo.clearbit.com/{self.profile()['website']}",
+                headers=HEADERS
+            ).content
+            if response == b"\n":
+                return None
+            return response
+
+        return None
     
     def historical_data(
         self,
@@ -316,6 +320,8 @@ class YahooReader:
                 df_div.index = pd.to_datetime(df_div.index, unit="s")
                 df_splits.index = pd.to_datetime(df_splits.index, unit="s")
 
+        if len(prices.index) < 2:
+            return None
         if prices.index[-1] == prices.index[-2]:
             prices = prices[:-1]
         
