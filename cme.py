@@ -105,12 +105,10 @@ class CMEReader:
 
         html = self.driver.page_source
         soup = BeautifulSoup(html, "lxml")
-        button = soup.find("select", {"class": "dropdown-toggle"})
-        options = button.find_all("option")
 
         time.sleep(1)
         try:
-            button_expand = self.driver.find_element(by=By.XPATH, value="/html/body/main/div/div[3]/div[2]/div/div/div/div/div/div[2]/div/div/div/div/div/div[8]/div[2]/button")
+            button_expand = self.driver.find_element(by=By.XPATH, value="/html/body/main/div/div[3]/div[3]/div/div/div/div/div/div[2]/div/div/div/div/div/div[9]/div[2]/button")
         except common.exceptions.NoSuchElementException:
             y_distance = 0
         else:
@@ -119,7 +117,7 @@ class CMEReader:
             time.sleep(1)
             button_expand.click()
 
-        self.driver.execute_script(f"window.scrollBy(0, 200)")
+        self.driver.execute_script(f"window.scrollBy(0, 600)")
         deleted = False
         index = 0
         while not deleted and index < 20:
@@ -134,31 +132,26 @@ class CMEReader:
 
         self.driver.execute_script(f"window.scrollBy(0, {-y_distance})")
         time.sleep(1)
-        
-        date = pd.to_datetime(options[0].get("value"))
-        if self.timestamps:
-            data[int(date.timestamp())] = self._parse_table()
-        else:
-            data[date.date().isoformat()] = self._parse_table()
 
-        time.sleep(1)
-        for index, option in enumerate(options):
-            if index == 0:
-                continue
-            date = pd.to_datetime(option.get("value"))
-            button_dates = self.driver.find_element(by=By.XPATH, value="/html/body/main/div/div[3]/div[3]/div/div/div/div/div/div[2]/div/div/div/div/div/div[5]/div/div/div/div/select")
-            button_dates.click()
-            button_refresh = self.driver.find_element(by=By.XPATH, value=f"/html/body/main/div/div[3]/div[3]/div/div/div/div/div/div[2]/div/div/div/div/div/div[5]/div/div/div/div/select/option[{index+1}]")
-            button_refresh.click()
+        div = self.driver.find_element(by=By.XPATH, value="/html/body/main/div/div[3]/div[3]/div/div/div/div/div/div[2]/div/div/div/div/div/div[5]/div/div/div")
+        button = div.find_element(by=By.XPATH, value=".//button")
+        button.click()
+        no_dates = len(div.find_elements(by=By.CSS_SELECTOR, value="div[role='presentation']"))
+        assert no_dates != 0
+        for index in range(1, no_dates):
+            date_btn = self.driver.find_element(by=By.XPATH, value=f"/html/body/main/div/div[3]/div[3]/div/div/div/div/div/div[2]/div/div/div/div/div/div[5]/div/div/div/div/div/div[1]/div[2]/div/div/div/div/div[{index}]")
+            date = pd.to_datetime(date_btn.get_attribute("data-value"))
+            date_btn.click()
+            time.sleep(2)
             if self.timestamps:
                 data[int(date.timestamp())] = self._parse_table()
             else:
                 data[date.date().isoformat()] = self._parse_table()
-        
+            button.click()
+
         return data
     
     def _parse_table(self) -> pd.DataFrame:
-        time.sleep(1)
         html = self.driver.page_source
         df = pd.read_html(html)[0]
         df = df.set_index("Month")
