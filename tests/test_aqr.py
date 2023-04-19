@@ -1,4 +1,3 @@
-from datetime import time
 from finance_data import AQRReader
 import pandas as pd
 
