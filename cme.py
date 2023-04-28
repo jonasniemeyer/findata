@@ -138,7 +138,7 @@ class CMEReader:
         button.click()
         no_dates = len(div.find_elements(by=By.CSS_SELECTOR, value="div[role='presentation']"))
         assert no_dates != 0
-        for index in range(1, no_dates):
+        for index in range(1, no_dates+1):
             date_btn = self.driver.find_element(by=By.XPATH, value=f"/html/body/main/div/div[3]/div[3]/div/div/div/div/div/div[2]/div/div/div/div/div/div[5]/div/div/div/div/div/div[1]/div[2]/div/div/div/div/div[{index}]")
             date = pd.to_datetime(date_btn.get_attribute("data-value"))
             date_btn.click()

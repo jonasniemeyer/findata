@@ -69,9 +69,9 @@ class MacrotrendsReader:
         The driver waits for a cookie button to appear, clicks it, and then moves to the slider of the table
         """
         if not hasattr(self, "driver"):
-            options = webdriver.ChromeOptions() 
-            options.add_experimental_option("excludeSwitches", ["enable-logging"])
             if browser == "chrome":
+                options = webdriver.ChromeOptions()
+                options.add_experimental_option("excludeSwitches", ["enable-logging"])
                 self.driver = webdriver.Chrome(options=options)
             else:
                 raise NotImplementedError

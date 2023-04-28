@@ -26,7 +26,7 @@ def sec_mutualfunds() -> list:
     items = requests.get("https://www.sec.gov/files/company_tickers_mf.json", headers=HEADERS).json()["data"]
     items = [
         {
-            "ticker": item[3].replace("(", "").replace(")", "").upper() if item[3] != "" else None,
+            "ticker": item[3].replace("(", "").replace(")", "").upper() if item[3] not in ("", "N/A") else None,
             "class_cik": item[2].upper(),
             "series_cik": item[1].upper(),
             "entity_cik": item[0]
