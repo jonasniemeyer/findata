@@ -87,7 +87,10 @@ class StratosphereReader:
         new = {"annual": {}, "quarterly": {}}
         for freq in ("annual", "quarterly"):
             for var in old[freq]:
-                if re.findall("(\([mM]\))", var):
+                if re.findall("(\([bB]\))", var):
+                    uncompressed_var = re.sub("( \([bB]\))", "", var)
+                    multiplicator = 1_000_000_000
+                elif re.findall("(\([mM]\))", var):
                     uncompressed_var = re.sub("( \([mM]\))", "", var)
                     multiplicator = 1_000_000
                 elif re.findall("(\([tT]housands\))", var):
