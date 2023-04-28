@@ -93,6 +93,10 @@ class YahooReader:
                 data["description"] = unescape(data["description"])
         if "website" in data.keys():
             data["website"] = data["website"].replace("http:", "https:")
+        if "industry" in data.keys():
+            data["industry"] = None if data["industry"] == "" else data["industry"]
+        if "sector" in data.keys():
+            data["sector"] = None if data["sector"] == "" else data["sector"]
         data["executives"] = [
             {
                 "name": entry["name"],
@@ -388,17 +392,18 @@ class YahooReader:
         except:
             return None
 
-        for dct in data:
-            assert dct["action"] in ("main", "reit", "init", "up", "down")
         data = [
             {
                 "date": (dct["epochGradeDate"] if timestamps else (dt.date(1970, 1, 1) + dt.timedelta(seconds=dct["epochGradeDate"])).isoformat()),
-                "company": dct["firm"],
-                "old": dct["toGrade"] if dct["action"] in ("main", "reit") else None if dct["action"] == "init" else dct["fromGrade"],
-                "new": dct["toGrade"],
-                "change": dct["action"]
+                "company": dct["firm"] if dct["firm"] != "" else None,
+                "old": (
+                    dct["toGrade"].title() if dct["action"] in ("main", "reit") and dct["toGrade"] != ""
+                    else (None if dct["action"] == "init" else (dct["fromGrade"].title() if dct["fromGrade"] != "" else None))
+                ),
+                "new": dct["toGrade"].title() if dct["toGrade"] != "" else None,
+                "change": dct["action"].title() if dct["action"] != "" else None
             }
-            for dct in data
+            for dct in data if dct["action"] in ("main", "reit", "init", "up", "down")
         ]
         
         return data
@@ -849,7 +854,7 @@ class YahooReader:
 
                 if estimate is not None and actual is not None:
                     absolute_diff = actual - estimate
-                    relative_diff = round(absolute_diff/abs(estimate), 4)
+                    relative_diff = round(absolute_diff/abs(estimate), 4) if estimate != 0 else None
                 else:
                     absolute_diff = None
                     relative_diff = None
