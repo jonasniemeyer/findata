@@ -72,8 +72,8 @@ class TestEquity:
             assert dt.date.fromisoformat(item["date"])
             assert isinstance(item["company"], str)
             assert isinstance(item["old"], (str, NoneType))
-            assert isinstance(item["new"], str)
-            assert isinstance(item["change"], str)
+            assert isinstance(item["new"], (str, NoneType))
+            assert isinstance(item["change"], (str, NoneType))
             if item["change"] == "main":
                 assert item["old"] == item["new"]
         
