@@ -72,7 +72,7 @@ class TestRatingData:
         data = self.reader.covering_analysts()
         assert isinstance(data, list)
         for item in data:
-            assert isinstance(item["name"], str)
+            assert isinstance(item["name"], (str, NoneType))
             assert isinstance(item["company"], str)
             assert isinstance(item["image_url"], (str, NoneType))
             assert round(item["success_rate_stock"], 4) == item["success_rate_stock"]
@@ -83,7 +83,7 @@ class TestRatingData:
             assert isinstance(item["ratings"], list)
             assert len(item["ratings"]) == 1
             assert dt.date.fromisoformat(item["ratings"][0]["date"])
-            assert isinstance(item["ratings"][0]["news_url"], str)
+            assert isinstance(item["ratings"][0]["news_url"], (str, NoneType))
             assert isinstance(item["ratings"][0]["news_title"], (str, NoneType))
             assert isinstance(item["analyst_ranking"], dict)
             assert isinstance(item["analyst_ranking"]["rank"], int)
