@@ -112,6 +112,7 @@ class YahooReader:
         if data["executives"] == []:
             data.pop("executives")
         for key in (
+            "industryDisp",
             "companyOfficers",
             "auditRisk",
             "boardRisk",
