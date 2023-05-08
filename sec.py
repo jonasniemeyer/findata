@@ -1394,6 +1394,7 @@ class FilingNPORT(_SECFiling):
         "EQT": "Equity",
         "GDR": "Global depositary receipt",
         "LON": "Loan",
+        "MM": "Money market",
         "PLCMO": "Private label collateralized mortgage obligations",
         "RA": "Repurchase agreement",
         "RE": "Real estate",
@@ -1555,7 +1556,7 @@ class FilingNPORT(_SECFiling):
                 identifier["ticker"] = ticker_value
             other = other_identifier.find_all("other")
             for item in other:
-                other_name = item.get("otherdesc")
+                other_name = item.get("otherdesc").lower()
                 other_value = item.get("value")
                 identifier[other_name] = other_value
 
@@ -1723,7 +1724,7 @@ class FilingNPORT(_SECFiling):
                 conversion_asset_identifier["isin"] = conversion_asset_isin.get("value")
             other = conversion_asset_section.find_all("other")
             for item in other:
-                other_name = item.get("otherdesc")
+                other_name = item.get("otherdesc").lower()
                 other_value = item.get("value")
                 conversion_asset_identifier[other_name] = other_value
 
@@ -2184,7 +2185,7 @@ class FilingNPORT(_SECFiling):
                     identifier["ticker"] = ticker_value
                 other = other_identifier.find_all("other")
                 for item in other:
-                    other_name = item.get("otherdesc")
+                    other_name = item.get("otherdesc").lower()
                     other_value = item.get("value")
                     identifier[other_name] = other_value
 
@@ -2323,7 +2324,7 @@ class FilingNPORT(_SECFiling):
                 identifier["ticker"] = None if ticker == "N/A" else ticker
             other = identifier_section.find_all("other")
             for item in other:
-                other_name = item.get("otherdesc")
+                other_name = item.get("otherdesc").lower()
                 other_value = item.get("value")
                 identifier[other_name] = None if other_value == "N/A" else other_value
 
