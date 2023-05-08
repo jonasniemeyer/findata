@@ -10,6 +10,8 @@ from finance_data.utils import (
 from typing import Union
 from bs4 import BeautifulSoup
 
+NoneType = type(None)
+
 def sec_companies() -> list:
     items = requests.get("https://www.sec.gov/files/company_tickers.json", headers=HEADERS).json()
     items = [
@@ -229,12 +231,12 @@ class _SECFiling:
         else:
             self._film_number = int(film_number[0])
         
-        self._parse_header_entities()
+        self._parse_header()
 
     def _check_amendment(self) -> bool:
         return True if self.submission_type.endswith("/A") else False
         
-    def _parse_header_entities(self) -> None:
+    def _parse_header(self) -> None:
         """
         There are 4 different possible header entities: Filer, Subject Company, Reporting Owner, Issuer
         Some documents only have a filer entity (e.g. Form 10-K), some documents have filer and subject entities (e.g. Form 13D) and some have
@@ -1107,7 +1109,170 @@ class Filing5(Filing4):
 
 
 class Filing13G(_SECFiling):
-    pass
+    """
+    Form-13G filings and their amendments are filed when a person or group acquires more than
+    5% of voting class of a company's equity shares and they meet one exemption to file a
+    Form-13D filing, including:
+        - An institutional acquired shares while doing normal business without the intention
+          of influencing control over the issuer.
+        - An individual acquired shares without the intention of influencing control and without
+          owning more than 20% of the security, either directly or indirectly.
+    Form-13G filings represent a shorter version of Form-13D filings with fewer reporting requirements.
+    """
+
+    person_type = {
+        "BD": "Broker Dealer",
+        "BK": "Bank",
+        "IC": "Insurance Company",
+        "IV": "Investment Company",
+        "IA": "Investment Adviser",
+        "EP": "Employee Benefit Plan or Endowment Fund",
+        "HC": "Parent Holding Company/Control Person",
+        "SA": "Savings Association",
+        "CP": "Church Plan",
+        "CO": "Corporation",
+        "PN": "Partnership",
+        "IN": "Individual",
+        "FI": "Non-U.S. Institution",
+        "OO": "Other"
+    }
+
+    def __init__(self, filing_type="13G", **kwargs):
+        raise NotImplementedError
+        super().__init__(filing_type, **kwargs)
+
+        assert len(self.filer) != 0
+        assert self.subject_company is not None
+
+        self._parse_document()
+
+    def __repr__(self) -> str:
+        return f"Filing {self.submission_type}(Filer: {self.filer[0]['name']}, Subject: {self.subject_company['name']}, Date: {self.date_filed})"
+
+    def _parse_document(self) -> None:
+        if self.is_html:
+            document = BeautifulSoup(self.document).get_text()
+        else:
+            document = self.document
+
+        for match in (
+            "(?i)([A-Z]+[,\s]*[0-9]{2}[,\s]+[0-9]{2,4})\[?[0-9]*\]?[\s\-_]*\(?Date\s*of\s*Event[\s,]*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?",
+            "(?i)([0-9]{2}[/-][0-9]{2}[/-][0-9]{2,4})\[?[0-9]*\]?[\s\-_]*\(?Date\s*of\s*Event\s*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?",
+            "(?i)([0-9]{2}[/-][A-Z]+[/-][0-9]{2,4})\[?[0-9]*\]?[\s\-_]*\(?Date\s*of\s*Event\s*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?",
+            "(?i)\(?Date\s*of\s*Event[\s,]*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?[\s\-_]*([A-Z]+[,\s]*[0-9]{2}[,\s]+[0-9]{2,4})",
+            "(?i)\(?Date\s*of\s*Event\s*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?[\s\-_]*([0-9]{2}[/-][0-9]{2}[/-][0-9]{2,4})",
+            "(?i)Date\s*of\s*Event\s*Which\s*Requires\s*Filing\s*of\s*(?:this|the)\s*Statement:\s*([A-Z]+\s[0-9]{2},\s+[0-9]{4})",
+            "(?i)Date\s*of\s*Event\s*Which\s*Requires\s*Filing\s*of\s*(?:this|the)\s*Statement:\s*([0-9]{2}[/-][0-9]{2}[/-][0-9]{4})"
+        ):
+            self._date_of_period = re.findall(match, document)
+            if self._date_of_period != []:
+                self._date_of_period = self._date_of_period[0].replace("\n", "").replace(",", ", ")
+                self._date_of_period = re.sub("([A-Z+]+)([0-9]+)", r"\1 \2", self._date_of_period)
+                break
+        self._date_of_period = pd.to_datetime(self._date_of_period).date().isoformat()
+
+        self._group_members = re.findall("GROUP MEMBERS:\t{2}(.+)", self.header)
+
+        if self.is_amendment:
+            for match in (
+                "(?i)\(\s*Amendment\s+(?:No.|)([0-9\s_NA//]*)\)",
+                "(?i)Amendment No.:? ([0-9_\s]+)"
+            ):
+                self._amendment_number = re.findall(match, document)
+                if self._amendment_number != []:
+                    self._amendment_number = self._amendment_number[0].replace("_", "").strip()
+                    break
+            self._amendment_number = None if self._amendment_number in ("", "0", "n/a") else int(self._amendment_number)
+        else:
+            self._amendment_number = None
+
+        for match in (
+            "(?i)([0-9A-Z]{3}[- ]*[0-9][0-9A-Z][- ]*[0-9A-Z][- ]*[0-9A-Z]{0,2}[- ]*[0-9])[\*]*[\s\-]*\(CUSIP\s+Number\)",
+            "(?i)\(CUSIP\s+Number\)[\s\-]*([0-9A-Z]{3}[- ]*[0-9][0-9A-Z][- ]*[0-9A-Z][- ]*[0-9A-Z]{0,2}[- ]*[0-9])",
+            "(?i)CUSIP\s+Number:\s*([0-9A-Z]{3}[- ]*[0-9][0-9A-Z][- ]*[0-9A-Z][- ]*[0-9A-Z]{0,2}[- ]*[0-9])"
+        ):
+            self._class_cusip = re.findall(match, document)
+            if self._class_cusip != []:
+                self._class_cusip = self._class_cusip[0].replace(" ", "")
+                break
+        if self._class_cusip == []: raise ValueError("No Cusip")
+
+        self._reporting_persons = self._parse_reporting_persons(document)
+        self._signatures = self._parse_signatures()
+
+    def _parse_reporting_persons(self, document) -> list:
+        sections = ["Name of Reporting Person" + item for item in document.split("Name of Reporting Person")][1:]
+        return sections
+        persons = []
+        for section in sections:
+            name = re.findall("Name of Reporting Person\s+.+", document)
+            group_member = None
+            country = None
+            sole_voting = None
+            shared_voting = None
+            sole_dispositive = None
+            shared_dispositive = None
+            aggregate_amount = None
+            shares = {
+                "sole_voting_power": sole_voting,
+                "shared_voting_power": shared_voting,
+                "sole_dispositive_power": sole_dispositive,
+                "shared_dispositive_power": shared_dispositive,
+                "aggregate": aggregate_amount
+            }
+            percentage = None
+            person_type = None
+
+            persons.append(
+                {
+                    "name": name,
+                    "person_type": person_type,
+                    "group_member": group_member,
+                    "country": country,
+                    "shares": shares,
+                    "percentage": percentage
+                }
+            )
+        return persons
+
+    def _parse_signatures(self) -> list:
+        return
+
+    @property
+    def amendment_number(self) -> Union[int, NoneType]:
+        return self._amendment_number
+
+    @property
+    def class_cusip(self) -> str:
+        return self._class_cusip
+
+    @property
+    def filer(self) -> list:
+        return self._filer
+
+    @property
+    def group_members(self) -> list:
+        return self._group_members
+
+    @property
+    def percentage_acquired(self) -> float:
+        return self.reporting_persons[0]["percentage"]
+
+    @property
+    def subject_company(self) -> dict:
+        return self._subject_company
+
+    @property
+    def reporting_persons(self) -> list:
+        return self._reporting_persons
+
+    @property
+    def signatures(self) -> list:
+        return self._signatures
+
+    @property
+    def shares_acquired(self) -> int:
+        return self.reporting_persons[0]["shares"]
 
 
 class Filing13D(Filing13G):
