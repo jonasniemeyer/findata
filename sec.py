@@ -1276,7 +1276,22 @@ class Filing13G(_SECFiling):
 
 
 class Filing13D(Filing13G):
-    pass
+    """
+    Form-13D filings and their amendments are filed when a person or group acquires more than
+    5% of voting class of a company's equity shares who has not the permission to file a Form-13G filing.
+    """
+
+    fund_source = {
+        "SC": "Subject Company (Company whose securities are being acquired)",
+        "BK": "Bank",
+        "AF": "Affiliate (of reporting person)",
+        "WC": "Working Capital (of reporting person)",
+        "PF": "Personal Funds (of reportintwg person)",
+        "OO": "Other"
+    }
+
+    def __init__(self, filing_type="13D", **kwargs):
+        super().__init__(filing_type, **kwargs)
 
 
 class Filing13F(_SECFiling):
