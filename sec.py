@@ -230,6 +230,9 @@ class _SECFiling:
             self._film_number = int(film_number[0])
         
         self._parse_header_entities()
+
+    def _check_amendment(self) -> bool:
+        return True if self.submission_type.endswith("/A") else False
         
     def _parse_header_entities(self) -> None:
         """
@@ -243,7 +246,7 @@ class _SECFiling:
         self._document_count = int(re.findall("PUBLIC DOCUMENT COUNT:\t{2}([0-9]+)", self.header)[0])
         self._accession_number = re.findall("ACCESSION NUMBER:\t{2}([0-9\-]+)", self.header)[0]
         self._submission_type = re.findall("CONFORMED SUBMISSION TYPE:\t(.+)", self.header)[0]
-        self._is_amendment = True if self.submission_type.endswith("/A") else False
+        self._is_amendment = self._check_amendment()
         
         date_filed = re.findall("FILED AS OF DATE:\t{2}([0-9]{8})", self.header)[0]
         date_filed = dt.date(
@@ -579,7 +582,7 @@ class Filing3(_SECFiling):
     def __init__(self, filing_type="3", **kwargs):
         super().__init__(filing_type, **kwargs)
 
-        self._parse_data()
+        self._parse_document()
         assert len(self.reporting_owner) != 0
         assert self.issuer is not None
 
@@ -611,7 +614,7 @@ class Filing3(_SECFiling):
     def signature(self) -> dict:
         return self._signature
 
-    def _parse_data(self) -> None:
+    def _parse_document(self) -> None:
         if not self.is_xml:
             raise NotImplementedError("Filing 3 classes can only be called on XML compliant files")
 
