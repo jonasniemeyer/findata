@@ -1111,7 +1111,7 @@ class Filing5(Filing4):
 class Filing13G(_SECFiling):
     """
     Form-13G filings and their amendments are filed when a person or group acquires more than
-    5% of voting class of a company's equity shares and they meet one exemption to file a
+    5% of voting class of a company's equity shares and they meet one exemption to file a 
     Form-13D filing, including:
         - An institutional acquired shares while doing normal business without the intention
           of influencing control over the issuer.
@@ -1156,9 +1156,9 @@ class Filing13G(_SECFiling):
             document = self.document
 
         for match in (
-            "(?i)([A-Z]+[,\s]*[0-9]{2}[,\s]+[0-9]{2,4})\[?[0-9]*\]?[\s\-_]*\(?Date\s*of\s*Event[\s,]*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?",
+            "(?i)([A-Z]+[,\s]*[0-9]{1,2}[,\s]+[0-9]{2,4})\[?[0-9]*\]?[\s\-_]*\(?Date\s*of\s*Event[\s,]*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?",
             "(?i)([0-9]{2}[/-][0-9]{2}[/-][0-9]{2,4})\[?[0-9]*\]?[\s\-_]*\(?Date\s*of\s*Event\s*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?",
-            "(?i)([0-9]{2}[/-][A-Z]+[/-][0-9]{2,4})\[?[0-9]*\]?[\s\-_]*\(?Date\s*of\s*Event\s*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?",
+            "(?i)([0-9]{2}[\s/-][A-Z]+[\s/-][0-9]{2,4})\[?[0-9]*\]?[\s\-_]*\(?Date\s*of\s*Event\s*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?",
             "(?i)\(?Date\s*of\s*Event[\s,]*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?[\s\-_]*([A-Z]+[,\s]*[0-9]{2}[,\s]+[0-9]{2,4})",
             "(?i)\(?Date\s*of\s*Event\s*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?[\s\-_]*([0-9]{2}[/-][0-9]{2}[/-][0-9]{2,4})",
             "(?i)Date\s*of\s*Event\s*Which\s*Requires\s*Filing\s*of\s*(?:this|the)\s*Statement:\s*([A-Z]+\s[0-9]{2},\s+[0-9]{4})",
@@ -1187,13 +1187,13 @@ class Filing13G(_SECFiling):
             self._amendment_number = None
 
         for match in (
-            "(?i)([0-9A-Z]{3}[- ]*[0-9][0-9A-Z][- ]*[0-9A-Z][- ]*[0-9A-Z]{0,2}[- ]*[0-9])[\*]*[\s\-]*\(CUSIP\s+Number\)",
+            "(?i)([0-9A-Z]{3}[- ]*[0-9][0-9A-Z][- ]*[0-9A-Z][- (]*[0-9A-Z]{0,2}[- )]*[0-9]*)[\*]*[\s\-_]*\(CUSIP\s+Number\)",
             "(?i)\(CUSIP\s+Number\)[\s\-]*([0-9A-Z]{3}[- ]*[0-9][0-9A-Z][- ]*[0-9A-Z][- ]*[0-9A-Z]{0,2}[- ]*[0-9])",
-            "(?i)CUSIP\s+Number:\s*([0-9A-Z]{3}[- ]*[0-9][0-9A-Z][- ]*[0-9A-Z][- ]*[0-9A-Z]{0,2}[- ]*[0-9])"
+            "(?i)CUSIP\s+(?:Number:|No.)\s*([0-9A-Z]{3}[- ]*[0-9][0-9A-Z][- ]*[0-9A-Z][- ]*[0-9A-Z]{0,2}[- ]*[0-9])"
         ):
             self._class_cusip = re.findall(match, document)
             if self._class_cusip != []:
-                self._class_cusip = self._class_cusip[0].replace(" ", "")
+                self._class_cusip = self._class_cusip[0].replace(" ", "").replace("(", "").replace(")", "")
                 break
         if self._class_cusip == []: raise ValueError("No Cusip")
 
