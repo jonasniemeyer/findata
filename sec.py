@@ -290,31 +290,61 @@ def sec_filings(
 
 class _SECFiling:
     """
-    _SECFiling is the parent class for all SEC filing classes and should never be called.
-    It splits the file into the header and document section and extracts information in the header section.
-    
-    The header section contains file-related information such as the date and to what entities the file relates to.
-    Assertion that the entity exists (e.g. issuer in Form 4 Filings) is done by the respective subclass.
-    The header also holds entity-specific information (e.g. the name and the CIK) whose parsing is also done in the _SECFiling parent class.
-    
-    The document section holds the file-specific data (e.g. fund holdings in Form 13F filings) and parsing is solely governed by the respective subclass.
-    
-    Each SEC filing, irrespective of the type, has the following attributes:
-        accession_number: str        
+    _SECFiling is the parent class of all SEC filing classes. While it can be called with any form type, it should not be called
+    It governs the splitting of the file into the header section and the document section and extracts all of the header information.
+
+    The header section contains file-related information such as the date and what entites are involved and how they are related.
+    There are four different entity roles: filer, subject company, reporting owner and issuer. Every form type has specific entity roles
+    (e.g. issuer in Form 4 Filings) and assertion of that role types is done by the respective subclass.
+    The header also holds entity-specific information such as the name, the CIK and the address of an entity.
+
+    The document section holds the form-specific data (e.g. fund holdings in Form 13F filings) and parsing is solely governed by the respective subclass.
+
+    Each form class, irrespective of the form type, has the following attributes:
+        accession_number: str
+            The accession number of the filing
+
         date_filed: str
-        date_of_period: str
+            The ISO-8601 date when the filing was filed
+
         date_of_change: str
+            The ISO-8601 date when the filing was filed
+
+        date_of_period: str
+            The ISO-8601 date the filing refers to
+
         document: str
+            The document that consists of all the form-specific information
+
         document_count: int
+            The document number of the filing / how many filings the entity had submitted before + 1
+
         effectiveness_date: str
+            The ISO-8601 effectiveness date of the
+
         file: str
+            The raw text file of the filing which consists of the header and the document
+
         file_number: str
+            The file number of the filing
+
         film_number: int
+            The film number of the filing
+
         header: str
+            The header that consists of the entity-specific information
+
         is_amendment: bool
+            Whether the filing is an amendment to another filing
+
         is_html: bool
+            Whether the document is in valid HTML
+
         is_xml: bool
+            Whether the document is in valid XML
+
         submission_type: str
+            The form type of the filing (e.g. "10-K" or "4")
     """
 
     def __init__(
