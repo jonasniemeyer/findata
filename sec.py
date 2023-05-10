@@ -1643,68 +1643,6 @@ class FilingNPORT(_SECFiling):
     def __repr__(self) -> str:
         return f"{self.submission_type} Filing({self.general_information['series']['cik']}|{self.general_information['series']['name']}|{self.general_information['reporting_date']})"
 
-    def portfolio(self, sorted_by=None) -> list:
-        sort_variables = (
-            None,
-            "name",
-            "title",
-            "market_value",
-            "quantity",
-            "percentage",
-            "payoff_direction"
-        )
-        if sorted_by not in (sort_variables):
-            raise ValueError(f"sorting variable has to be in {sort_variables}")
-        
-        if sorted_by is None:
-            portfolio = self._investments
-        else:
-            desc = True if sorted_by in ("market_value", "quantity", "percentage") else False
-            if sorted_by in ("quantity", "market_value", "percentage"):
-                portfolio = sorted(self._investments, key=lambda x: x["amount"][sorted_by] if x["amount"][sorted_by] is not None else 0, reverse=desc)
-            elif sorted_by == "name":
-                portfolio = sorted(self._investments, key=lambda x: x["issuer"][sorted_by] if x["issuer"][sorted_by] is not None else "", reverse=desc)
-            else:
-                portfolio = sorted(self._investments, key=lambda x: x[sorted_by] if x[sorted_by] is not None else "", reverse=desc)
-        
-        return portfolio
-    
-    @property
-    def filer(self) -> dict:
-        return self._filer
-    
-    @property
-    def has_short_positions(self) -> bool:
-        return self._has_short_positions
-
-    @property
-    def explanatory_notes(self) -> dict:
-        return self._explanatory_notes
-
-    @property
-    def general_information(self) -> dict:
-        return self._general_information
-    
-    @property
-    def fund_information(self) -> dict:
-        return self._fund_information
-    
-    @property
-    def flow_information(self) -> dict:
-        return self.fund_information["flow_information"]
-    
-    @property
-    def return_information(self) -> dict:
-        return self.fund_information["return_information"]
-    
-    @property
-    def securities_lending(self) -> dict:
-        return self.fund_information["securities_lending"]
-
-    @property
-    def signature(self) -> dict:
-        return self._signature
-
     def _parse_document(self) -> None:
         if self.is_xml:
             self._soup = BeautifulSoup(self.document, "lxml")
@@ -1784,7 +1722,7 @@ class FilingNPORT(_SECFiling):
             if currency_name == "N/A":
                 currency_name = None
             currency = {
-                "name": currency_name,
+                "abbr": currency_name,
                 "exchange_rate": exchange_rate
             }
             
@@ -2734,7 +2672,7 @@ class FilingNPORT(_SECFiling):
             "is_final_filing": is_final_filing
         }
     
-    def _parse_fund_information(self) -> dict:        
+    def _parse_fund_information(self) -> dict:
         form_data = self._soup.find("formdata")
         if form_data is None:
             form_data = self._soup.find("nport:formdata")
@@ -3027,6 +2965,68 @@ class FilingNPORT(_SECFiling):
             "derivatives_exposure": derivatives_exposure,
             "var_information": var_information
         }
+
+    def portfolio(self, sorted_by=None) -> list:
+        sort_variables = (
+            None,
+            "name",
+            "title",
+            "market_value",
+            "quantity",
+            "percentage",
+            "payoff_direction"
+        )
+        if sorted_by not in (sort_variables):
+            raise ValueError(f"sorting variable has to be in {sort_variables}")
+
+        if sorted_by is None:
+            portfolio = self._investments
+        else:
+            desc = True if sorted_by in ("market_value", "quantity", "percentage") else False
+            if sorted_by in ("quantity", "market_value", "percentage"):
+                portfolio = sorted(self._investments, key=lambda x: x["amount"][sorted_by] if x["amount"][sorted_by] is not None else 0, reverse=desc)
+            elif sorted_by == "name":
+                portfolio = sorted(self._investments, key=lambda x: x["issuer"][sorted_by] if x["issuer"][sorted_by] is not None else "", reverse=desc)
+            else:
+                portfolio = sorted(self._investments, key=lambda x: x[sorted_by] if x[sorted_by] is not None else "", reverse=desc)
+
+        return portfolio
+
+    @property
+    def filer(self) -> dict:
+        return self._filer
+
+    @property
+    def has_short_positions(self) -> bool:
+        return self._has_short_positions
+
+    @property
+    def explanatory_notes(self) -> dict:
+        return self._explanatory_notes
+
+    @property
+    def general_information(self) -> dict:
+        return self._general_information
+
+    @property
+    def fund_information(self) -> dict:
+        return self._fund_information
+
+    @property
+    def flow_information(self) -> dict:
+        return self.fund_information["flow_information"]
+
+    @property
+    def return_information(self) -> dict:
+        return self.fund_information["return_information"]
+
+    @property
+    def securities_lending(self) -> dict:
+        return self.fund_information["securities_lending"]
+
+    @property
+    def signature(self) -> dict:
+        return self._signature
 
 
 class SECFundamentals:
