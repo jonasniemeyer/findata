@@ -300,7 +300,7 @@ class _SECFiling:
 
     The document section holds the form-specific data (e.g. fund holdings in Form 13F filings) and parsing is solely governed by the respective subclass.
 
-    Each form class, irrespective of the form type, has the following attributes:
+    Each filing class, irrespective of the form type, has the following attributes:
         accession_number: str
             The accession number of the filing
 
@@ -338,15 +338,14 @@ class _SECFiling:
             Whether the filing is an amendment to another filing
 
         is_html: bool
-            Whether the document is in valid HTML
+            Whether the document is in valid HTML format
 
         is_xml: bool
-            Whether the document is in valid XML
+            Whether the document is in valid XML format
 
         submission_type: str
             The form type of the filing (e.g. "10-K" or "4")
     """
-
     def __init__(
         self,
         form_type="all",
@@ -846,8 +845,8 @@ class Filing3(_SECFiling):
                      "title": title,
                      "amount": amount,
                      "ownership": {
-                         "type": ownership_type,
-                         "nature": nature
+                        "type": ownership_type,
+                        "nature": nature
                      }
                  }
             )
