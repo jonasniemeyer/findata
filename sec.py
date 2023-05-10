@@ -588,34 +588,6 @@ class Filing3(_SECFiling):
         assert len(self.reporting_owner) != 0
         assert self.issuer is not None
 
-    @property
-    def reporting_owner(self) -> list:
-        return self._reporting_owner
-
-    @property
-    def issuer(self) -> dict:
-        return self._issuer
-
-    @property
-    def relationship(self) -> bool:
-        return self._relationship
-
-    @property
-    def non_derivative_securities(self) -> dict:
-        return self._non_derivative_securities
-
-    @property
-    def derivative_securities(self) -> list:
-        return self._derivative_securities
-
-    @property
-    def footnotes(self) -> list:
-        return self._footnotes
-
-    @property
-    def signature(self) -> dict:
-        return self._signature
-
     def _parse_document(self) -> None:
         if not self.is_xml:
             raise NotImplementedError("Filing 3 classes can only be called on XML compliant files")
@@ -814,6 +786,34 @@ class Filing3(_SECFiling):
             "name": name,
             "date": date
         }
+
+    @property
+    def reporting_owner(self) -> list:
+        return self._reporting_owner
+
+    @property
+    def issuer(self) -> dict:
+        return self._issuer
+
+    @property
+    def relationship(self) -> bool:
+        return self._relationship
+
+    @property
+    def non_derivative_securities(self) -> dict:
+        return self._non_derivative_securities
+
+    @property
+    def derivative_securities(self) -> list:
+        return self._derivative_securities
+
+    @property
+    def footnotes(self) -> list:
+        return self._footnotes
+
+    @property
+    def signature(self) -> dict:
+        return self._signature
 
 
 class Filing4(Filing3):
@@ -1093,11 +1093,11 @@ class Filing4(Filing3):
 
             holdings.append(
                  {
-                     "title": title,
-                     "expiration_date": expiration_date,
-                     "exercise_data": exercise_data,
-                     "underlying": underlying,
-                     "ownership_type": ownership_type
+                    "title": title,
+                    "expiration_date": expiration_date,
+                    "exercise_data": exercise_data,
+                    "underlying": underlying,
+                    "ownership_type": ownership_type
                  }
             )
 
@@ -1201,8 +1201,7 @@ class Filing13G(_SECFiling):
         self._signatures = self._parse_signatures()
 
     def _parse_reporting_persons(self, document) -> list:
-        sections = ["Name of Reporting Person" + item for item in document.split("Name of Reporting Person")][1:]
-        return sections
+        raise NotImplementedError
         persons = []
         for section in sections:
             name = re.findall("Name of Reporting Person\s+.+", document)
