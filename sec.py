@@ -13,6 +13,28 @@ from bs4 import BeautifulSoup
 NoneType = type(None)
 
 def sec_companies() -> list:
+    """
+    sec_companies returns a list of US-listed companies that file 10-K filings to the SEC.
+    The list contains the companies' name, ticker and CIK.
+
+
+    Parameters
+    ----------------------
+    None
+
+
+    Returns
+    ----------------------
+    list of dicts
+        cik : int
+            The CIK of the entity
+
+        ticker: str
+            The ticker of the security
+
+        name : str
+            The name of the entity
+    """
     items = requests.get("https://www.sec.gov/files/company_tickers.json", headers=HEADERS).json()
     items = [
         {
@@ -25,6 +47,30 @@ def sec_companies() -> list:
     return items
 
 def sec_mutualfunds() -> list:
+    """
+    sec_mutualfunds returns a list of US-listed mutual-funds and ETFs.
+
+
+    Parameters
+    ----------------------
+    None
+
+
+    Returns
+    ----------------------
+    list of dicts
+        ticker : str
+            The ticker of the class
+
+        class_cik : str
+            The CIK of the class
+
+        series_cik : str
+            The CIK of the fund series
+
+        entity_cik : int
+            The CIK of the issuing entity
+    """
     items = requests.get("https://www.sec.gov/files/company_tickers_mf.json", headers=HEADERS).json()["data"]
     items = [
         {
@@ -38,6 +84,52 @@ def sec_mutualfunds() -> list:
     return items
 
 def latest_sec_filings(start=pd.to_datetime("today").isoformat(), timestamps=False) -> list:
+    """
+    latest_sec_filings returns a list of the latest sec filings that were filed with the SEC.
+
+
+    Parameters
+    ----------------------
+    start : str
+        The ISO-8601 date (e.g. "2012-05-22")
+
+    timestamps : bool
+        If True, any date(-time) is returned as a UNIX-timestamp and if False, as an ISO-8601 date(-time)
+
+
+    Returns
+    ----------------------
+    list of dicts
+        name : str
+            The name of the entity that submitted the filing
+
+        cik : int
+            the CIK of the entity that submitted the filing
+
+        form_type : str
+            The form type of the filing (e.g. 10-K)
+
+        filing_url : str
+            The url of the filing
+
+        document_url : str
+            The url of the text-file document of the filing
+
+        accession_number : int
+            The accession number of the filing
+
+        accepted : str or int
+            The ISO-8601 datetime or UNIX timestamp when the filing was accepted
+
+        date_filed : int or str
+            The ISO-8601 date or UNIX timestamp when the filing was submitted
+
+        file_number : str
+            The file number of the filing
+
+        film_number : int
+            The film number of the filing
+    """
     filings = []
     start_reached = False
     page_counter = 0
@@ -108,6 +200,52 @@ def sec_filings(
     start="1900-01-01",
     end=pd.to_datetime("today").date().isoformat()
 ) -> list:
+    """
+    sec_filings returns a list of submitted filings of a specific entity, of a specific form type and within a given timeframe.
+
+
+    Parameters
+    ----------------------
+    cik : int
+        The CIK of the issuing entity
+
+    form_types : list or str
+        Either a list of form types or "all" or "any" to retrieve filings of all form types
+
+    start : str
+        The ISO-8601 start date (e.g. "2012-05-22")
+
+    end : str
+        The ISO-8601 end date (e.g. "2018-07-01")
+
+
+    Returns
+    ----------------------
+    list of dicts
+        type : str
+            The form type of the filing
+
+        filing_url : str
+            The url of the filing
+
+        document_url : str
+            The url of the text-file document of the filing
+
+        date_filed : int or str
+            The ISO-8601 date or UNIX timestamp when the filing was submitted
+
+        date_of_period : int or str
+            The ISO-8601 date or UNIX timestamp of the date the filing refers to (e.g. when the purchase of the security of a form 3 filing happened)
+
+        accession_number : int
+            The accession number of the filing
+
+        file_number : str
+            The file number of the filing
+
+        film_number : int
+            The film number of the filing
+    """
     base_url = "https://efts.sec.gov/LATEST/search-index"
     params = {
         "startdt": start,
