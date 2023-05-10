@@ -1313,7 +1313,14 @@ class Filing13F(_SECFiling):
                 }
             else:
                 self._amendment_information = None
-            self._report_type = self._soup.find("reporttype").text
+
+            if "n1:formData" in self.document:
+                prefix = "n1:"
+            elif "ns1:formData" in self.document:
+                prefix = "ns1:"
+            else:
+                prefix = ""
+            self._report_type = self._soup.find(f"{prefix}reporttype").text
             
             self._other_reporting_managers = []
             other_reporting_managers = self._soup.find("othermanagersinfo")
@@ -1341,14 +1348,20 @@ class Filing13F(_SECFiling):
         return
     
     def _parse_signature_from_xml(self) -> dict:
-        signature = self._soup.find("signatureblock")
-        
-        name = signature.find("name").text
-        title = signature.find("title").text
-        phone = signature.find("phone").text
-        city = signature.find("city").text
-        state = signature.find("stateorcountry").text
-        date = signature.find("signaturedate").text
+        if "n1:signatureBlock" in self.document:
+            prefix = "n1:"
+        elif "ns1:signatureBlock" in self.document:
+            prefix = "ns1:"
+        else:
+            prefix = ""
+        signature = self._soup.find(f"{prefix}signatureblock")
+
+        name = signature.find(f"{prefix}name").text
+        title = signature.find(f"{prefix}title").text
+        phone = signature.find(f"{prefix}phone").text
+        city = signature.find(f"{prefix}city").text
+        state = signature.find(f"{prefix}stateorcountry").text
+        date = signature.find(f"{prefix}signaturedate").text
         month, day, year = date.split("-")
         date = dt.date(year=int(year), month=int(month), day=int(day)).isoformat()
         
@@ -1365,10 +1378,17 @@ class Filing13F(_SECFiling):
         if self.submission_type == "13F-NT":
             return None
         
-        summary = self._soup.find("summarypage")
-        number_of_investments = int(summary.find("tableentrytotal").text)
-        portfolio_value = int(summary.find("tablevaluetotal").text) * 1000
-        confidential_omitted = summary.find("isconfidentialomitted")
+        if "n1:summaryPage" in self.document:
+            prefix = "n1:"
+        elif "ns1:summaryPage" in self.document:
+            prefix = "ns1:"
+        else:
+            prefix = ""
+        summary = self._soup.find(f"{prefix}summarypage")
+
+        number_of_investments = int(summary.find(f"{prefix}tableentrytotal").text)
+        portfolio_value = int(summary.find(f"{prefix}tablevaluetotal").text) * 1000
+        confidential_omitted = summary.find(f"{prefix}isconfidentialomitted")
         if confidential_omitted is not None:
             confidential_omitted = confidential_omitted.text.lower()
             if confidential_omitted == "true":
@@ -1402,9 +1422,9 @@ class Filing13F(_SECFiling):
         }
     
     def _parse_holdings_from_xml(self) -> list:       
-        if "n1:infoTable" in self._document:
+        if "n1:infoTable" in self.document:
             prefix = "n1:"
-        elif "ns1:infoTable" in self._document:
+        elif "ns1:infoTable" in self.document:
             prefix = "ns1:"
         else:
             prefix = ""
