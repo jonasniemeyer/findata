@@ -1737,6 +1737,63 @@ class Filing13F(_SECFiling):
 
 
 class FilingNPORT(_SECFiling):
+    """
+    FilingNPORT classes extract information from filings of form "NPORT-P" and their amendments "NPORT-P/A".
+    These filings are filed at the end of each quarter and give information of a mutual fund or ETF such as
+    portfolio holdings, in- and outflows and fund returns.
+    As with each filing class, it has to be called with the file string, the filing url or the cik of the entity and the date when the filing was filed.
+
+
+    Parameters
+    --------------------------
+    file : str (optional)
+        The document text file
+
+    url : str (optional)
+        The url of the document text file
+
+    cik : int (optional)
+        The CIK of the filing entity
+
+    date : str or int (optional)
+        The ISO-8601 date when the filing was filed
+
+
+    Attributes
+    --------------------------
+    filer : dict
+        The entity-specific information of the filing entity
+
+    has_short_positions : bool
+        Whether the portfolio of the fund has short positions
+
+    explanatory_notes : dict
+        Explanatory notes, if any, of specific information
+
+    general_information : dict
+        General information such as the filer LEI and classes
+
+    fund_information : dict
+        Fund information such as assets under management, portfolio risk, return and flow information
+
+    flow_information : dict
+        Flow information of each month
+
+    return_information : dict
+        Return information of each month, including class returns and derivative gains
+
+    securities_lending : dict
+        Securities lending information, including the borrower entities
+
+    signature : dict
+        Signature information of the fund manager
+
+
+    Methods
+    --------------------------
+    portfolio : list of dicts
+        A list of all portfolio holdings (long and short) that includes holding-specific information in each dictionary
+    """
     _asset_types = {
         "ABS": "Asset-backed securities",
         "ABS-APCP": "ABS-asset backed commercial paper",
