@@ -1461,6 +1461,58 @@ class Filing13D(Filing13G):
 
 
 class Filing13F(_SECFiling):
+    """
+    Filing13F classes extract information from filings of form "13F-HR" and their amendments "13F-HR/A".
+    These filings are filed by investment managers with more than $100M assets under management within 45 days after each quarter
+    and give information about the holdings of that manager. Aside from long positions, purchased call and put options are also included while
+    short positions and securities that are not listed in the United States are excluded.
+    As with each filing class, it has to be called with the file string, the filing url or the cik of the entity and the date when the filing was filed.
+
+
+    Parameters
+    --------------------------
+    file : str (optional)
+        The document text file
+
+    url : str (optional)
+        The url of the document text file
+
+    cik : int (optional)
+        The CIK of the filing entity
+
+    date : str or int (optional)
+        The ISO-8601 date when the filing was filed
+
+
+    Attributes
+    --------------------------
+    amendment_information : dict or None
+        The amendment type and number if it is an amendment to another filing, else None
+
+    filer : dict
+        The entity-specific information of the filing entity
+
+    investments : list
+        A list of all investments with holding-specific information. Holdings that are shared with different reporting managers are reported separately
+
+    other_reporting_managers : list
+        A list of managers that share and also report some of the investments by themselves
+
+    report_type : str
+        The report type of the filing
+
+    signature : dict
+        Signature information of the manager, including the name of the manager and the date of signature
+
+    summary : dict
+        A fund summary, including the number of investments and the portfolio value
+
+
+    Methods
+    --------------------------
+    aggregate_portfolio : list of dicts
+        A list of portfolio holdings that includes holding-specific information in each dictionary. Separately reported holdings with different managers are aggregated.
+    """
     def __init__(self, filing_type="13F-HR", **kwargs):
         super().__init__(filing_type, **kwargs)
         
@@ -1708,7 +1760,7 @@ class Filing13F(_SECFiling):
         return portfolio
     
     @property
-    def amendment_information(self) -> dict:
+    def amendment_information(self) -> Union[dict, None]:
         return self._amendment_information
     
     @property
