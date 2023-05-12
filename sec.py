@@ -743,6 +743,56 @@ class _SECFiling:
 
 
 class Filing3(_SECFiling):
+    """
+    Filing3 classes extract information from filings of form "3" and their amendments "3/A".
+    These filings are filed within 10 days by companies after an insider becomes affiliated with the company and give information about
+    derivative and non-derivative securities the insider owns, irrespective if they hold any security of the issuing company.
+    As with each filing class, it has to be called with the file string, the filing url or the cik of the entity and the date when the filing was filed.
+
+
+    Parameters
+    --------------------------
+    file : str (optional)
+        The document text file
+
+    url : str (optional)
+        The url of the document text file
+
+    cik : int (optional)
+        The CIK of the filing entity
+
+    date : str or int (optional)
+        The ISO-8601 date when the filing was filed
+
+
+    Attributes
+    --------------------------
+    reporting_owner : list
+        A list of the reporting owners that own the securities of the issuer
+
+    issuer : dict
+        The entity-specific information of the filing entity, in this case the company issuing the securities
+
+    relationship : dict
+        Information regarding the relationship of the owner and the issuer, including whether the owner is a manager or director
+
+    non_derivative_securities : list
+        A list of non-derivative securities and their value the reporting owner holds
+
+    derivative_securities : list
+        A list of derivative securities and their value the reporting owner holds
+
+    footnotes : list
+        A list of possible footnotes, explaining the filed information
+
+    signature : dict
+        Signature information of the manager, including the name of the manager and the date of signature
+
+
+    Methods
+    --------------------------
+    None
+    """
     _ownership_codes = {
         "D": "Direct Ownership",
         "I": "Indirect Ownership"
@@ -841,14 +891,14 @@ class Filing3(_SECFiling):
                 }
 
             holdings.append(
-                 {
-                     "title": title,
-                     "amount": amount,
-                     "ownership": {
+                {
+                    "title": title,
+                    "amount": amount,
+                    "ownership": {
                         "type": ownership_type,
                         "nature": nature
-                     }
-                 }
+                    }
+                }
             )
 
         return holdings
@@ -920,13 +970,13 @@ class Filing3(_SECFiling):
             }
 
             holdings.append(
-                 {
-                     "title": title,
-                     "expiration_date": expiration_date,
-                     "exercise_data": exercise_data,
-                     "underlying": underlying,
-                     "ownership_type": ownership_type
-                 }
+                {
+                    "title": title,
+                    "expiration_date": expiration_date,
+                    "exercise_data": exercise_data,
+                    "underlying": underlying,
+                    "ownership_type": ownership_type
+                }
             )
 
         return holdings
@@ -963,7 +1013,7 @@ class Filing3(_SECFiling):
         return self._issuer
 
     @property
-    def relationship(self) -> bool:
+    def relationship(self) -> dict:
         return self._relationship
 
     @property
