@@ -767,23 +767,23 @@ class Filing3(_SECFiling):
 
     Attributes
     --------------------------
-    reporting_owner : list
-        A list of the reporting owners that own the securities of the issuer
-
-    issuer : dict
-        The entity-specific information of the filing entity, in this case the company issuing the securities
-
-    relationship : dict
-        Information regarding the relationship of the owner and the issuer, including whether the owner is a manager or director
-
-    non_derivative_securities : list
-        A list of non-derivative securities and their value the reporting owner holds
-
     derivative_securities : list
         A list of derivative securities and their value the reporting owner holds
 
     footnotes : list
         A list of possible footnotes, explaining the filed information
+
+    issuer : dict
+        The entity-specific information of the filing entity, in this case the company issuing the securities
+
+    non_derivative_securities : list
+        A list of non-derivative securities and their value the reporting owner holds
+
+    relationship : dict
+        Information regarding the relationship of the owner and the issuer, including whether the owner is a manager or director
+
+    reporting_owner : list
+        A list of the reporting owners that own the securities of the issuer
 
     signature : dict
         Signature information of the manager, including the name of the manager and the date of signature
@@ -1005,28 +1005,28 @@ class Filing3(_SECFiling):
         }
 
     @property
-    def reporting_owner(self) -> list:
-        return self._reporting_owner
-
-    @property
-    def issuer(self) -> dict:
-        return self._issuer
-
-    @property
-    def relationship(self) -> dict:
-        return self._relationship
-
-    @property
-    def non_derivative_securities(self) -> dict:
-        return self._non_derivative_securities
-
-    @property
     def derivative_securities(self) -> list:
         return self._derivative_securities
 
     @property
     def footnotes(self) -> list:
         return self._footnotes
+
+    @property
+    def issuer(self) -> dict:
+        return self._issuer
+
+    @property
+    def non_derivative_securities(self) -> dict:
+        return self._non_derivative_securities
+
+    @property
+    def relationship(self) -> dict:
+        return self._relationship
+
+    @property
+    def reporting_owner(self) -> list:
+        return self._reporting_owner
 
     @property
     def signature(self) -> dict:
