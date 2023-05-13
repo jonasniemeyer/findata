@@ -1034,6 +1034,56 @@ class Filing3(_SECFiling):
 
 
 class Filing4(Filing3):
+    """
+    Filing4 classes extract information from filings of form "4" and their amendments "4/A".
+    These filings are filed within 2 days by the company or the insider when there is a change in the holdings of the insider. They give information about
+    derivative and non-derivative security transactions, such as buys and sells and stock option exercises.
+    As with each filing class, it has to be called with the file string, the filing url or the cik of the entity and the date when the filing was filed.
+
+
+    Parameters
+    --------------------------
+    file : str (optional)
+        The document text file
+
+    url : str (optional)
+        The url of the document text file
+
+    cik : int (optional)
+        The CIK of the filing entity
+
+    date : str or int (optional)
+        The ISO-8601 date when the filing was filed
+
+
+    Attributes
+    --------------------------
+    derivative_securities : list
+        A list of derivative security transactions and their total value
+
+    footnotes : list
+        A list of possible footnotes, explaining the filed information
+
+    issuer : dict
+        The entity-specific information of the filing entity, in this case the company issuing the securities
+
+    non_derivative_securities : list
+        A list of non-derivative security transactions and their total value
+
+    relationship : dict
+        Information regarding the relationship of the owner and the issuer, including whether the owner is a manager or director
+
+    reporting_owner : list
+        A list of the reporting owners that own the securities of the issuer
+
+    signature : dict
+        Signature information of the manager, including the name of the manager and the date of signature
+
+
+    Methods
+    --------------------------
+    None
+    """
     _direction_codes = {
         "A": "Acquired",
         "D": "Disposed"
