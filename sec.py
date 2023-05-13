@@ -17,21 +17,17 @@ def sec_companies() -> list:
     sec_companies returns a list of US-listed companies that file 10-K filings to the SEC.
     The list contains the company's name, ticker and CIK.
 
-
     Parameters
     ----------------------
     None
-
 
     Returns
     ----------------------
     list of dicts
         cik : int
             The CIK of the entity
-
         ticker: str
             The ticker of the security
-
         name : str
             The name of the entity
     """
@@ -50,24 +46,19 @@ def sec_mutualfunds() -> list:
     """
     sec_mutualfunds returns a list of US-listed mutual-funds and ETFs.
 
-
     Parameters
     ----------------------
     None
-
 
     Returns
     ----------------------
     list of dicts
         ticker : str
             The ticker of the class
-
         class_cik : str
             The CIK of the class
-
         series_cik : str
             The CIK of the fund series
-
         entity_cik : int
             The CIK of the issuing entity
     """
@@ -87,46 +78,34 @@ def latest_sec_filings(start=pd.to_datetime("today").isoformat(), timestamps=Fal
     """
     latest_sec_filings returns a list of the latest sec filings that were filed with the SEC.
 
-
     Parameters
     ----------------------
     start : str
         The ISO-8601 date (e.g. "2012-05-22")
-
     timestamps : bool
         If True, any date(-time) is returned as a UNIX-timestamp and if False, as an ISO-8601 date(-time)
-
 
     Returns
     ----------------------
     list of dicts
         name : str
             The name of the entity that submitted the filing
-
         cik : int
             the CIK of the entity that submitted the filing
-
         form_type : str
             The form type of the filing (e.g. 10-K)
-
         filing_url : str
             The url of the filing
-
         document_url : str
             The url of the text-file document of the filing
-
         accession_number : int
             The accession number of the filing
-
         accepted : str or int
             The ISO-8601 datetime or UNIX timestamp when the filing was accepted
-
         date_filed : int or str
             The ISO-8601 date or UNIX timestamp when the filing was submitted
-
         file_number : str
             The file number of the filing
-
         film_number : int
             The film number of the filing
     """
@@ -203,46 +182,34 @@ def sec_filings(
     """
     sec_filings returns a list of submitted filings of a specific entity, of a specific form type and within a given timeframe.
 
-
     Parameters
     ----------------------
     cik : int
         The CIK of the issuing entity
-
     form_types : list or str
         Either a list of form types or "all" or "any" to retrieve filings of all form types
-
     start : str
         The ISO-8601 start date (e.g. "2012-05-22")
-
     end : str
         The ISO-8601 end date (e.g. "2018-07-01")
-
 
     Returns
     ----------------------
     list of dicts
         type : str
             The form type of the filing
-
         filing_url : str
             The url of the filing
-
         document_url : str
             The url of the text-file document of the filing
-
         date_filed : int or str
             The ISO-8601 date or UNIX timestamp when the filing was submitted
-
         date_of_period : int or str
             The ISO-8601 date or UNIX timestamp of the date the filing refers to (e.g. when the purchase of the security of a form 3 filing happened)
-
         accession_number : int
             The accession number of the filing
-
         file_number : str
             The file number of the filing
-
         film_number : int
             The film number of the filing
     """
@@ -290,61 +257,51 @@ def sec_filings(
 
 class _SECFiling:
     """
-    _SECFiling is the parent class of all SEC filing classes. While it can be called with any form type, it should not be called
-    It governs the splitting of the file into the header section and the document section and extracts all of the header information.
+    _SECFiling is the parent class of all SEC filing classes. Hence, each filing class, irrespective of the form type, has the attributes provided by _SECFiling.
+    The base class governs the splitting of the file into the header section and the document section and extracts all of the header information.
 
     The header section contains file-related information such as the date and what entites are involved and how they are related.
     There are four different entity roles: filer, subject company, reporting owner and issuer. Every form type has specific entity roles
     (e.g. issuer in Form 4 Filings) and assertion of that role types is done by the respective subclass.
     The header also holds entity-specific information such as the name, the CIK and the address of an entity.
-
     The document section holds the form-specific data (e.g. fund holdings in Form 13F filings) and parsing is solely governed by the respective subclass.
 
-    Each filing class, irrespective of the form type, has the following attributes:
-        accession_number: str
-            The accession number of the filing
+    Attributes
+    ----------------------
+    accession_number: str
+        The accession number of the filing
+    date_filed: str
+        The ISO-8601 date when the filing was filed
+    date_of_change: str
+        The ISO-8601 date when the filing was filed
+    date_of_period: str
+        The ISO-8601 date the filing refers to
+    document: str
+        The document that consists of all the form-specific information
+    document_count: int
+        The document number of the filing / how many filings the entity had submitted before + 1
+    effectiveness_date: str
+        The ISO-8601 effectiveness date of the
+    file: str
+        The raw text file of the filing which consists of the header and the document
+    file_number: str
+        The file number of the filing
+    film_number: int
+        The film number of the filing
+    header: str
+        The header that consists of the entity-specific information
+    is_amendment: bool
+        Whether the filing is an amendment to another filing
+    is_html: bool
+        Whether the document is in valid HTML format
+    is_xml: bool
+        Whether the document is in valid XML format
+    submission_type: str
+        The form type of the filing (e.g. "10-K" or "4")
 
-        date_filed: str
-            The ISO-8601 date when the filing was filed
-
-        date_of_change: str
-            The ISO-8601 date when the filing was filed
-
-        date_of_period: str
-            The ISO-8601 date the filing refers to
-
-        document: str
-            The document that consists of all the form-specific information
-
-        document_count: int
-            The document number of the filing / how many filings the entity had submitted before + 1
-
-        effectiveness_date: str
-            The ISO-8601 effectiveness date of the
-
-        file: str
-            The raw text file of the filing which consists of the header and the document
-
-        file_number: str
-            The file number of the filing
-
-        film_number: int
-            The film number of the filing
-
-        header: str
-            The header that consists of the entity-specific information
-
-        is_amendment: bool
-            Whether the filing is an amendment to another filing
-
-        is_html: bool
-            Whether the document is in valid HTML format
-
-        is_xml: bool
-            Whether the document is in valid XML format
-
-        submission_type: str
-            The form type of the filing (e.g. "10-K" or "4")
+    Methods
+    -----------------------
+    None
     """
     def __init__(
         self,
@@ -749,45 +706,33 @@ class Filing3(_SECFiling):
     derivative and non-derivative securities the insider owns, irrespective if they hold any security of the issuing company.
     As with each filing class, it has to be called with the file string, the filing url or the cik of the entity and the date when the filing was filed.
 
-
     Parameters
     --------------------------
     file : str (optional)
         The document text file
-
     url : str (optional)
         The url of the document text file
-
     cik : int (optional)
         The CIK of the filing entity
-
     date : str or int (optional)
         The ISO-8601 date when the filing was filed
-
 
     Attributes
     --------------------------
     derivative_securities : list
         A list of derivative securities and their value the reporting owner holds
-
     footnotes : list
         A list of possible footnotes, explaining the filed information
-
     issuer : dict
         The entity-specific information of the filing entity, in this case the company issuing the securities
-
     non_derivative_securities : list
         A list of non-derivative securities and their value the reporting owner holds
-
     relationship : dict
         Information regarding the relationship of the owner and the issuer, including whether the owner is a manager or director
-
     reporting_owner : list
         A list of the reporting owners that own the securities of the issuer
-
     signature : dict
         Signature information of the manager, including the name of the manager and the date of signature
-
 
     Methods
     --------------------------
@@ -1040,45 +985,33 @@ class Filing4(Filing3):
     derivative and non-derivative security transactions, such as buys and sells and stock option exercises.
     As with each filing class, it has to be called with the file string, the filing url or the cik of the entity and the date when the filing was filed.
 
-
     Parameters
     --------------------------
     file : str (optional)
         The document text file
-
     url : str (optional)
         The url of the document text file
-
     cik : int (optional)
         The CIK of the filing entity
-
     date : str or int (optional)
         The ISO-8601 date when the filing was filed
-
 
     Attributes
     --------------------------
     derivative_securities : list
         A list of derivative security transactions and their total value
-
     footnotes : list
         A list of possible footnotes, explaining the filed information
-
     issuer : dict
         The entity-specific information of the filing entity, in this case the company issuing the securities
-
     non_derivative_securities : list
         A list of non-derivative security transactions and their total value
-
     relationship : dict
         Information regarding the relationship of the owner and the issuer, including whether the owner is a manager or director
-
     reporting_owner : list
         A list of the reporting owners that own the securities of the issuer
-
     signature : dict
         Signature information of the manager, including the name of the manager and the date of signature
-
 
     Methods
     --------------------------
@@ -1574,45 +1507,33 @@ class Filing13F(_SECFiling):
     short positions and securities that are not listed in the United States are excluded.
     As with each filing class, it has to be called with the file string, the filing url or the cik of the entity and the date when the filing was filed.
 
-
     Parameters
     --------------------------
     file : str (optional)
         The document text file
-
     url : str (optional)
         The url of the document text file
-
     cik : int (optional)
         The CIK of the filing entity
-
     date : str or int (optional)
         The ISO-8601 date when the filing was filed
-
 
     Attributes
     --------------------------
     amendment_information : dict or None
         The amendment type and number if it is an amendment to another filing, else None
-
     filer : dict
         The entity-specific information of the filing entity
-
     investments : list
         A list of all investments with holding-specific information. Holdings that are shared with different reporting managers are reported separately
-
     other_reporting_managers : list
         A list of managers that share and also report some of the investments by themselves
-
     report_type : str
         The report type of the filing
-
     signature : dict
         Signature information of the manager, including the name of the manager and the date of signature
-
     summary : dict
         A fund summary, including the number of investments and the portfolio value
-
 
     Methods
     --------------------------
@@ -1901,51 +1822,37 @@ class FilingNPORT(_SECFiling):
     portfolio holdings, in- and outflows and fund returns.
     As with each filing class, it has to be called with the file string, the filing url or the cik of the entity and the date when the filing was filed.
 
-
     Parameters
     --------------------------
     file : str (optional)
         The document text file
-
     url : str (optional)
         The url of the document text file
-
     cik : int (optional)
         The CIK of the filing entity
-
     date : str or int (optional)
         The ISO-8601 date when the filing was filed
-
 
     Attributes
     --------------------------
     filer : dict
         The entity-specific information of the filing entity
-
     has_short_positions : bool
         Whether the portfolio of the fund has short positions
-
     explanatory_notes : dict
         Explanatory notes, if any, of specific information
-
     general_information : dict
         General information such as the filer LEI and classes
-
     fund_information : dict
         Fund information such as assets under management, portfolio risk, return and flow information
-
     flow_information : dict
         Flow information of each month
-
     return_information : dict
         Return information of each month, including class returns and derivative gains
-
     securities_lending : dict
         Securities lending information, including the borrower entities
-
     signature : dict
         Signature information of the fund manager
-
 
     Methods
     --------------------------
