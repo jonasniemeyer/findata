@@ -15,7 +15,7 @@ NoneType = type(None)
 def sec_companies() -> list:
     """
     sec_companies returns a list of US-listed companies that file 10-K filings to the SEC.
-    The list contains the companies' name, ticker and CIK.
+    The list contains the company's name, ticker and CIK.
 
 
     Parameters
@@ -1372,6 +1372,12 @@ class Filing4(Filing3):
 
 
 class Filing5(Filing4):
+    """
+    Filing5 classes extract information from filings of form "5" and their amendments "5/A".
+    These filings are filed within 45 days following the company's fiscal year end if an insider conducted a trade of securities of the company's securities
+    but failed to report it in a form 4 filing.
+    As with each filing class, it has to be called with the file string, the filing url or the cik of the entity and the date when the filing was filed.
+    """
     pass
 
 
