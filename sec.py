@@ -3376,6 +3376,28 @@ class FilingNPORT(_SECFiling):
 
     @property
     def filer(self) -> dict:
+        """
+        Returns entity-specific information of the filer
+        ---------------------------
+        name : str
+            The name of the filing entity
+        cik : int
+            The CIK of the filing entity
+        sic : dict
+            A dict of the SIC name and SIC code
+        irs_number : int or None
+            The Internal Revenue Service number of the filing entity
+        state : str
+            The abbreviation of the state the filing entity is located
+        fiscal_year_end : dict
+            A dict of the fiscal year end month and day
+        business_address : dict
+            A dict of business address information, including the street, city, zip, state and phone number
+        mail_address : dict
+            A dict of mail address information, including the street, city, zip and state
+        former_names: list
+            A list of former names, including the former name and date of change
+        """
         return self._filer
 
     @property
