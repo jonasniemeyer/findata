@@ -3256,6 +3256,56 @@ class FilingNPORT(_SECFiling):
         }
 
     def portfolio(self, sorted_by=None) -> list:
+        """
+        Returns a sorted list of portfolio holdings, each entry being a dictionary of holding-specific information.
+
+        Parameters
+        ------------------------
+        sorted_by : str or None
+            Governs by which variable the portfolio holdings should be sorted, or that the data should not be sorted at all if None is given
+            Possible values: None, "name", "title", "market_value", "quantity", "percentage", "payoff_direction"
+
+        Returns
+        ------------------------
+        list of dicts
+            issuer : dict
+                name : str
+                lei : str
+                type : dict
+                    name : str
+                    abbr : str
+                country : str
+            title : str
+            identifier : dict
+                cusip : str (optional)
+                isin : str (optional)
+                ticker : str (optional)
+                other_identifiers (optional)
+            amount : dict
+                percentage : float
+                market_value : float
+                quantity : float
+                quantitiy_type : dict
+                    name : str
+                    abbr : str
+                currency : dict
+                    abbr : str
+                    exchange_rate : float or None
+            payoff_direction : str
+            asset-type : dict
+                name : str
+                abbr : str
+            restricted_security : bool
+            liquidity_classification : dict or None
+            us_gaap_fair_value_hierarchy : int
+            debt_information : dict or None
+            repurchase_information: dict or None
+            derivative_information: dict or None
+            securities_lending: dict
+                cash_collateral : float or None
+                non_cash_collateral : float or None
+                loaned : float or None
+        """
         sort_variables = (
             None,
             "name",
