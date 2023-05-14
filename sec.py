@@ -3456,7 +3456,7 @@ class FilingNPORT(_SECFiling):
                     sales : float
                     reinvestments : float
                     redemptions : float
-            liquid_investment_minimum_information
+            liquid_investment_minimum_information : dict or None
             derivatives_transactions : dict or None
             derivatives_exposure : dict or None
             var_information : dict or None
@@ -3465,14 +3465,59 @@ class FilingNPORT(_SECFiling):
 
     @property
     def flow_information(self) -> dict:
+        """
+        Returns flow information of the fund. For each month of the quarter the filing refers to, the values of sales, reinvestments and redemption are returned.
+
+        Returns
+        --------------------------
+        dict
+            for each ISO-8601 date : dict
+                sales : float
+                reinvestments : float
+                redemptions : float
+        """
         return self.fund_information["flow_information"]
 
     @property
     def return_information(self) -> dict:
+        """
+        Returns return information of the fund, including the returns of each class, the derivative gains of different contract
+        and derivative types and the non-derivative gains, all for each month of the quarter the filing refers to.
+
+        Returns
+        --------------------------
+        dict
+            class_returns : dict
+                for each class CIK : dict
+                    ISO-8601 date : float
+            derivative_gains : dict
+                for each contract type : dict
+                    for each ISO-8601 date : float or None
+                    derivative_types : dict
+                        for each derivative type : dict
+                            for each ISO-8601 date : float or None
+            non_derivative_gains : dict
+                for each ISO-8601 date : dict
+                    realized_gain : float
+                    unrealized_appreciation : float
+        """
         return self.fund_information["return_information"]
 
     @property
     def securities_lending(self) -> dict:
+        """
+        Returns aggregate securities lending information, including the list of borrowers, their name and lei and the total market value borrowed
+        and the total amount of non_cash_collateral.
+
+        Returns
+        --------------------------
+        dict
+            borrowers : list of dicts
+                name : str
+                lei : str
+                value : float
+            non_cash_collateral : float or None
+        """
         return self.fund_information["securities_lending"]
 
     @property
