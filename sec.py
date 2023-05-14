@@ -3270,7 +3270,7 @@ class FilingNPORT(_SECFiling):
         list of dicts
             issuer : dict
                 name : str
-                lei : str
+                lei : str or None
                 type : dict
                     name : str
                     abbr : str
@@ -3292,7 +3292,7 @@ class FilingNPORT(_SECFiling):
                     abbr : str
                     exchange_rate : float or None
             payoff_direction : str
-            asset-type : dict
+            asset_type : dict
                 name : str
                 abbr : str
             restricted_security : bool
@@ -3402,6 +3402,65 @@ class FilingNPORT(_SECFiling):
 
     @property
     def fund_information(self) -> dict:
+        """
+        Returns fund-specific information, including assets under management, portfolio risk metrics
+        and return, flow and derivative information
+
+        Returns
+        --------------------------
+        dict
+            total_assets : float
+            total_liabilities : float
+            net_assets: float
+            certain_assets : dict
+                miscellaneous_securities : float
+                assets_foreign_controlled_company : float
+                accounts_payable : dict
+                    1-year : dict
+                        banks : float
+                        controlled_companies : float
+                        other_affiliates : float
+                        other : float
+                    long_term : dict
+                        banks : float
+                        controlled_companies : float
+                        other_affiliates : float
+                        other : float
+                    delayed_delivery : float
+                    standby_commitment : float
+                liquiditation_preference : float
+                cash : float
+            portfolio_level_risk : dict or None
+            securities_lending : dict
+                borrowers : list of dicts
+                    name : str
+                    lei : str
+                    value : float
+                non_cash_collateral : float or None
+            return_information : dict
+                class_returns : dict
+                    for each class CIK : dict
+                        ISO-8601 date : float
+                derivative_gains : dict
+                    for each contract type : dict
+                        for each ISO-8601 date : float or None
+                        derivative_types : dict
+                            for each derivative type : dict
+                                for each ISO-8601 date : float or None
+                non_derivative_gains : dict
+                    for each ISO-8601 date : dict
+                        realized_gain : float
+                        unrealized_appreciation : float
+            flow_information : dict
+                for each ISO-8601 date : dict
+                    sales : float
+                    reinvestments : float
+                    redemptions : float
+            liquid_investment_minimum_information
+            derivatives_transactions : dict or None
+            derivatives_exposure : dict or None
+            var_information : dict or None
+        """
         return self._fund_information
 
     @property
