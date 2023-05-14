@@ -81,7 +81,7 @@ def latest_sec_filings(start=pd.to_datetime("today").isoformat(), timestamps=Fal
     Parameters
     ----------------------
     start : str
-        The ISO-8601 date (e.g. "2012-05-22")
+        The ISO-8601 starting date. Only filings filed on and after that date are searched
     timestamps : bool
         If True, any date(-time) is returned as a UNIX-timestamp and if False, as an ISO-8601 date(-time)
 
@@ -3309,14 +3309,45 @@ class FilingNPORT(_SECFiling):
 
     @property
     def has_short_positions(self) -> bool:
+        """
+        Returns True if the fund portfolio has at least one holding with negative market value, and False else.
+        """
         return self._has_short_positions
 
     @property
     def explanatory_notes(self) -> dict:
+        """
+        Returns a dictionary of explanatory notes regarding file-specific information, the item being the key and the note being the value.
+        """
         return self._explanatory_notes
 
     @property
     def general_information(self) -> dict:
+        """
+        Returns general information of the fund
+        ----------------------------
+        filer_lei : str
+            The Legal Entity Identifier of the issuing entity
+        series : dict
+            name : str
+                The name of the fund series
+            cik : str
+                The CIK of the fund series
+            lei : The Legal Entity Identifier of the fund series
+        classes : list of dicts
+            cik : str
+                The CIK of the class
+            name : str
+                The name of the class
+            ticker : str
+                The ticker of the class
+        fiscal_year_end : str
+            The ISO-8601 date on which the fiscal year of the entity ends
+        reporting_date : str
+            The ISO-8601 date of the quarter end date the filing refers to
+        is_final_filing : bool
+            Whether the issuer expects the filing to be the last one of that fund (e.g. because it is closed)
+        """
         return self._general_information
 
     @property
@@ -3337,6 +3368,20 @@ class FilingNPORT(_SECFiling):
 
     @property
     def signature(self) -> dict:
+        """
+        Returns signature data of the filing
+        ------------------
+        date : str
+            The ISO-8601 date on which the filing was signed
+        name : str
+            The name of the signee
+        title : str
+            The title of the signee
+        company : str
+            The company name of the signee
+        signature : str
+            The signature of the signee
+        """
         return self._signature
 
 
