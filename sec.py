@@ -3466,7 +3466,7 @@ class FilingNPORT(_SECFiling):
     @property
     def flow_information(self) -> dict:
         """
-        Returns flow information of the fund. For each month of the quarter the filing refers to, the values of sales, reinvestments and redemption are returned.
+        Returns flow information of the fund. For each month of the quarter the filing refers to, the total amount of sales, reinvestments and redemption are returned.
 
         Returns
         --------------------------
