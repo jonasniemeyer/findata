@@ -9,9 +9,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from finance_data.utils import TickerError
 
 class MacrotrendsReader:
-    base_url = "https://www.macrotrends.net/stocks/charts/{}/{}/{}?freq={}"
+    _base_url = "https://www.macrotrends.net/stocks/charts/{}/{}/{}?freq={}"
 
-    conversion = {
+    _conversion = {
         "income-statement": "income_statement",
         "balance-sheet": "balance_sheet",
         "cash-flow-statement": "cashflow_statement"
@@ -24,7 +24,7 @@ class MacrotrendsReader:
         statement="financial-statement",
         frequency="yearly",
         timestamps=False
-    ):
+    ) -> None:
         if statement not in ("income-statement", "balance-sheet", "cash-flow-statement", "financial-statement"):
             raise ValueError('Statement type has to be "income-statement", "balance-sheet", "cash-flow-statement" or "financial-statement"')
         
@@ -46,7 +46,7 @@ class MacrotrendsReader:
         else:
             raise ValueError('Reporting Frequency has to be "yearly", "Y", "annual", "A", "quarterly" or "Q"')
         
-        self.url = self.base_url.format(
+        self.url = self._base_url.format(
             self.ticker,
             self.name,
             self.statement,
@@ -54,12 +54,57 @@ class MacrotrendsReader:
         )
 
         self.timestamps = timestamps
-    
-    def read(self):
-        self._open_website()
-        return self._parse()
 
-    def _open_website(self, browser="chrome", url=None):
+    def _find_cell_width(self) -> int:
+        """
+        Finds the cell width of the cells that contain the financial data values.
+        They are needed to compute the minimum pixels the slider has to be moved to the right in order to see and parse the next column
+        """
+        html = self.driver.page_source
+        soup = BeautifulSoup(html, "lxml")
+        table = soup.find("div", {"id":"jqxgrid"})
+        row = table.find_all("div", {"role": "row"})[0]
+        cell = row.find_all("div", {"role": "gridcell"})[2].get("style")
+        width = re.findall("width:\s?([0-9]+)px", cell)[0]
+        width = int(width)
+        return width
+
+    def _find_slider_sensitivity(self) -> int:
+        """
+        Moves the slider 1px to the right and gets the "margin-left"-attribute of the cells of the first column to check, 
+        how far the table is moved to the left in response of moving the slider
+        """
+        self._move_slider(10)
+        html = self.driver.page_source
+        soup = BeautifulSoup(html, "lxml")
+        table = soup.find("div", {"id":"jqxgrid"})
+        row = table.find_all("div", {"role": "row"})[0]
+        cell = row.find_all("div", {"role": "gridcell"})[0].get("style")
+        try:
+            margin = re.findall("margin-left:\s?([0-9]+)px", cell)[0]
+            margin = int(margin)
+            return margin / 10
+        except:
+            return
+
+    def _find_scrollbar_width(self) -> int:
+        """
+        Returns the width of the scrollbar (in px) right to the slider. This is needed to see, how often the slider can be moved
+        to the right without touching the end of the scrollbar
+        """
+        html = self.driver.page_source
+        width = BeautifulSoup(html, "lxml").find("div", {"id": "jqxScrollAreaDownhorizontalScrollBarjqxgrid"}).get("style")
+        width = int(re.findall("width: ([0-9]+)px", width)[0])
+        return width
+
+    def _move_slider(self, pixels) -> None:
+        """
+        Moves the slider n pixels to the right
+        """
+        move = ActionChains(self.driver)
+        move.click_and_hold(self.slider).move_by_offset(pixels, 0).release().perform()
+
+    def _open_website(self, browser="chrome", url=None) -> None:
         """
         Opens the website and the url with the according webdriver and extracts the necessary items:
         1. slider object
@@ -87,7 +132,7 @@ class MacrotrendsReader:
                 self.driver.quit()
                 raise TickerError(f"cannot find data with ticker {self.ticker}")
             self.name = name
-            self.url = self.base_url.format(
+            self.url = self._base_url.format(
                 self.ticker,
                 self.name,
                 self.statement,
@@ -105,13 +150,13 @@ class MacrotrendsReader:
         else:
             self.driver.get(url)
 
-    def _parse(self):
+    def _parse(self) -> dict:
         data = {}
         if self.statement == "financial-statement":
             for statement in ("income-statement", "balance-sheet", "cash-flow-statement"):
                 href_url = self.url.replace("financial-statement", statement)
                 self._open_website(url=href_url)
-                data = data | {self.conversion[statement]: self._parse_table()}
+                data = data | {self._conversion[statement]: self._parse_table()}
         else:
             data = self._parse_table()
         self.driver.quit()
@@ -191,55 +236,10 @@ class MacrotrendsReader:
                 break
         return data
 
-    def _move_slider(self, pixels) -> None:
-        """
-        Moves the slider n pixels to the right
-        """
-        move = ActionChains(self.driver)
-        move.click_and_hold(self.slider).move_by_offset(pixels, 0).release().perform()
-
-    def _find_cell_width(self) -> int:
-        """
-        Finds the cell width of the cells that contain the financial data values.
-        They are needed to compute the minimum pixels the slider has to be moved to the right in order to see and parse the next column
-        """
-        html = self.driver.page_source
-        soup = BeautifulSoup(html, "lxml")
-        table = soup.find("div", {"id":"jqxgrid"})
-        row = table.find_all("div", {"role": "row"})[0]
-        cell = row.find_all("div", {"role": "gridcell"})[2].get("style")
-        width = re.findall("width:\s?([0-9]+)px", cell)[0]
-        width = int(width)
-        return width
-
-    def _find_slider_sensitivity(self) -> int:
-        """
-        Moves the slider 1px to the right and gets the "margin-left"-attribute of the cells of the first column to check, 
-        how far the table is moved to the left in response of moving the slider
-        """
-        self._move_slider(10)
-        html = self.driver.page_source
-        soup = BeautifulSoup(html, "lxml")
-        table = soup.find("div", {"id":"jqxgrid"})
-        row = table.find_all("div", {"role": "row"})[0]
-        cell = row.find_all("div", {"role": "gridcell"})[0].get("style")
-        try:
-            margin = re.findall("margin-left:\s?([0-9]+)px", cell)[0]
-            margin = int(margin)
-            return margin / 10
-        except:
-            return
-
-    def _find_scrollbar_width(self) -> int:
-        """
-        Returns the width of the scrollbar (in px) right to the slider. This is needed to see, how often the slider can be moved
-        to the right without touching the end of the scrollbar
-        """
-        html = self.driver.page_source
-        width = BeautifulSoup(html, "lxml").find("div", {"id": "jqxScrollAreaDownhorizontalScrollBarjqxgrid"}).get("style")
-        width = int(re.findall("width: ([0-9]+)px", width)[0])
-        return width
+    def read(self) -> dict:
+        self._open_website()
+        return self._parse()
 
     @property
-    def ticker(self):
+    def ticker(self) -> str:
         return self._ticker
