@@ -12,44 +12,6 @@ class FREDReader:
     def __init__(self, dataset, timestamps=False) -> None:
         self._dataset = dataset
         self.timestamps = timestamps
-    
-    def historical_data(self) -> pd.DataFrame:
-        parameters = {"id": self.dataset}
-
-        response = requests.get(
-            url=self._dataset_url, 
-            headers=HEADERS,
-            params=parameters
-        ).text
-
-        df = pd.read_csv(StringIO(response), index_col=0)
-        df.index = pd.to_datetime(df.index)
-        if self.timestamps:
-            df.index = [int(date.timestamp()) for date in df.index]
-        df = df.replace(".", np.NaN)
-        df = df.apply(pd.to_numeric)
-
-        return df
-
-    def name(self) -> str:
-        if not hasattr(self, "_description_data"):
-            self._get_description_data()
-        return self._description_data["name"]
-
-    def categories(self) -> str:
-        if not hasattr(self, "_description_data"):
-            self._get_description_data()
-        return self._description_data["categories"]
-
-    def description(self) -> str:
-        if not hasattr(self, "_description_data"):
-            self._get_description_data()
-        return self._description_data["description"]
-
-    def unit(self) -> str:
-        if not hasattr(self, "_description_data"):
-            self._get_description_data()
-        return self._description_data["unit"]
 
     def _get_description_data(self) -> dict:        
         html = requests.get(
@@ -78,6 +40,44 @@ class FREDReader:
         self._description_data = data
 
         return data
+
+    def categories(self) -> str:
+        if not hasattr(self, "_description_data"):
+            self._get_description_data()
+        return self._description_data["categories"]
+
+    def description(self) -> str:
+        if not hasattr(self, "_description_data"):
+            self._get_description_data()
+        return self._description_data["description"]
+
+    def historical_data(self) -> pd.DataFrame:
+        parameters = {"id": self.dataset}
+
+        response = requests.get(
+            url=self._dataset_url,
+            headers=HEADERS,
+            params=parameters
+        ).text
+
+        df = pd.read_csv(StringIO(response), index_col=0)
+        df.index = pd.to_datetime(df.index)
+        if self.timestamps:
+            df.index = [int(date.timestamp()) for date in df.index]
+        df = df.replace(".", np.NaN)
+        df = df.apply(pd.to_numeric)
+
+        return df
+
+    def name(self) -> str:
+        if not hasattr(self, "_description_data"):
+            self._get_description_data()
+        return self._description_data["name"]
+
+    def unit(self) -> str:
+        if not hasattr(self, "_description_data"):
+            self._get_description_data()
+        return self._description_data["unit"]
 
     @property
     def dataset(self) -> dict:

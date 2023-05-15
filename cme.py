@@ -64,12 +64,6 @@ class CMEReader:
         )
         self.timestamps = timestamps
     
-    def read(self) -> dict:
-        self._open_website()
-        data = self._parse()
-        self.driver.quit()
-        return data
-    
     def _open_website(self, browser="chrome", url=None):
         if not hasattr(self, "driver"):
             if browser == "chrome":
@@ -168,3 +162,9 @@ class CMEReader:
             df[col] = pd.to_numeric(df[col])
         df = df.rename(columns = {"Est. Volume": "Volume", "Prior day OI": "Open Interest"})
         return df
+
+    def read(self) -> dict:
+        self._open_website()
+        data = self._parse()
+        self.driver.quit()
+        return data

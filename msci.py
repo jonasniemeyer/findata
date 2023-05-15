@@ -20,7 +20,7 @@ class MSCIReader:
         normalize=False,
         returns=True,
         timestamps=False
-    ):
+    ) -> None:
         """
         index_code : int or str
             specifies the MSCI index code that should be fetched

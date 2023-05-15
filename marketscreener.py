@@ -21,6 +21,39 @@ class MarketscreenerReader:
         self._company_url = f"{self._base_url}{company_tag.get('href')}"
         self._header_parsed = False
 
+    def _get_company_information(self) -> None:
+        url = f"{self._company_url}/company/"
+        html = requests.get(url=url, headers=HEADERS).text
+        self._company_soup = BeautifulSoup(html, "lxml")
+
+    def _get_financial_information(self) -> None:
+        url = f"{self._company_url}/financials/"
+        html = requests.get(url=url, headers=HEADERS).text
+        self._financial_soup = BeautifulSoup(html, "lxml")
+
+    def _parse_header(self) -> None:
+        if self._header_parsed:
+            return
+        if hasattr(self, "_financial_soup"):
+            soup = self._financial_soup
+        elif hasattr(self, "_company_soup"):
+            soup = self._company_soup
+        else:
+            self._get_financial_information()
+            soup = self._financial_soup
+
+        ticker, isin = soup.find("div", {"class": "bc_pos"}).find("span", {"class": "bc_add"}).find_all("span")
+        self._ticker = ticker.text.strip()
+        self._isin = isin.text.strip()
+
+        self._name = re.findall("(.+)\(.+\)", soup.find("h1").parent.text.strip())[0].strip()
+
+        price_tag = soup.find("span", {"class": "last variation--no-bg txt-bold"})
+        self._price = float(price_tag.text)
+        self._currency = price_tag.find_next("td").text.strip()
+
+        self._header_parsed = True
+
     def board_members(self) -> list:
         if not hasattr(self, "_company_soup"):
             self._get_company_information()
@@ -421,36 +454,3 @@ class MarketscreenerReader:
     def ticker(self) -> str:
         self._parse_header()
         return self._ticker
-
-    def _get_company_information(self) -> None:
-        url = f"{self._company_url}/company/"
-        html = requests.get(url=url, headers=HEADERS).text
-        self._company_soup = BeautifulSoup(html, "lxml")
-
-    def _get_financial_information(self) -> None:
-        url = f"{self._company_url}/financials/"
-        html = requests.get(url=url, headers=HEADERS).text
-        self._financial_soup = BeautifulSoup(html, "lxml")
-    
-    def _parse_header(self) -> None:
-        if self._header_parsed:
-            return
-        if hasattr(self, "_financial_soup"):
-            soup = self._financial_soup
-        elif hasattr(self, "_company_soup"):
-            soup = self._company_soup
-        else:
-            self._get_financial_information()
-            soup = self._financial_soup
-        
-        ticker, isin = soup.find("div", {"class": "bc_pos"}).find("span", {"class": "bc_add"}).find_all("span")
-        self._ticker = ticker.text.strip()
-        self._isin = isin.text.strip()
-        
-        self._name = re.findall("(.+)\(.+\)", soup.find("h1").parent.text.strip())[0].strip()
-        
-        price_tag = soup.find("span", {"class": "last variation--no-bg txt-bold"})
-        self._price = float(price_tag.text)
-        self._currency = price_tag.find_next("td").text.strip()
-        
-        self._header_parsed = True

@@ -29,22 +29,6 @@ class StratosphereReader:
             self._populate_profile(data)
 
         return data
-    
-    def _populate_profile(self, data) -> None:
-        if "company" not in data["props"]["pageProps"]:
-            return None
-        self._profile = {"ticker": self.ticker}
-        profile_data = data["props"]["pageProps"]["company"]
-        self._profile["name"] = profile_data["name"]
-        self._profile["cik"] = None if profile_data["cik"] in (None, "") else int(profile_data["cik"])
-        self._profile["website"] = f'https://www.{profile_data["website"]}'
-        self._profile["exchange"] = profile_data["exchange"]
-        self._profile["country"] = profile_data["country"]
-        self._profile["currency"] = {
-            "name": profile_data["currency"],
-            "exchange_rate": round(1/data["props"]["pageProps"]["exchangeRate"], 4)
-        }
-        self._profile["market_cap"] = int(data["props"]["pageProps"]["marketCap"])
 
     def _parse_fundamental_data(self, data, timestamps=False) -> dict:
         dct = {"annual": {}, "quarterly": {}}
@@ -73,6 +57,22 @@ class StratosphereReader:
                         dct[freq][var] = {}
                     dct[freq][var][date] = round(item[var], 6) if not isinstance(item[var], (str, NoneType)) else None
         return dct
+
+    def _populate_profile(self, data) -> None:
+        if "company" not in data["props"]["pageProps"]:
+            return None
+        self._profile = {"ticker": self.ticker}
+        profile_data = data["props"]["pageProps"]["company"]
+        self._profile["name"] = profile_data["name"]
+        self._profile["cik"] = None if profile_data["cik"] in (None, "") else int(profile_data["cik"])
+        self._profile["website"] = f'https://www.{profile_data["website"]}'
+        self._profile["exchange"] = profile_data["exchange"]
+        self._profile["country"] = profile_data["country"]
+        self._profile["currency"] = {
+            "name": profile_data["currency"],
+            "exchange_rate": round(1/data["props"]["pageProps"]["exchangeRate"], 4)
+        }
+        self._profile["market_cap"] = int(data["props"]["pageProps"]["marketCap"])
 
     def _uncompress_variables(self, old: dict) -> dict:
         new = {"annual": {}, "quarterly": {}}

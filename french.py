@@ -70,6 +70,16 @@ class FrenchReader:
         else:
             self._dataset = dataset
         self.timestamps = timestamps
+
+    def _read_zip(self, http_response) -> str:
+        with TemporaryFile() as temp_file:
+            temp_file.write(http_response)
+            try:
+                with ZipFile(temp_file, "r") as zip_file:
+                    raw_data = zip_file.open(zip_file.namelist()[0]).read().decode(encoding="cp1252")
+                    return raw_data
+            except BadZipFile:
+                raise DatasetError(f"Could not fetch data for {self._dataset}")
           
     def read(self) -> dict:
         time_series = {}
@@ -128,16 +138,10 @@ class FrenchReader:
             
             time_series[name] = df
         return time_series
-        
-    def _read_zip(self, http_response) -> str:
-        with TemporaryFile() as temp_file:
-            temp_file.write(http_response)
-            try:
-                with ZipFile(temp_file, "r") as zip_file:
-                    raw_data = zip_file.open(zip_file.namelist()[0]).read().decode(encoding="cp1252")
-                    return raw_data
-            except BadZipFile:
-                raise DatasetError(f"Could not fetch data for {self._dataset}")
+
+    @property
+    def dataset(self):
+        return self._dataset
     
     @classmethod
     def datasets(cls) -> list:
@@ -149,7 +153,3 @@ class FrenchReader:
             if dataset is not None and dataset.endswith("_CSV.zip")
         ]
         return datasets
-    
-    @property
-    def dataset(self):
-        return self._dataset
