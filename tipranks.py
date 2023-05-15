@@ -10,7 +10,85 @@ class TipranksAnalystReader:
     def __init__(self, name) -> None:
         self.name = name
     
-    def ratings(self, timestamps=False):
+    def _get_analyst_data(self) -> str:
+        if not hasattr(self, "_analyst_data"):
+            name_encoded = self.name.lower().replace(" ", "-")
+            self._analyst_data = requests.get(
+                url = f"{self._base_url}{name_encoded}",
+                headers = HEADERS
+            ).text
+            self._analyst_data = BeautifulSoup(self._analyst_data, "lxml")
+        
+        return self._analyst_data
+    
+    def _get_coverage_information(self) -> dict:
+        information = self._get_analyst_data().find("div", {"data-sc": "Information"}).find_all("div", recursive=False)[1].find_all("div")
+        
+        assert information[0].find_all("span")[0].text == "Main Sector:"
+        assert information[1].find_all("span")[0].text == "Geo Coverage:"
+        sector = None if len(information[0].find_all("span")) == 1 else information[0].find_all("span")[1].text
+        country = None if len(information[1].find_all("span")) == 1 else information[1].find_all("span")[1].text
+        
+        return {"sector": sector, "country": country}
+    
+    def _get_profile(self) -> dict:
+        profile_divs = self._get_analyst_data().find("div", {"data-sc": "Profile"})
+        if profile_divs is None:
+            raise DatasetError(f"No profile data found for analyst '{self.name}'")
+
+        profile_divs = profile_divs.find_all("div", recursive=False)[1].find_all("div", recursive=False)        
+        personal = profile_divs[0]
+        performance = profile_divs[1].find_all("div", recursive=False)[1]
+
+        name = personal.find("h2").text
+        company = personal.find_all("div", recursive=False)[0].find("span").text
+        analyst_rank, total_analysts = re.findall(
+            "#([0-9,]+) out of ([0-9,]+) Wall Street Analysts",
+            personal.find_all("div", recursive=False)[2].find_all("div", recursive=False)[1].text
+        )[0]
+        analyst_rank = int(analyst_rank.replace(",", ""))
+        total_analysts = int(total_analysts.replace(",", ""))
+        image_url = personal.find("img").get("src")
+
+        successful_recommendations, total_recommendations = re.findall(
+            "([0-9]+) out of ([0-9]+) transactions made a profit",
+            performance.find_all("div", recursive=False)[0].find_all("div", recursive=False)[2].text
+        )[0]
+        successful_recommendations = int(successful_recommendations)
+        total_recommendations = int(total_recommendations)
+        success_rate = round(successful_recommendations/total_recommendations, 4)
+        average_rating_return = performance.find_all("div", recursive=False)[2].find_all("div", recursive=False)[1].find("span").text
+        average_rating_return = round(float(average_rating_return.replace("%", "")) / 100, 4)
+        
+        dct = {
+            "name": name,
+            "company": company,
+            "image_url": image_url,
+            "rank": analyst_rank,
+            "total_analysts": total_analysts,
+            "successful_recommendations": successful_recommendations,
+            "total_recommendations": total_recommendations,
+            "success_rate": success_rate,
+            "average_rating_return": average_rating_return
+        }
+        
+        return dct
+    
+    def _get_rating_distribution(self) -> dict:
+        rating_distribution = self._get_analyst_data().find("div", {"data-sc": "StockRating"}).find_all("div", recursive=False)[1].find_all("div")[1].find_all("div", recursive=False)
+        
+        distribution = {}
+        for tag in rating_distribution:
+            percentage, rating = tag.find("div").text.split()
+            percentage = round(float(percentage.replace("%", "")) / 100, 4)
+            distribution[f"{rating.lower()}_percentage"] = percentage
+        
+        return distribution
+
+    def profile(self) -> dict:        
+        return {**self._get_profile(), **self._get_coverage_information(), **self._get_rating_distribution()}
+
+    def ratings(self, timestamps=False) -> list:
         table = self._get_analyst_data().find("div", {"data-sc": "StockCoverage"})
         if table is None:
             raise DatasetError(f"No ratings data found for analyst '{self.name}'")
@@ -56,84 +134,6 @@ class TipranksAnalystReader:
             )
         
         return ratings
-    
-    def profile(self):        
-        return {**self._get_profile(), **self._get_coverage_information(), **self._get_rating_distribution()}
-    
-    def _get_analyst_data(self):
-        if not hasattr(self, "_analyst_data"):
-            name_encoded = self.name.lower().replace(" ", "-")
-            self._analyst_data = requests.get(
-                url = f"{self._base_url}{name_encoded}",
-                headers = HEADERS
-            ).text
-            self._analyst_data = BeautifulSoup(self._analyst_data, "lxml")
-        
-        return self._analyst_data
-    
-    def _get_coverage_information(self):
-        information = self._get_analyst_data().find("div", {"data-sc": "Information"}).find_all("div", recursive=False)[1].find_all("div")
-        
-        assert information[0].find_all("span")[0].text == "Main Sector:"
-        assert information[1].find_all("span")[0].text == "Geo Coverage:"
-        sector = None if len(information[0].find_all("span")) == 1 else information[0].find_all("span")[1].text
-        country = None if len(information[1].find_all("span")) == 1 else information[1].find_all("span")[1].text
-        
-        return {"sector": sector, "country": country}
-    
-    def _get_profile(self):
-        profile_divs = self._get_analyst_data().find("div", {"data-sc": "Profile"})
-        if profile_divs is None:
-            raise DatasetError(f"No profile data found for analyst '{self.name}'")
-
-        profile_divs = profile_divs.find_all("div", recursive=False)[1].find_all("div", recursive=False)        
-        personal = profile_divs[0]
-        performance = profile_divs[1].find_all("div", recursive=False)[1]
-
-        name = personal.find("h2").text
-        company = personal.find_all("div", recursive=False)[0].find("span").text
-        analyst_rank, total_analysts = re.findall(
-            "#([0-9,]+) out of ([0-9,]+) Wall Street Analysts",
-            personal.find_all("div", recursive=False)[2].find_all("div", recursive=False)[1].text
-        )[0]
-        analyst_rank = int(analyst_rank.replace(",", ""))
-        total_analysts = int(total_analysts.replace(",", ""))
-        image_url = personal.find("img").get("src")
-
-        successful_recommendations, total_recommendations = re.findall(
-            "([0-9]+) out of ([0-9]+) transactions made a profit",
-            performance.find_all("div", recursive=False)[0].find_all("div", recursive=False)[2].text
-        )[0]
-        successful_recommendations = int(successful_recommendations)
-        total_recommendations = int(total_recommendations)
-        success_rate = round(successful_recommendations/total_recommendations, 4)
-        average_rating_return = performance.find_all("div", recursive=False)[2].find_all("div", recursive=False)[1].find("span").text
-        average_rating_return = round(float(average_rating_return.replace("%", "")) / 100, 4)
-        
-        dct = {
-            "name": name,
-            "company": company,
-            "image_url": image_url,
-            "rank": analyst_rank,
-            "total_analysts": total_analysts,
-            "successful_recommendations": successful_recommendations,
-            "total_recommendations": total_recommendations,
-            "success_rate": success_rate,
-            "average_rating_return": average_rating_return
-        }
-        
-        return dct
-    
-    def _get_rating_distribution(self):
-        rating_distribution = self._get_analyst_data().find("div", {"data-sc": "StockRating"}).find_all("div", recursive=False)[1].find_all("div")[1].find_all("div", recursive=False)
-        
-        distribution = {}
-        for tag in rating_distribution:
-            percentage, rating = tag.find("div").text.split()
-            percentage = round(float(percentage.replace("%", "")) / 100, 4)
-            distribution[f"{rating.lower()}_percentage"] = percentage
-        
-        return distribution
 
 
 class TipranksStockReader:
@@ -142,45 +142,16 @@ class TipranksStockReader:
     def __init__(self, ticker) -> None:
         self.ticker = ticker
 
-    @classmethod
-    def trending_stocks(cls, timestamps=False):
-        data = requests.get(
-            url = f"{cls._base_url}gettrendingstocks/",
-            headers = TIPRANKS_HEADERS,
-            params = {
-                "daysago": 30,
-                "which": "most"
-            }
-        ).json()
-        
-        data = [
-            {
-                "ticker": item["ticker"],
-                "name": item["companyName"],
-                "popularity": item["popularity"],
-                "sentiment": item["sentiment"],
-                "consensus_score": round(item["consensusScore"], 2),
-                "sector": item["sector"],
-                "market_cap": item["marketCap"],
-                "buy": item["buy"],
-                "hold": item["hold"],
-                "sell": item["sell"],
-                "consensus_rating": item["rating"],
-                "price_target": item["priceTarget"],
-                "latest_rating": (
-                    int(pd.to_datetime(pd.to_datetime(item["lastRatingDate"]).date()).timestamp()) if timestamps
-                    else pd.to_datetime(item["lastRatingDate"]).date().isoformat()
-                )
-            } for item in data
-        ]
-        
-        return data
-    
-    @property
-    def isin(self):
-        return self._get_ratings_data()["isin"]
-    
-    def blogger_sentiment(self):
+    def _get_ratings_data(self):
+        if not hasattr(self, "_ratings_data"):
+            self._ratings_data = requests.get(
+                url = f"{self._base_url}getData/",
+                headers = TIPRANKS_HEADERS,
+                params = {"name": self.ticker}
+            ).json()
+        return self._ratings_data
+
+    def blogger_sentiment(self) -> dict:
         data = self._get_ratings_data()["bloggerSentiment"]
         data = {
             "positive": data["bullishCount"],
@@ -190,7 +161,7 @@ class TipranksStockReader:
         }
         return data
     
-    def covering_analysts(self, include_retail=False, timestamps=False, sorted_by="name"):
+    def covering_analysts(self, include_retail=False, timestamps=False, sorted_by="name") -> list:
         sort_variables = (
             "name",
             "company",
@@ -265,7 +236,7 @@ class TipranksStockReader:
 
         return data
     
-    def insider_trades(self, timestamps=False, sorted_by="name"):
+    def insider_trades(self, timestamps=False, sorted_by="name") -> dict:
         sort_variables = ("name", "amount", "shares", "report_date")
         if sorted_by not in sort_variables:
             raise ValueError(f"sorting variable has to be in {sort_variables}")
@@ -300,7 +271,7 @@ class TipranksStockReader:
 
         return data
     
-    def institutional_ownership(self, sorted_by="name"):
+    def institutional_ownership(self, sorted_by="name") -> list:
         sort_variables = (
             "name",
             "company",
@@ -337,7 +308,7 @@ class TipranksStockReader:
         
         return data
 
-    def institutional_ownership_trend(self, timestamps=False):
+    def institutional_ownership_trend(self, timestamps=False) -> dict:
         data_raw = self._get_ratings_data()["hedgeFundData"]["holdingsByTime"]
         data = {}
         for item in data_raw:
@@ -347,7 +318,7 @@ class TipranksStockReader:
         
         return data
     
-    def news_sentiment(self, timestamps=False):
+    def news_sentiment(self, timestamps=False) -> dict:
         data = requests.get(
             url = f"{self._base_url}getNewsSentiments/",
             headers = TIPRANKS_HEADERS,
@@ -389,7 +360,7 @@ class TipranksStockReader:
         
         return data
     
-    def peers(self):
+    def peers(self) -> list:
         data = self._get_ratings_data()["similarStocks"]
         data = [
             {
@@ -411,7 +382,7 @@ class TipranksStockReader:
         ]
         return data
     
-    def profile(self):
+    def profile(self) -> dict:
         company_data = self._get_ratings_data()["companyData"]
         data = {
             "isin": self._get_ratings_data()["isin"],
@@ -425,7 +396,7 @@ class TipranksStockReader:
         }
         return data
     
-    def recommendation_trend(self, timestamps=False):
+    def recommendation_trend(self, timestamps=False) -> dict:
         data_raw = self._get_ratings_data()
         data = {"all_analysts": {}, "best_analysts": {}}
         
@@ -450,7 +421,7 @@ class TipranksStockReader:
         
         return data
     
-    def recommendation_trend_breakup(self, sorted_by="star", timestamps=False):
+    def recommendation_trend_breakup(self, sorted_by="star", timestamps=False) -> dict:
         if sorted_by not in ("star", "date"):
             raise ValueError(f"sorting variable has to be 'star' or 'date'")
         data_raw = self._get_ratings_data()["consensuses"]
@@ -494,12 +465,41 @@ class TipranksStockReader:
                     data[star][date] = temp_dct[date][star]
         
         return data
+
+    @property
+    def isin(self) -> str:
+        return self._get_ratings_data()["isin"]
+
+    @classmethod
+    def trending_stocks(cls, timestamps=False) -> list:
+        data = requests.get(
+            url = f"{cls._base_url}gettrendingstocks/",
+            headers = TIPRANKS_HEADERS,
+            params = {
+                "daysago": 30,
+                "which": "most"
+            }
+        ).json()
         
-    def _get_ratings_data(self):
-        if not hasattr(self, "_ratings_data"):
-            self._ratings_data = requests.get(
-                url = f"{self._base_url}getData/",
-                headers = TIPRANKS_HEADERS,
-                params = {"name": self.ticker}
-            ).json()
-        return self._ratings_data
+        data = [
+            {
+                "ticker": item["ticker"],
+                "name": item["companyName"],
+                "popularity": item["popularity"],
+                "sentiment": item["sentiment"],
+                "consensus_score": round(item["consensusScore"], 2),
+                "sector": item["sector"],
+                "market_cap": item["marketCap"],
+                "buy": item["buy"],
+                "hold": item["hold"],
+                "sell": item["sell"],
+                "consensus_rating": item["rating"],
+                "price_target": item["priceTarget"],
+                "latest_rating": (
+                    int(pd.to_datetime(pd.to_datetime(item["lastRatingDate"]).date()).timestamp()) if timestamps
+                    else pd.to_datetime(item["lastRatingDate"]).date().isoformat()
+                )
+            } for item in data
+        ]
+        
+        return data
