@@ -357,18 +357,33 @@ class _SECFiling:
         
         self._parse_header()
 
+    @staticmethod
+    def _from_url(url: str) -> str:
+        """
+        Takes the document url, retrieves the document file from the web and returns it. If the document file does not exist, raise a DatasetError instead.
+        """
+        file = requests.get(
+            url=url,
+            headers=HEADERS
+        ).text
+        if "<Message>The specified key does not exist.</Message>" in file:
+            raise DatasetError(f'No filing exists for url "{url}"')
+        return file
+
     def _check_amendment(self) -> bool:
+        """
+        Returns True if the form type ends with /A and is hence an amendment to another filing and False else.
+        """
         return True if self.submission_type.endswith("/A") else False
         
     def _parse_header(self) -> None:
         """
-        There are 4 different possible header entities: Filer, Subject Company, Reporting Owner, Issuer.
+        Splits the header section into subsections of each entity role and parses the respective role if it exists.
+
+        There are four different possible entity roles: Filer, Subject Company, Reporting Owner, Issuer.
         Some documents only have a filer entity (e.g. Form 10-K), some documents have filer and subject entities (e.g. Form 13D) and some have
         reporting owner and issuer entities (e.g. Form 4).
-        
-        This method splits the header section into subsections of each entity and parses the respective section if it exists.
         """
-        
         self._document_count = int(re.findall("PUBLIC DOCUMENT COUNT:\t{2}([0-9]+)", self.header)[0])
         self._accession_number = re.findall("ACCESSION NUMBER:\t{2}([0-9\-]+)", self.header)[0]
         self._submission_type = re.findall("CONFORMED SUBMISSION TYPE:\t(.+)", self.header)[0]
@@ -447,6 +462,9 @@ class _SECFiling:
         self._issuer = self._parse_header_subsection(issuer_index, indices)
     
     def _parse_header_subsection(self, index: Union[int, list], indices: list) -> Union[list, dict, None]:
+        """
+        Takes the start and end indices of the section of an entity role as a parameter and parses and returns the section of that entity role.
+        """
         if isinstance(index, list):
             data = []
             if len(index) != 0:
@@ -549,6 +567,9 @@ class _SECFiling:
         return data
     
     def _parse_addresses(self, section) -> tuple:
+        """
+        Parses the address sections and returns a tuple of dictionaries of business and mail address data.
+        """
         business_index = section.find("BUSINESS ADDRESS:")
         mail_index = section.find("MAIL ADDRESS:")
         
@@ -582,6 +603,9 @@ class _SECFiling:
         return business_address, mail_address
     
     def _parse_single_address(self, section) -> dict:
+        """
+        Returns the data of a specific address, either the business of the mail address.
+        """
         if "STREET 1:" in section:
             street1 = re.findall("STREET 1:\t{2}(.*)", section)[0]
         else:
@@ -629,74 +653,108 @@ class _SECFiling:
     
     @property
     def accession_number(self) -> str:
+        """
+        Returns the accession number of the file.
+        """
         return self._accession_number
     
     @property
     def date_filed(self) -> str:
+        """
+        Returns the ISO-8601 date on which the filing was filed.
+        """
         return self._date_filed
 
     @property
     def date_of_change(self) -> str:
+        """
+        Returns the ISO-8601 date of change.
+        """
         return self._date_of_change
     
     @property
     def date_of_period(self) -> str:
+        """
+        Returns the ISO-8601 date the filing refers to. This can be the quarter end in a Form 10-Q or Form 13F filing or the trading date in a Form 4 filing.
+        """
         return self._date_of_period
 
     @property
     def document(self) -> str:
+        """
+        Returns the document section of the filing.
+        """
         return self._document
 
     @property
     def document_count(self) -> int:
+        """
+        Returns the document count this filing represents to the submitting entity.
+        """
         return self._document_count
 
     @property
     def effectiveness_date(self) -> str:
+        """
+        Returns the ISO-8601 effectiveness date.
+        """
         return self._effectiveness_date
     
     @property
     def file(self) -> str:
+        """
+        Returns the whole filing, comprising of the header section and the filing-specific document section.
+        """
         return self._file
     
     @property
     def file_number(self) -> str:
+        """
+        Returns the filing's file number.
+        """
         return self._file_number
     
     @property
     def film_number(self) -> int:
+        """
+        Returns the filing's film number.
+        """
         return self._film_number
     
     @property
     def header(self) -> str:
+        """
+        Returns the header section of the filing.
+        """
         return self._header
 
     @property
     def is_amendment(self) -> bool:
+        """
+        Returns True if the filing is an amendment to another filing.
+        """
         return self._is_amendment
 
     @property
     def is_html(self) -> bool:
+        """
+        Returns True if the document is in valid HTML format and False else.
+        """
         return self._is_html
     
     @property
     def is_xml(self) -> bool:
+        """
+        Returns True if the document is in valid XML format and False else.
+        """
         return self._is_xml
 
     @property
     def submission_type(self) -> str:
+        """
+        Returns the submission type (e.g. "SC-13D" or "4").
+        """
         return self._submission_type
-
-    @staticmethod
-    def _from_url(url: str) -> str:
-        file = requests.get(
-            url=url,
-            headers=HEADERS
-        ).text
-        if "<Message>The specified key does not exist.</Message>" in file:
-            raise DatasetError(f'No filing exists for url "{url}"')
-
-        return file
 
 
 class Filing3(_SECFiling):
