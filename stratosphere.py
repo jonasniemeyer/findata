@@ -17,15 +17,6 @@ class StratosphereReader:
     def __repr__(self) -> str:
         return f"StratosphereReader({self.ticker})"
     
-    @property
-    def ticker(self) -> str:
-        return self._ticker
-
-    def profile(self) -> Optional[dict]:
-        if self._profile is None:
-            self.income_statement()
-        return self._profile
-    
     def _get_data(self, suffix) -> dict:
         html = requests.get(
             url=self._base_url.format(self.ticker, suffix),
@@ -106,17 +97,20 @@ class StratosphereReader:
                 for date in old[freq][var]:
                     new[freq][uncompressed_var][date] = round(old[freq][var][date]*multiplicator, 6) if not isinstance(old[freq][var][date], (str, NoneType)) else None
         return new
-    
-    def income_statement(self, timestamps=False) -> Optional[dict]:
-        if not hasattr(self, "_income_data"):
-            self._income_data = self._get_data("")
 
-        if "financials" not in self._income_data["props"]["pageProps"]:
+    def analyst_estimates(self, timestamps=False) -> Optional[dict]:
+        if not hasattr(self, "_estimates_data"):
+            self._estimates_data = self._get_data("analysts/estimates")
+
+        if "data" not in self._estimates_data["props"]["pageProps"]:
             return None
 
-        data = self._parse_fundamental_data(self._income_data["props"]["pageProps"]["financials"], timestamps)
+        data = self._parse_fundamental_data(
+            self._estimates_data["props"]["pageProps"]["data"]["estimates"],
+            timestamps
+        )
         return data
-    
+
     def balance_sheet(self, timestamps=False) -> Optional[dict]:
         if not hasattr(self, "_balance_data"):
             self._balance_data = self._get_data("balance-sheet")
@@ -126,7 +120,7 @@ class StratosphereReader:
 
         data = self._parse_fundamental_data(self._balance_data["props"]["pageProps"]["financials"], timestamps)
         return data
-    
+
     def cashflow_statement(self, timestamps=False) -> Optional[dict]:
         if not hasattr(self, "_cashflow_data"):
             self._cashflow_data = self._get_data("cash-flow-statement")
@@ -136,7 +130,7 @@ class StratosphereReader:
 
         data = self._parse_fundamental_data(self._cashflow_data["props"]["pageProps"]["financials"], timestamps)
         return data
-    
+
     def financial_ratios(self, timestamps=False) -> Optional[dict]:
         if not hasattr(self, "_ratios_data"):
             self._ratios_data = self._get_data("ratios/valuation")
@@ -166,21 +160,14 @@ class StratosphereReader:
                 "financial_ratios": ratios
             }
 
-    def segment_information(self, timestamps=False) -> Optional[dict]:
-        if not hasattr(self, "_segment_kpi_data"):
-            self._segment_kpi_data = self._get_data("kpis")
+    def income_statement(self, timestamps=False) -> Optional[dict]:
+        if not hasattr(self, "_income_data"):
+            self._income_data = self._get_data("")
 
-        if "financials" not in self._segment_kpi_data["props"]["pageProps"]:
+        if "financials" not in self._income_data["props"]["pageProps"]:
             return None
 
-        dct = self._segment_kpi_data["props"]["pageProps"]["financials"]
-        variables = {item["label"] for item in dct["labels"] if item["isSegment"]}
-        data = self._parse_fundamental_data(dct["financials"], timestamps)
-        data = {
-            "annual": {var: values for var, values in data["annual"].items() if var in variables},
-            "quarterly": {var: values for var, values in data["quarterly"].items() if var in variables}
-        }
-        data = self._uncompress_variables(data)
+        data = self._parse_fundamental_data(self._income_data["props"]["pageProps"]["financials"], timestamps)
         return data
 
     def kpi_information(self, timestamps=False) -> Optional[dict]:
@@ -198,19 +185,6 @@ class StratosphereReader:
             "quarterly": {var: values for var, values in data["quarterly"].items() if var in variables}
         }
         data = self._uncompress_variables(data)
-        return data
-
-    def analyst_estimates(self, timestamps=False) -> Optional[dict]:
-        if not hasattr(self, "_estimates_data"):
-            self._estimates_data = self._get_data("analysts/estimates")
-
-        if "data" not in self._estimates_data["props"]["pageProps"]:
-            return None
-
-        data = self._parse_fundamental_data(
-            self._estimates_data["props"]["pageProps"]["data"]["estimates"],
-            timestamps
-        )
         return data
 
     def prices(self, timestamps=False) -> Optional[dict]:
@@ -265,6 +239,32 @@ class StratosphereReader:
             "low": round(data["targetLow"], 2)
         }
         return data
+
+    def profile(self) -> Optional[dict]:
+        if self._profile is None:
+            self.income_statement()
+        return self._profile
+
+    def segment_information(self, timestamps=False) -> Optional[dict]:
+        if not hasattr(self, "_segment_kpi_data"):
+            self._segment_kpi_data = self._get_data("kpis")
+
+        if "financials" not in self._segment_kpi_data["props"]["pageProps"]:
+            return None
+
+        dct = self._segment_kpi_data["props"]["pageProps"]["financials"]
+        variables = {item["label"] for item in dct["labels"] if item["isSegment"]}
+        data = self._parse_fundamental_data(dct["financials"], timestamps)
+        data = {
+            "annual": {var: values for var, values in data["annual"].items() if var in variables},
+            "quarterly": {var: values for var, values in data["quarterly"].items() if var in variables}
+        }
+        data = self._uncompress_variables(data)
+        return data
+
+    @property
+    def ticker(self) -> str:
+        return self._ticker
 
     @staticmethod
     def fund_letters(timestamps=False) -> list:
