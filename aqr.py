@@ -10,6 +10,37 @@ class AQRReader:
         return epoch + timedelta(days=ordinal)
     
     @classmethod
+    def bab_factors(cls, frequency="daily", timestamps=False) -> dict:
+        if frequency not in ("daily", "monthly"):
+            raise ValueError("frequency must be daily or monthly")
+        file = pd.ExcelFile(f"https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Betting-Against-Beta-Equity-Factors-{frequency}.xlsx")
+        dfs = {}
+        for name in ("BAB Factors", "MKT", "SMB", "HML FF", "HML Devil", "UMD", "RF"):
+            df = file.parse(
+                sheet_name=name,
+                skiprows=range(18),
+                index_col=0
+            )
+            df.index = pd.to_datetime(df.index, format="%m/%d/%Y")
+            if timestamps:
+                df.index = [int(date.timestamp()) for date in df.index]
+            dfs[name] = df
+        return dfs
+
+    @classmethod
+    def commodities_long_run(cls, timestamps=False) -> pd.DataFrame:
+        df = pd.read_excel(
+            io="https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Commodities-for-the-Long-Run-Index-Level-Data-Monthly.xlsx",
+            sheet_name="Commodities for the Long Run",
+            skiprows=range(10),
+            index_col=0
+        )
+        df.index = pd.to_datetime(df.index, format="%Y/%m/%d")
+        if timestamps:
+            df.index = [int(date.timestamp()) for date in df.index]
+        return df
+
+    @classmethod
     def esg_efficient_frontier_portfolios(cls, timestamps=False) -> dict:
         file = pd.ExcelFile("https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/ESG_efficient_frontier_portfolios_vF.xlsx")
         dfs = {}
@@ -33,24 +64,6 @@ class AQRReader:
         return dfs
     
     @classmethod
-    def bab_factors(cls, frequency="daily", timestamps=False) -> dict:
-        if frequency not in ("daily", "monthly"):
-            raise ValueError("frequency must be daily or monthly")
-        file = pd.ExcelFile(f"https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Betting-Against-Beta-Equity-Factors-{frequency}.xlsx")
-        dfs = {}
-        for name in ("BAB Factors", "MKT", "SMB", "HML FF", "HML Devil", "UMD", "RF"):
-            df = file.parse(
-                sheet_name=name,
-                skiprows=range(18),
-                index_col=0
-            )
-            df.index = pd.to_datetime(df.index, format="%m/%d/%Y")
-            if timestamps:
-                df.index = [int(date.timestamp()) for date in df.index]
-            dfs[name] = df
-        return dfs
-    
-    @classmethod
     def factor_premia_century(cls, timestamps=False) -> pd.DataFrame:
         df = pd.read_excel(
             io="https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Century-of-Factor-Premia-Monthly.xlsx",
@@ -63,19 +76,24 @@ class AQRReader:
         if timestamps:
             df.index = [int(date.timestamp()) for date in df.index]
         return df
-    
+
     @classmethod
-    def commodities_long_run(cls, timestamps=False) -> pd.DataFrame:
-        df = pd.read_excel(
-            io="https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Commodities-for-the-Long-Run-Index-Level-Data-Monthly.xlsx",
-            sheet_name="Commodities for the Long Run",
-            skiprows=range(10),
-            index_col=0
-        )
-        df.index = pd.to_datetime(df.index, format="%Y/%m/%d")
-        if timestamps:
-            df.index = [int(date.timestamp()) for date in df.index]
-        return df
+    def hml_devil_factors(cls, frequency="daily", timestamps=False) -> dict:
+        if frequency not in ("daily", "monthly"):
+            raise ValueError("frequency must be daily or monthly")
+        file = pd.ExcelFile(f"https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/The-Devil-in-HMLs-Details-Factors-{frequency}.xlsx")
+        dfs = {}
+        for name in ("HML Devil", "MKT", "SMB", "HML FF", "UMD", "RF"):
+            df = file.parse(
+                sheet_name=name,
+                skiprows=range(18),
+                index_col=0
+            )
+            df.index = pd.to_datetime(df.index, format="%m/%d/%Y")
+            if timestamps:
+                df.index = [int(date.timestamp()) for date in df.index]
+            dfs[name] = df
+        return dfs
     
     @classmethod
     def momentum_indices(cls, timestamps=False) -> pd.DataFrame:
@@ -99,6 +117,24 @@ class AQRReader:
         df2.columns = ["U.S. Large Cap", "U.S. Small Cap", "International"]
         dfs["Monthly"] = df1
         dfs["Yearly"] = df2
+        return dfs
+
+    @classmethod
+    def qmj_factors(cls, frequency="daily", timestamps=False) -> dict:
+        if frequency not in ("daily", "monthly"):
+            raise ValueError("frequency must be daily or monthly")
+        dfs = {}
+        file = pd.ExcelFile(f"https://images.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Quality-Minus-Junk-Factors-{frequency}.xlsx")
+        for name in ("QMJ Factors", "MKT", "SMB", "HML FF", "HML Devil", "UMD", "RF"):
+            df = file.parse(
+                sheet_name=name,
+                skiprows=range(18),
+                index_col=0
+            )
+            df.index = pd.to_datetime(df.index, format="%m/%d/%Y")
+            if timestamps:
+                df.index = [int(date.timestamp()) for date in df.index]
+            dfs[name] = df
         return dfs
     
     @classmethod
@@ -125,24 +161,6 @@ class AQRReader:
         return dfs
     
     @classmethod
-    def qmj_factors(cls, frequency="daily", timestamps=False) -> dict:
-        if frequency not in ("daily", "monthly"):
-            raise ValueError("frequency must be daily or monthly")
-        dfs = {}
-        file = pd.ExcelFile(f"https://images.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Quality-Minus-Junk-Factors-{frequency}.xlsx")
-        for name in ("QMJ Factors", "MKT", "SMB", "HML FF", "HML Devil", "UMD", "RF"):
-            df = file.parse(
-                sheet_name=name,
-                skiprows=range(18),
-                index_col=0
-            )
-            df.index = pd.to_datetime(df.index, format="%m/%d/%Y")
-            if timestamps:
-                df.index = [int(date.timestamp()) for date in df.index]
-            dfs[name] = df
-        return dfs
-    
-    @classmethod
     def quality_size_sorted_portfolios(cls, timestamps=False) -> dict:
         file = pd.ExcelFile("https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Quality-Minus-Junk-Six-Portfolios-Formed-on-Size-and-Quality-Monthly.xlsx")
         dfs = {}
@@ -164,24 +182,6 @@ class AQRReader:
                 df2.index = [int(date.timestamp()) for date in df2.index]
             dfs["US"] = df1
             dfs["Global"] = df2
-        return dfs
-    
-    @classmethod
-    def hml_devil_factors(cls, frequency="daily", timestamps=False) -> dict:
-        if frequency not in ("daily", "monthly"):
-            raise ValueError("frequency must be daily or monthly")
-        file = pd.ExcelFile(f"https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/The-Devil-in-HMLs-Details-Factors-{frequency}.xlsx")
-        dfs = {}
-        for name in ("HML Devil", "MKT", "SMB", "HML FF", "UMD", "RF"):
-            df = file.parse(
-                sheet_name=name,
-                skiprows=range(18),
-                index_col=0
-            )
-            df.index = pd.to_datetime(df.index, format="%m/%d/%Y")
-            if timestamps:
-                df.index = [int(date.timestamp()) for date in df.index]
-            dfs[name] = df
         return dfs
     
     @classmethod
