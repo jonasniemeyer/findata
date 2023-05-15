@@ -362,7 +362,7 @@ class _SECFiling:
         
     def _parse_header(self) -> None:
         """
-        There are 4 different possible header entities: Filer, Subject Company, Reporting Owner, Issuer
+        There are 4 different possible header entities: Filer, Subject Company, Reporting Owner, Issuer.
         Some documents only have a filer entity (e.g. Form 10-K), some documents have filer and subject entities (e.g. Form 13D) and some have
         reporting owner and issuer entities (e.g. Form 4).
         
@@ -472,7 +472,7 @@ class _SECFiling:
     
     def _parse_entity_data(self, section: str) -> dict:
         """
-        Parses entity-related data and returns a dictionary of structured data
+        Parses entity-related data and returns a dictionary of structured data.
         """
         
         name = re.findall("COMPANY CONFORMED NAME:\t{3}(.+)", section)[0]
@@ -2099,7 +2099,7 @@ class FilingNPORT(_SECFiling):
     
     def _get_debt_information(self, entry) -> Union[dict, None]:
         """
-        Returns the debt-specific information if the holding is a debt security and None else
+        Returns the debt-specific information if the holding is a debt security and None else.
         """
         debt_section = entry.find("debtsec")
         if debt_section is None:
@@ -2209,7 +2209,7 @@ class FilingNPORT(_SECFiling):
 
     def _get_repurchase_information(self, entry) -> Union[dict, None]:
         """
-        Returns the repurchase-specific information if the holding is a repurchase or reverse repo agreement and None else
+        Returns the repurchase-specific information if the holding is a repurchase or reverse repo agreement and None else.
         """
         repurchase_section = entry.find("repurchaseagrmt")
         if repurchase_section is None:
@@ -2279,7 +2279,7 @@ class FilingNPORT(_SECFiling):
     
     def _get_derivative_information(self, entry) -> Union[dict, None]:
         """
-        Returns the derivative-specific information if the holding is a derivative and None else
+        Returns the derivative-specific information if the holding is a derivative and None else.
         """
         derivative_section = entry.find("derivativeinfo")
         if derivative_section is None:
@@ -2329,7 +2329,7 @@ class FilingNPORT(_SECFiling):
 
     def _parse_currency_forward_information(self, section) -> dict:
         """
-        Returns the data of a currency forward derivative
+        Returns the data of a currency forward derivative.
         """
         amount_currency_sold = section.find("amtcursold")
         if amount_currency_sold is not None:
@@ -2368,7 +2368,7 @@ class FilingNPORT(_SECFiling):
 
     def _parse_future_information(self, section) -> dict:
         """
-        Returns the data of a future derivative
+        Returns the data of a future derivative.
         """
         reference_section = section.find("descrefinstrmnt")
         reference_asset = self._parse_reference_asset_information(reference_section)
@@ -2401,7 +2401,7 @@ class FilingNPORT(_SECFiling):
 
     def _parse_option_information(self, section) -> dict:
         """
-        Returns the data of an option derivative
+        Returns the data of an option derivative.
         """
         reference_section = section.find("descrefinstrmnt")
         reference_asset = self._parse_reference_asset_information(reference_section)
@@ -2461,7 +2461,7 @@ class FilingNPORT(_SECFiling):
 
     def _parse_swap_information(self, section) -> dict:
         """
-        Returns the data of a swap derivative
+        Returns the data of a swap derivative.
         """
         custom_swap = section.find("swapflag")
         if custom_swap is not None:
@@ -2549,7 +2549,7 @@ class FilingNPORT(_SECFiling):
 
     def _parse_other_derivative_information(self, section) -> dict:
         """
-        Returns the data of a derivative security that has no specific type
+        Returns the data of a derivative security that has no specific type.
         """
         reference_section = section.find("descrefinstrmnt")
         reference_asset = self._parse_reference_asset_information(reference_section)
@@ -2584,7 +2584,7 @@ class FilingNPORT(_SECFiling):
 
     def _parse_reference_asset_information(self, section) -> Union[dict, None]:
         """
-        Returns the data of the underlying reference asset of a derivative security
+        Returns the data of the underlying reference asset of a derivative security.
         """
         if section is None:
             return None
@@ -2801,7 +2801,7 @@ class FilingNPORT(_SECFiling):
 
     def _parse_floating_leg(self, section):
         """
-        Returns the data of a floating leg within a swap agreement
+        Returns the data of a floating leg within a swap agreement.
         """
         currency = section.get("curcd")
         type_ = section.get("fixedorfloating")
@@ -2847,7 +2847,7 @@ class FilingNPORT(_SECFiling):
 
     def _parse_fixed_leg(self, section):
         """
-        Returns the data of a fixed leg within a swap agreement
+        Returns the data of a fixed leg within a swap agreement.
         """
         amount = section.get("amount")
         amount = None if amount == "N/A" else float(amount)
@@ -2865,7 +2865,7 @@ class FilingNPORT(_SECFiling):
 
     def _parse_other_leg(self, section):
         """
-        Returns the data of a leg that is neither fixed nor floating within a swap agreement
+        Returns the data of a leg that is neither fixed nor floating within a swap agreement.
         """
         type_ = section.get("fixedorfloating")
         tenor = section.text
@@ -2877,7 +2877,7 @@ class FilingNPORT(_SECFiling):
 
     def _get_lending_information(self, entry):
         """
-        Returns the lending information of a single security in the portfolio
+        Returns the lending information of a single security in the portfolio.
         """
         security_lending_section = entry.find("securitylending")
 
@@ -2913,7 +2913,7 @@ class FilingNPORT(_SECFiling):
     
     def _parse_explanatory_notes(self) -> dict:
         """
-        Returns the explanatory notes which can be accessed by the .explanatory_notes attribute
+        Returns the explanatory notes which can be accessed by the .explanatory_notes attribute.
         """
         note_section = self._soup.find("explntrnotes")
         if note_section is None:
@@ -2930,7 +2930,7 @@ class FilingNPORT(_SECFiling):
     
     def _parse_signature(self) -> dict:
         """
-        Returns the signature information of the fund which can be accessed by the .signature attribute
+        Returns the signature information of the fund which can be accessed by the .signature attribute.
         """
         signature_section = self._soup.find("signature")
         prefix = "" if signature_section.find("ncom:datesigned") is None else "ncom:"
@@ -2951,7 +2951,7 @@ class FilingNPORT(_SECFiling):
     
     def _parse_general_information(self) -> dict:
         """
-        Returns the general information of the fund which can be accessed by the .general_information attribute
+        Returns the general information of the fund which can be accessed by the .general_information attribute.
         """
         form_data = self._soup.find("formdata")
         if form_data is None:
@@ -3019,7 +3019,7 @@ class FilingNPORT(_SECFiling):
     
     def _parse_fund_information(self) -> dict:
         """
-        Returns the fund information of the fund which can be accessed by the .fund_information attribute
+        Returns the fund information of the fund which can be accessed by the .fund_information attribute.
         """
         form_data = self._soup.find("formdata")
         if form_data is None:
@@ -3393,7 +3393,7 @@ class FilingNPORT(_SECFiling):
     @property
     def filer(self) -> dict:
         """
-        Returns entity-specific information of the filer
+        Returns a dictionary of entity-specific information of the filer.
         ---------------------------
         name : str
             The name of the filing entity
@@ -3433,37 +3433,39 @@ class FilingNPORT(_SECFiling):
     @property
     def general_information(self) -> dict:
         """
-        Returns general information of the fund
+        Returns a dictionary of general information of the fund.
+
+        Returns
         ----------------------------
-        filer_lei : str
-            The Legal Entity Identifier of the issuing entity
-        series : dict
-            name : str
-                The name of the fund series
-            cik : str
-                The CIK of the fund series
-            lei : The Legal Entity Identifier of the fund series
-        classes : list of dicts
-            cik : str
-                The CIK of the class
-            name : str
-                The name of the class
-            ticker : str
-                The ticker of the class
-        fiscal_year_end : str
-            The ISO-8601 date on which the fiscal year of the entity ends
-        reporting_date : str
-            The ISO-8601 date of the quarter end date the filing refers to
-        is_final_filing : bool
-            Whether the issuer expects the filing to be the last one of that fund (e.g. because it is closed)
+        dict
+            filer_lei : str
+                The Legal Entity Identifier of the issuing entity
+            series : dict
+                name : str
+                    The name of the fund series
+                cik : str
+                    The CIK of the fund series
+                lei : The Legal Entity Identifier of the fund series
+            classes : list of dicts
+                cik : str
+                    The CIK of the class
+                name : str
+                    The name of the class
+                ticker : str
+                    The ticker of the class
+            fiscal_year_end : str
+                The ISO-8601 date on which the fiscal year of the entity ends
+            reporting_date : str
+                The ISO-8601 date of the quarter end date the filing refers to
+            is_final_filing : bool
+                Whether the issuer expects the filing to be the last one of that fund (e.g. because it is closed)
         """
         return self._general_information
 
     @property
     def fund_information(self) -> dict:
         """
-        Returns fund-specific information, including assets under management, portfolio risk metrics
-        and return, flow and derivative information
+        Returns a dictionary of fund-specific information, including assets under management, portfolio risk metrics and return, flow and derivative information.
 
         Returns
         --------------------------
@@ -3525,7 +3527,7 @@ class FilingNPORT(_SECFiling):
     @property
     def flow_information(self) -> dict:
         """
-        Returns flow information of the fund. For each month of the quarter the filing refers to, the total amount of sales, reinvestments and redemption are returned.
+        Returns a dictionary of flow information of the fund. For each month of the quarter the filing refers to, the total amount of sales, reinvestments and redemption are returned.
 
         Returns
         --------------------------
@@ -3583,17 +3585,20 @@ class FilingNPORT(_SECFiling):
     def signature(self) -> dict:
         """
         Returns signature data of the filing
+
+        Returns
         ------------------
-        date : str
-            The ISO-8601 date on which the filing was signed
-        name : str
-            The name of the signee
-        title : str
-            The title of the signee
-        company : str
-            The company name of the signee
-        signature : str
-            The signature of the signee
+        dict
+            date : str
+                The ISO-8601 date on which the filing was signed
+            name : str
+                The name of the signee
+            title : str
+                The title of the signee
+            company : str
+                The company name of the signee
+            signature : str
+                The signature of the signee
         """
         return self._signature
 
