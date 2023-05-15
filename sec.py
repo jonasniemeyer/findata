@@ -1933,6 +1933,9 @@ class FilingNPORT(_SECFiling):
         return f"{self.submission_type} Filing({self.general_information['series']['cik']}|{self.general_information['series']['name']}|{self.general_information['reporting_date']})"
 
     def _parse_document(self) -> None:
+        """
+        Parse the filing-specific data. If the document is not XML-compliant, raise a NotImplementedError.
+        """
         if self.is_xml:
             self._soup = BeautifulSoup(self.document, "lxml")
             self._general_information = self._parse_general_information()
@@ -1946,6 +1949,11 @@ class FilingNPORT(_SECFiling):
         self._has_short_positions = True if any(item["amount"]["quantity"] < 0 for item in self._investments if item["amount"]["quantity"] is not None) else False
     
     def _parse_investments(self) -> list:
+        """
+        Returns a list of all holdings in the fund's portfolio.
+        Each holding carries general information such as the market value and holding-specific information depending on the security type.
+        A sorted list of the investments can be accessed by the .portfolio method.
+        """
         entries = self._soup.find("invstorsecs")
         if entries is None:
             return []
@@ -2090,6 +2098,9 @@ class FilingNPORT(_SECFiling):
         return investments
     
     def _get_debt_information(self, entry) -> Union[dict, None]:
+        """
+        Returns the debt-specific information if the holding is a debt security and None else
+        """
         debt_section = entry.find("debtsec")
         if debt_section is None:
             return None
@@ -2197,6 +2208,9 @@ class FilingNPORT(_SECFiling):
         }
 
     def _get_repurchase_information(self, entry) -> Union[dict, None]:
+        """
+        Returns the repurchase-specific information if the holding is a repurchase or reverse repo agreement and None else
+        """
         repurchase_section = entry.find("repurchaseagrmt")
         if repurchase_section is None:
             return None
@@ -2264,6 +2278,9 @@ class FilingNPORT(_SECFiling):
         }
     
     def _get_derivative_information(self, entry) -> Union[dict, None]:
+        """
+        Returns the derivative-specific information if the holding is a derivative and None else
+        """
         derivative_section = entry.find("derivativeinfo")
         if derivative_section is None:
             return None
@@ -2311,6 +2328,9 @@ class FilingNPORT(_SECFiling):
         }
 
     def _parse_currency_forward_information(self, section) -> dict:
+        """
+        Returns the data of a currency forward derivative
+        """
         amount_currency_sold = section.find("amtcursold")
         if amount_currency_sold is not None:
             amount_currency_sold = None if amount_currency_sold.text == "N/A" else float(amount_currency_sold.text)
@@ -2347,6 +2367,9 @@ class FilingNPORT(_SECFiling):
         }
 
     def _parse_future_information(self, section) -> dict:
+        """
+        Returns the data of a future derivative
+        """
         reference_section = section.find("descrefinstrmnt")
         reference_asset = self._parse_reference_asset_information(reference_section)
 
@@ -2377,6 +2400,9 @@ class FilingNPORT(_SECFiling):
         }
 
     def _parse_option_information(self, section) -> dict:
+        """
+        Returns the data of an option derivative
+        """
         reference_section = section.find("descrefinstrmnt")
         reference_asset = self._parse_reference_asset_information(reference_section)
 
@@ -2434,6 +2460,9 @@ class FilingNPORT(_SECFiling):
         }
 
     def _parse_swap_information(self, section) -> dict:
+        """
+        Returns the data of a swap derivative
+        """
         custom_swap = section.find("swapflag")
         if custom_swap is not None:
             custom_swap = True if custom_swap.text == "Y" else False
@@ -2519,6 +2548,9 @@ class FilingNPORT(_SECFiling):
         }
 
     def _parse_other_derivative_information(self, section) -> dict:
+        """
+        Returns the data of a derivative security that has no specific type
+        """
         reference_section = section.find("descrefinstrmnt")
         reference_asset = self._parse_reference_asset_information(reference_section)
 
@@ -2551,6 +2583,9 @@ class FilingNPORT(_SECFiling):
         }
 
     def _parse_reference_asset_information(self, section) -> Union[dict, None]:
+        """
+        Returns the data of the underlying reference asset of a derivative security
+        """
         if section is None:
             return None
 
@@ -2765,6 +2800,9 @@ class FilingNPORT(_SECFiling):
             }
 
     def _parse_floating_leg(self, section):
+        """
+        Returns the data of a floating leg within a swap agreement
+        """
         currency = section.get("curcd")
         type_ = section.get("fixedorfloating")
         index = section.get("floatingrtindex")
@@ -2808,6 +2846,9 @@ class FilingNPORT(_SECFiling):
         }
 
     def _parse_fixed_leg(self, section):
+        """
+        Returns the data of a fixed leg within a swap agreement
+        """
         amount = section.get("amount")
         amount = None if amount == "N/A" else float(amount)
         currency = section.get("curcd")
@@ -2823,6 +2864,9 @@ class FilingNPORT(_SECFiling):
         }
 
     def _parse_other_leg(self, section):
+        """
+        Returns the data of a leg that is neither fixed nor floating within a swap agreement
+        """
         type_ = section.get("fixedorfloating")
         tenor = section.text
 
@@ -2832,6 +2876,9 @@ class FilingNPORT(_SECFiling):
         }
 
     def _get_lending_information(self, entry):
+        """
+        Returns the lending information of a single security in the portfolio
+        """
         security_lending_section = entry.find("securitylending")
 
         cash_collateral = security_lending_section.find("iscashcollateral")
@@ -2865,6 +2912,9 @@ class FilingNPORT(_SECFiling):
         }
     
     def _parse_explanatory_notes(self) -> dict:
+        """
+        Returns the explanatory notes which can be accessed by the .explanatory_notes attribute
+        """
         note_section = self._soup.find("explntrnotes")
         if note_section is None:
             return {}
@@ -2879,6 +2929,9 @@ class FilingNPORT(_SECFiling):
         return notes
     
     def _parse_signature(self) -> dict:
+        """
+        Returns the signature information of the fund which can be accessed by the .signature attribute
+        """
         signature_section = self._soup.find("signature")
         prefix = "" if signature_section.find("ncom:datesigned") is None else "ncom:"
         
@@ -2897,6 +2950,9 @@ class FilingNPORT(_SECFiling):
         }
     
     def _parse_general_information(self) -> dict:
+        """
+        Returns the general information of the fund which can be accessed by the .general_information attribute
+        """
         form_data = self._soup.find("formdata")
         if form_data is None:
             form_data = self._soup.find("nport:formdata")
@@ -2962,6 +3018,9 @@ class FilingNPORT(_SECFiling):
         }
     
     def _parse_fund_information(self) -> dict:
+        """
+        Returns the fund information of the fund which can be accessed by the .fund_information attribute
+        """
         form_data = self._soup.find("formdata")
         if form_data is None:
             form_data = self._soup.find("nport:formdata")
