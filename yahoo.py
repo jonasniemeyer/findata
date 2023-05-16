@@ -581,15 +581,16 @@ class YahooReader:
                     absolute_diff = None
                     relative_diff = None
 
-                earnings.append(
-                    {
-                        "date": date,
-                        "estimate": estimate,
-                        "actual": actual,
-                        "absolute_difference": absolute_diff,
-                        "relative_difference": relative_diff
-                    }
-                )
+                if date not in [item["date"] for item in earnings]:
+                    earnings.append(
+                        {
+                            "date": date,
+                            "estimate": estimate,
+                            "actual": actual,
+                            "absolute_difference": absolute_diff,
+                            "relative_difference": relative_diff
+                        }
+                    )
             
             next_page_button_disabled = row.find_all("td")[-1].find_next("div").find_all("button")[-1].get("disabled")
             if next_page_button_disabled == "":
