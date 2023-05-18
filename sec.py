@@ -2249,7 +2249,7 @@ class FilingNPORT(_SECFiling):
                 "mandatory_convertible": mandatory_convertible,
                 "contingent_convertible": contingent_convertible,
                 "conversion_asset": conversion_asset,
-                "conversion_ratio": conversion_information,
+                "conversion_information": conversion_information,
                 "delta": delta
             }
 
@@ -3413,12 +3413,265 @@ class FilingNPORT(_SECFiling):
                 name : str
                 abbr : str
             restricted_security : bool
-            liquidity_classification : dict or None
+            liquidity_classification : None
             us_gaap_fair_value_hierarchy : int
             debt_information : dict or None
+                maturity : str
+                coupon : dict
+                    rate : float or None
+                    type : str
+                in_default : bool
+                coupon_payments_deferred : bool
+                paid_in_kind : bool
+                convertible_information : dict or None
+                    mandatory_convertible : bool
+                    contingent_convertible : bool
+                    conversion_asset : dict
+                        name : str
+                        title : str
+                        currency : str
+                        identifier : dict
+                            cusip : str (optional)
+                            isin : str (optional)
+                            other identifier (optional)
+                    conversion_information : dict
+                        ratio : float or None
+                        currency : str
+                    delta : float or None
             repurchase_information: dict or None
-            derivative_information: dict or None
-            securities_lending: dict
+                type : str
+                counterparty : dict
+                    central_counterparty : bool
+                    name : str
+                    lei : str
+                tri_party : bool
+                repurchase_date : str
+                maturity_date : str
+                collaterals : list of dicts
+                    principal : dict
+                        value : float
+                        currency : str
+                    collateral : dict
+                        value : float
+                        currency : str
+                    asset_type : dict
+                        name : str
+                        abbr : str
+            derivative_information : dict or None
+                type : dict
+                    name : str
+                    abbr : str
+                counterparties : list of dicts
+                    name : str
+                    lei : str
+                if currency forward
+                    purchased : dict
+                        amount : float
+                        currency : str
+                    sold : dict
+                        amount : float
+                        currency : str
+                    settlement_date : str
+                    unrealized_appreciation : float
+                if future
+                    reference_asset : dict
+                        if derivative
+                            type : str
+                            name : str
+                            title : str
+                            identifier : dict
+                                cusip : str (optional)
+                                isin : str (optional)
+                                ticker : str (optional)
+                                other identifier (optional)
+                            derivative_information : dict
+                                type : dict
+                                    name : str
+                                    abbr : str
+                                derivative specific information
+                        if index
+                            type : str
+                            name : str
+                            title : None
+                            identifier : str or None
+                            description : str
+                        if other
+                            type : str
+                            name : str
+                            title : str
+                            identifier : dict
+                                cusip : str (optional)
+                                isin : str (optional)
+                                ticker : str (optional)
+                                other identifier (optional)
+                    trade_direction : str
+                    expiration_date : str
+                    notional_amount : float
+                    currency : str
+                    unrealized_appreciation : float
+                if option
+                    reference_asset : dict
+                        if derivative
+                            type : str
+                            name : str
+                            title : str
+                            identifier : dict
+                                cusip : str (optional)
+                                isin : str (optional)
+                                ticker : str (optional)
+                                other identifier (optional)
+                            derivative_information : dict
+                                type : dict
+                                    name : str
+                                    abbr : str
+                                derivative specific information
+                        if index
+                            type : str
+                            name : str
+                            title : None
+                            identifier : str or None
+                            description : str
+                        if other
+                            type : str
+                            name : str
+                            title : str
+                            identifier : dict
+                                cusip : str (optional)
+                                isin : str (optional)
+                                ticker : str (optional)
+                                other identifier (optional)
+                    option_type : str
+                    trade_direction : str
+                    amount : float
+                    exercise_data : dict
+                        price : float
+                        currency : str
+                    expiration_date : str
+                    delta : float
+                    unrealized_appreciation : float
+                if swap
+                    custom_swap : bool
+                    reference_asset : dict
+                        if derivative
+                            type : str
+                            name : str
+                            title : str
+                            identifier : dict
+                                cusip : str (optional)
+                                isin : str (optional)
+                                ticker : str (optional)
+                                other identifier (optional)
+                            derivative_information : dict
+                                type : dict
+                                    name : str
+                                    abbr : str
+                                derivative specific information
+                        if index
+                            type : str
+                            name : str
+                            title : None
+                            identifier : str or None
+                            description : str
+                        if other
+                            type : str
+                            name : str
+                            title : str
+                            identifier : dict
+                                cusip : str (optional)
+                                isin : str (optional)
+                                ticker : str (optional)
+                                other identifier (optional)
+                    receiving_leg : dict or None
+                        if floating
+                            currency : str
+                            type : str
+                            index : str
+                            spread : float
+                            amount : float
+                            tenors : list of dicts
+                                rate : dict
+                                    unit : str
+                                    frequency : float
+                                reset : dict
+                                    date : str
+                                    frequency : float
+                        if fixed
+                            amount : float
+                            currency : str
+                            type : str
+                            rate : float
+                        if other
+                            type : str
+                            tenor : str
+                    payer_leg : dict or None
+                        if floating
+                            currency : str
+                            type : str
+                            index : str
+                            spread : float
+                            amount : float
+                            tenors : list of dicts
+                                rate : dict
+                                    unit : str
+                                    frequency : float
+                                reset : dict
+                                    date : str
+                                    frequency : float
+                        if fixed
+                            amount : float
+                            currency : str
+                            type : str
+                            rate : float
+                        if other
+                            type : str
+                            tenor : str
+                    termination_date : str
+                    upfront_receipt : dict
+                        amount : float
+                        currency : str
+                    upfront_payment : dict
+                        amount : float
+                        currency : str
+                    notional_amount : dict
+                        amount : float
+                        currency : str
+                    unrealized_appreciation : float
+                if other
+                    reference_asset : dict
+                        if derivative
+                            type : str
+                            name : str
+                            title : str
+                            identifier : dict
+                                cusip : str (optional)
+                                isin : str (optional)
+                                ticker : str (optional)
+                                other identifier (optional)
+                            derivative_information : dict
+                                type : dict
+                                    name : str
+                                    abbr : str
+                                derivative specific information
+                        if index
+                            type : str
+                            name : str
+                            title : None
+                            identifier : str or None
+                            description : str
+                        if other
+                            type : str
+                            name : str
+                            title : str
+                            identifier : dict
+                                cusip : str (optional)
+                                isin : str (optional)
+                                ticker : str (optional)
+                                other identifier (optional)
+                    termination_date : str
+                    notional_amount : float
+                    delta : float
+                    unrealized_appreciation : float
+            securities_lending : dict
                 cash_collateral : float or None
                 non_cash_collateral : float or None
                 loaned : float or None
