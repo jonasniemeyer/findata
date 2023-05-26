@@ -3036,12 +3036,17 @@ class FilingNPORT(_SECFiling):
             series_cik = None
             series_name = general_info.find("seriesname").text
             lei = general_info.find("serieslei").text
+            if lei in ("00000000000000000000", "N/A"):
+                lei = None
             classes = None
         else:
             series_section = series_section.find("existing-series-and-classes-contracts").find("series")
             series_cik = series_section.find("series-id").find(text=True).strip()
             series_name = series_section.find("series-name").find(text=True).strip()
             lei = form_data.find("geninfo").find("serieslei").text
+
+            if lei in ("00000000000000000000", "N/A"):
+                lei = None
 
             # class data
             classes = []
