@@ -3018,6 +3018,8 @@ class FilingNPORT(_SECFiling):
         general_info = form_data.find("geninfo")
         
         filer_lei = general_info.find("reglei").text
+        if filer_lei in ("00000000000000000000", "N/A"):
+            filer_lei = None
         fiscal_year_end = general_info.find("reppdend").text
         reporting_date = general_info.find("reppddate").text
         is_final_filing = general_info.find("isfinalfiling").text
