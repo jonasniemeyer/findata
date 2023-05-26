@@ -3037,6 +3037,8 @@ class FilingNPORT(_SECFiling):
             general_info = form_data.find("geninfo")
             series_cik = None
             series_name = general_info.find("seriesname").text
+            if series_name == "N/A":
+                series_name = None
             lei = general_info.find("serieslei").text
             if lei in ("00000000000000000000", "N/A"):
                 lei = None
