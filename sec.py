@@ -1783,7 +1783,7 @@ class Filing13F(_SECFiling):
     def _parse_holdings_from_text(self) -> dict:
         return
     
-    def aggregate_portfolio(self, sorted_by=None) -> list:
+    def aggregate_portfolio(self, sorted_by="percentage") -> list:
         sort_variables = (
             None,
             "name",
@@ -3383,7 +3383,7 @@ class FilingNPORT(_SECFiling):
             "var_information": var_information
         }
 
-    def portfolio(self, sorted_by=None) -> list:
+    def portfolio(self, sorted_by="percentage") -> list:
         """
         Returns a sorted list of portfolio holdings, each entry being a dictionary of holding-specific information.
 
