@@ -2057,7 +2057,8 @@ class FilingNPORT(_SECFiling):
 
             percentage = entry.find("pctval").text
             percentage = None if percentage == "N/A" else round(float(percentage) / 100, 6)
-            market_value = float(entry.find("valusd").text)
+            market_value = entry.find("valusd").text
+            market_value = None if market_value == "N/A" else float(market_value)
             quantity = entry.find("balance").text
             quantity = None if quantity == "N/A" else float(quantity)
             quantity_type_abbr = entry.find("units").text
@@ -2493,7 +2494,8 @@ class FilingNPORT(_SECFiling):
         currency = None if currency == "N/A" else currency
 
         expiration_date = section.find("expdt").text
-        assert expiration_date != "N/A"
+        if expiration_date == "N/A":
+            expiration_date = None
 
         delta = section.find("delta")
         if delta is not None:
