@@ -2132,7 +2132,7 @@ class FilingNPORT(_SECFiling):
             fair_value_level = None if fair_value_level == "N/A" else int(fair_value_level)
             
             debt_information = self._get_debt_information(entry)
-            repurchase_information = self._get_repurchase_information(entry)
+            repo_information = self._get_repo_information(entry)
             derivative_information = self._get_derivative_information(entry)
             securities_lending = self._get_lending_information(entry)
             
@@ -2148,7 +2148,7 @@ class FilingNPORT(_SECFiling):
                     "liquidity_classification": liquidity_classification,
                     "us_gaap_fair_value_hierarchy": fair_value_level,
                     "debt_information": debt_information,
-                    "repurchase_information": repurchase_information,
+                    "repo_information": repo_information,
                     "derivative_information": derivative_information,
                     "securities_lending": securities_lending
                 }
@@ -2266,7 +2266,7 @@ class FilingNPORT(_SECFiling):
             "convertible_information": convertible_information
         }
 
-    def _get_repurchase_information(self, entry) -> Union[dict, None]:
+    def _get_repo_information(self, entry) -> Union[dict, None]:
         """
         Returns the repurchase-specific information if the holding is a repurchase or reverse repo agreement and None else.
         """
@@ -3449,7 +3449,7 @@ class FilingNPORT(_SECFiling):
                         ratio : float or None
                         currency : str
                     delta : float or None
-            repurchase_information: dict or None
+            repo_information : dict or None
                 type : str
                 counterparty : dict
                     central_counterparty : bool
