@@ -3456,7 +3456,7 @@ class FilingNPORT(_SECFiling):
                     name : str
                     lei : str
                 tri_party : bool
-                repurchase_date : str
+                repurchase_rate : float
                 maturity_date : str
                 collaterals : list of dicts
                     principal : dict
