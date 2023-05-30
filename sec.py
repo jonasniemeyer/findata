@@ -2298,7 +2298,7 @@ class FilingNPORT(_SECFiling):
         tri_party = repurchase_section.find("istriparty").text
         tri_party = True if tri_party == "Y" else False
         repurchase_rate = float(repurchase_section.find("repurchasert").text)
-        maturity_date = repurchase_section.find("maturitydt").text
+        maturity = repurchase_section.find("maturitydt").text
 
         collaterals = []
         collateral_section = repurchase_section.find("repurchasecollaterals")
@@ -2332,7 +2332,7 @@ class FilingNPORT(_SECFiling):
             "counterparty": counterparty,
             "tri_party": tri_party,
             "repurchase_rate": repurchase_rate,
-            "maturity_date": maturity_date,
+            "maturity": maturity,
             "collaterals": collaterals
         }
     
