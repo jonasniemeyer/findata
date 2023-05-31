@@ -2165,6 +2165,8 @@ class FilingNPORT(_SECFiling):
             return None
         
         maturity = debt_section.find("maturitydt").text
+        if maturity == "N/A":
+            maturity = None
         coupon_type = debt_section.find("couponkind").text
         if coupon_type == "N/A" or coupon_type is None:
             raise ValueError
@@ -2754,7 +2756,7 @@ class FilingNPORT(_SECFiling):
                 issuer_type = information.find("issuercat")
                 if issuer_type is None:
                     issuer["type"] = {
-                        "name": information.find("issuerconditional").get("desc"),
+                        "name": information.find("issuerconditional").get("desc") if information.find("issuerconditional").get("desc") != "N/A" else None,
                         "abbr": "OTH"
                     }
                 else:
