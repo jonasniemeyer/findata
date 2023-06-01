@@ -224,6 +224,11 @@ class OnvistaBondReader(_OnvistaAbstractReader):
 class OnvistaFundReader(_OnvistaAbstractReader):
     def __init__(self, *kwargs):
         super().__init__(*kwargs)
+        self._manager = self._data["manager"]
+
+    @property
+    def manager(self) -> str:
+        return self._manager
 
     def sector_breakdown(self) -> dict:
         data = self._data["branchFundsBreakdownList"]["list"]
