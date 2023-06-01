@@ -133,6 +133,40 @@ class _OnvistaAbstractReader:
 class OnvistaStockReader(_OnvistaAbstractReader):
     def __init__(self, *kwargs):
         super().__init__(*kwargs)
+        self._country = {
+            "name": self._data["company"]["nameCountry"],
+            "abbr": self._data["company"]["isoCountry"]
+        }
+        self._long_name = self._data["stocksDetails"]["officialName"]
+        self._market_cap = {
+            "market_cap": self._data["stocksFigure"]["marketCapCompany"],
+            "currency": self._data["stocksFigure"]["isoCurrency"]
+        }
+        self._sector = {
+            "sector": self._data["company"]["branch"]["name"],
+            "description": self._data["company"]["branch"]["sector"]["name"]
+        }
+        self._shares_outstanding = self._data["stocksFigure"]["numSharesCompany"]
+
+    @property
+    def country(self) -> dict:
+        return self._country
+
+    @property
+    def long_name(self) -> str:
+        return self._long_name
+
+    @property
+    def market_cap(self) -> dict:
+        return self._market_cap
+
+    @property
+    def sector(self) -> dict:
+        return self._sector
+
+    @property
+    def shares_outstanding(self) -> int:
+        return self._shares_outstanding
 
     def splits(self) -> dict:
         data = self._data["stocksSplitList"]["list"]
