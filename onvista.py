@@ -131,12 +131,49 @@ class _OnvistaAbstractReader:
 
 
 class OnvistaStockReader(_OnvistaAbstractReader):
-    pass
+    def __init__(self, *kwargs):
+        super().__init__(*kwargs)
 
 
 class OnvistaBondReader(_OnvistaAbstractReader):
-    pass
+    def __init__(self, *kwargs):
+        super().__init__(*kwargs)
+        bond_data = self._data["bondsFigures"]
+        self._ytm = round(bond_data["yieldToMaturity"] / 100, 6)
+        self._accrued_interest = round(bond_data["accruedInterest"], 4)
+        self._modified_duration = round(bond_data["modifyDuration"], 4)
+        self._macaulay_duration = round(bond_data["macaulayDuration"], 4)
+        self._convexity = round(bond_data["convexity"], 4)
+        self._interest_elasticity = round(bond_data["interestElasticity"], 4)
+
+    @property
+    def accrued_interest(self) -> float:
+        return self._accrued_interest
+
+    @property
+    def convexity(self) -> float:
+        return self._convexity
+
+    @property
+    def interest_elasticity(self) -> float:
+        return self._interest_elasticity
+
+    @property
+    def macaulay_duration(self) -> float:
+        return self._macaulay_duration
+
+    @property
+    def modified_duration(self) -> float:
+        return self._modified_duration
+
+    @property
+    def ytm(self) -> float:
+        return self._ytm
+
+    def coupon_payments(self) -> list:
+        return
 
 
 class OnvistaFundReader(_OnvistaAbstractReader):
-    pass
+    def __init__(self, *kwargs):
+        super().__init__(*kwargs)
