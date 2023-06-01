@@ -170,8 +170,15 @@ class OnvistaBondReader(_OnvistaAbstractReader):
     def ytm(self) -> float:
         return self._ytm
 
-    def coupon_payments(self) -> list:
-        return
+    def coupon_dates(self, timestamps=True) -> list:
+        data = self._data["bondsCouponList"]["list"]
+        assert all(item["coupon"] == data[0]["coupon"] for item in data)
+        coupons = [
+            int(pd.to_datetime(item["datetimeEndCoupon"]).timestamp()) if timestamps
+            else pd.to_datetime(item["datetimeEndCoupon"]).date().isoformat()
+            for item in data
+        ]
+        return coupons
 
 
 class OnvistaFundReader(_OnvistaAbstractReader):
