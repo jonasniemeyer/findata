@@ -2,7 +2,7 @@ import json
 import requests
 import pandas as pd
 import numpy as np
-from typing import Union
+from typing import Union, Optional
 from finance_data.utils import HEADERS
 
 class _OnvistaAbstractReader:
@@ -15,6 +15,9 @@ class _OnvistaAbstractReader:
         self._isin = isin
         self._data = self._get_data()
         self._name = self._data["instrument"]["name"]
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(Name: {self.name}, ISIN: {self.isin})"
 
     def _get_data(self) -> dict:
         if self.__class__.__name__ == "OnvistaStockReader":
