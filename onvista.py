@@ -225,12 +225,20 @@ class OnvistaFundReader(_OnvistaAbstractReader):
     def __init__(self, *kwargs):
         super().__init__(*kwargs)
 
+    def sector_breakdown(self) -> dict:
+        data = self._data["branchFundsBreakdownList"]["list"]
+        data = {
+            item["nameBreakdown"]: round(item["investmentPct"]/100, 6)
+            for item in  data
+        }
+        return data
+
     def top_holdings(self) -> list:
         data = self._data["fundsHoldingList"]["list"]
         data = [
             {
                 "name": item["instrument"]["name"],
-                "percentage": round(item["investmentPct"] / 100, 6)
+                "percentage": round(item["investmentPct"]/100, 6)
             }
             for item in data
         ]
