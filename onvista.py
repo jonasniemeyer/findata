@@ -138,36 +138,44 @@ class OnvistaStockReader(_OnvistaAbstractReader):
 class OnvistaBondReader(_OnvistaAbstractReader):
     def __init__(self, *kwargs):
         super().__init__(*kwargs)
-        bond_data = self._data["bondsFigures"]
-        self._ytm = round(bond_data["yieldToMaturity"] / 100, 6)
-        self._accrued_interest = round(bond_data["accruedInterest"], 4)
-        self._modified_duration = round(bond_data["modifyDuration"], 4)
-        self._macaulay_duration = round(bond_data["macaulayDuration"], 4)
-        self._convexity = round(bond_data["convexity"], 4)
-        self._interest_elasticity = round(bond_data["interestElasticity"], 4)
+        if "bondsFigures" in self._data:
+            bond_data = self._data["bondsFigures"]
+            self._ytm = round(bond_data["yieldToMaturity"] / 100, 6)
+            self._accrued_interest = round(bond_data["accruedInterest"], 4) if "accruedInterest" in bond_data else None
+            self._modified_duration = round(bond_data["modifyDuration"], 4)
+            self._macaulay_duration = round(bond_data["macaulayDuration"], 4)
+            self._convexity = round(bond_data["convexity"], 4)
+            self._interest_elasticity = round(bond_data["interestElasticity"], 4)
+        else:
+            self._ytm = None
+            self._accrued_interest = None
+            self._modified_duration = None
+            self._macaulay_duration = None
+            self._convexity = None
+            self._interest_elasticity = None
 
     @property
-    def accrued_interest(self) -> float:
+    def accrued_interest(self) -> Optional[float]:
         return self._accrued_interest
 
     @property
-    def convexity(self) -> float:
+    def convexity(self) -> Optional[float]:
         return self._convexity
 
     @property
-    def interest_elasticity(self) -> float:
+    def interest_elasticity(self) -> Optional[float]:
         return self._interest_elasticity
 
     @property
-    def macaulay_duration(self) -> float:
+    def macaulay_duration(self) -> Optional[float]:
         return self._macaulay_duration
 
     @property
-    def modified_duration(self) -> float:
+    def modified_duration(self) -> Optional[float]:
         return self._modified_duration
 
     @property
-    def ytm(self) -> float:
+    def ytm(self) -> Optional[float]:
         return self._ytm
 
     def coupon_dates(self, timestamps=True) -> list:
@@ -198,11 +206,11 @@ class OnvistaBondReader(_OnvistaAbstractReader):
         data = {
             "bond_type": details["nameTypeBond"],
             "coupon_type": details["nameTypeCoupon"],
-            "coupon": details["coupon"],
+            "coupon": details["coupon"] if "coupon" in details else 0,
             "nominal_value": details["nominal"],
             "maturity": pd.to_datetime(base_data["datetimeMaturity"]).date().isoformat(),
             "currency": details["isoCurrency"],
-            "next_coupon_payment": pd.to_datetime(base_data["datetimeNextCoupon"]).date().isoformat(),
+            "next_coupon_payment": pd.to_datetime(base_data["datetimeNextCoupon"]).date().isoformat() if "datetimeNextCoupon" in base_data else None,
             "emission_price": base_data["priceEmission"],
             "emission_volume": base_data["volumeEmission"],
             "emission_date": pd.to_datetime(base_data["datetimeEmission"]).date().isoformat(),
