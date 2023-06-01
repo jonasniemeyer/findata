@@ -168,6 +168,20 @@ class OnvistaStockReader(_OnvistaAbstractReader):
     def shares_outstanding(self) -> int:
         return self._shares_outstanding
 
+    def price_ratios(self) -> dict:
+        data = self._data["stocksCnFundamentalList"]["list"]
+        data = {
+            "actual": {
+                dct["idYear"]: {k: v for k,v in dct.items() if k not in ("label", "idYear")}
+                for dct in data if "e" not in dct["label"]
+            },
+            "estimate": {
+                dct["idYear"]: {k: v for k,v in dct.items() if k not in ("label", "idYear")}
+                for dct in data if "e" in dct["label"]
+            }
+        }
+        return data
+
     def splits(self) -> dict:
         data = self._data["stocksSplitList"]["list"]
         data = {
