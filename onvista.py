@@ -182,6 +182,20 @@ class OnvistaStockReader(_OnvistaAbstractReader):
         }
         return data
 
+    def financial_ratios(self) -> dict:
+        data = self._data["stocksCnFinancialList"]["list"]
+        data = {
+            "actual": {
+                dct["idYear"]: {k: v for k,v in dct.items() if k not in ("label", "idYear")}
+                for dct in data if "e" not in dct["label"]
+            },
+            "estimates": {
+                dct["idYear"]: {k: v for k,v in dct.items() if k not in ("label", "idYear")}
+                for dct in data if "e" in dct["label"]
+            }
+        }
+        return data
+
     def price_ratios(self) -> dict:
         data = self._data["stocksCnFundamentalList"]["list"]
         data = {
