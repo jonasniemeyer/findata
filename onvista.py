@@ -224,11 +224,16 @@ class OnvistaBondReader(_OnvistaAbstractReader):
 class OnvistaFundReader(_OnvistaAbstractReader):
     def __init__(self, *kwargs):
         super().__init__(*kwargs)
-        self._manager = self._data["manager"]
+        self._issuer = self._data["fundsIssuer"]["name"]
+        self._managers = self._data["manager"].split(", ")
 
     @property
-    def manager(self) -> str:
-        return self._manager
+    def issuer(self) -> str:
+        return self._issuer
+
+    @property
+    def managers(self) -> list:
+        return self._managers
 
     def benchmark_indices(self) -> list:
         data = self._data["fundsBenchmarkList"]["list"]
