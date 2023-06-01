@@ -168,6 +168,20 @@ class OnvistaStockReader(_OnvistaAbstractReader):
     def shares_outstanding(self) -> int:
         return self._shares_outstanding
 
+    def accounting_data(self) -> dict:
+        data = self._data["stocksBalanceSheetList"]["list"]
+        data = {
+            "actual": {
+                dct["idYear"]: {k: v for k,v in dct.items() if k not in ("label", "idYear")}
+                for dct in data if "e" not in dct["label"]
+            },
+            "estimates": {
+                dct["idYear"]: {k: v for k,v in dct.items() if k not in ("label", "idYear")}
+                for dct in data if "e" in dct["label"]
+            }
+        }
+        return data
+
     def price_ratios(self) -> dict:
         data = self._data["stocksCnFundamentalList"]["list"]
         data = {
@@ -175,7 +189,7 @@ class OnvistaStockReader(_OnvistaAbstractReader):
                 dct["idYear"]: {k: v for k,v in dct.items() if k not in ("label", "idYear")}
                 for dct in data if "e" not in dct["label"]
             },
-            "estimate": {
+            "estimates": {
                 dct["idYear"]: {k: v for k,v in dct.items() if k not in ("label", "idYear")}
                 for dct in data if "e" in dct["label"]
             }
