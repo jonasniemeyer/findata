@@ -311,7 +311,12 @@ class OnvistaFundReader(_OnvistaAbstractReader):
     def __init__(self, *kwargs):
         super().__init__(*kwargs)
         self._issuer = self._data["fundsIssuer"]["name"]
-        self._managers = self._data["manager"].split(", ")
+        if self._data["manager"].count(",") == 1:
+            first, second = self._data["manager"].split(", ")
+            if len(first.split()) == 1 and len(second.split()) == 1:
+                self._managers = [self._data["manager"]]
+        else:
+            self._managers = self._data["manager"].split(", ")
 
     @property
     def issuer(self) -> str:
