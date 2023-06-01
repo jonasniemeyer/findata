@@ -58,10 +58,12 @@ class _OnvistaAbstractReader:
 
     def historical_data(
         self,
+        dataset_id: Optional[int] = None,
         start: Union[int, str] = "1900-01-01",
         end: Union[int, str] = pd.to_datetime("today").date().isoformat()
     ) -> dict:
-        dataset_id = max(self.exchanges(), key=lambda x: x["4_week_volume"])["dataset_id"]
+        if dataset_id is None:
+            dataset_id = max(self.exchanges(), key=lambda x: x["4_week_volume"])["dataset_id"]
         return _OnvistaAbstractReader.get_historical_data(dataset_id, start, end)
 
     @staticmethod
