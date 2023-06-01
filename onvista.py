@@ -230,11 +230,23 @@ class OnvistaFundReader(_OnvistaAbstractReader):
     def manager(self) -> str:
         return self._manager
 
+    def benchmark_indices(self) -> list:
+        data = self._data["fundsBenchmarkList"]["list"]
+        data = [
+            {
+                "name": item["instrument"]["name"],
+                "url": item["instrument"]["urls"]["WEBSITE"],
+                "id": item["idNotationBenchmark"]
+            }
+            for item in data
+        ]
+        return data
+
     def reports(self) -> dict:
         data = self._data["fundsIssuerReports"]
         data = {
             item["nameTypeFundsReport"]: item["url"]
-            for item in  data
+            for item in data
         }
         return data
 
@@ -242,7 +254,7 @@ class OnvistaFundReader(_OnvistaAbstractReader):
         data = self._data["branchFundsBreakdownList"]["list"]
         data = {
             item["nameBreakdown"]: round(item["investmentPct"]/100, 6)
-            for item in  data
+            for item in data
         }
         return data
 
