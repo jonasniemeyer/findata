@@ -134,6 +134,14 @@ class OnvistaStockReader(_OnvistaAbstractReader):
     def __init__(self, *kwargs):
         super().__init__(*kwargs)
 
+    def splits(self) -> dict:
+        data = self._data["stocksSplitList"]["list"]
+        data = {
+            pd.to_datetime(item["dateSplit"]).date().isoformat(): item["factor"]
+            for item in data
+        }
+        return data
+
 
 class OnvistaBondReader(_OnvistaAbstractReader):
     def __init__(self, *kwargs):
