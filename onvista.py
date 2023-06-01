@@ -338,6 +338,21 @@ class OnvistaFundReader(_OnvistaAbstractReader):
         ]
         return data
 
+    def morningstar_rating(self) -> dict:
+        data = self._data["fundsEvaluation"]
+        data = {
+            "bond_style": int(data["morningstarStyleboxBond"]) if "morningstarStyleboxBond" in data else None,
+            "equity_style": int(data["morningstarStyleboxEquity"]) if "morningstarStyleboxEquity" in data else None,
+            "rating": {
+                "1y": int(data["morningstarRating"]),
+                "3y": int(data["morningstarRating3y"]),
+                "5y": int(data["morningstarRating5y"]),
+                "10y": int(data["morningstarRating10y"])
+            },
+            "sustainability": data["morningstarSustainabilityRating"]
+        }
+        return data
+
     def profile(self) -> dict:
         data = self._data["fundsBaseData"]
         data = {
