@@ -192,6 +192,26 @@ class OnvistaBondReader(_OnvistaAbstractReader):
             "issuer_sub_type": data["nameSubTypeIssuer"]
         }
 
+    def profile(self) -> dict:
+        details = self._data["bondsDetails"]
+        base_data = self._data["bondsBaseData"]
+        data = {
+            "bond_type": details["nameTypeBond"],
+            "coupon_type": details["nameTypeCoupon"],
+            "coupon": details["coupon"],
+            "nominal_value": details["nominal"],
+            "maturity": pd.to_datetime(base_data["datetimeMaturity"]).date().isoformat(),
+            "currency": details["isoCurrency"],
+            "next_coupon_payment": pd.to_datetime(base_data["datetimeNextCoupon"]).date().isoformat(),
+            "emission_price": base_data["priceEmission"],
+            "emission_volume": base_data["volumeEmission"],
+            "emission_date": pd.to_datetime(base_data["datetimeEmission"]).date().isoformat(),
+            "in_default": base_data["inDefault"],
+            "perpetual": base_data["perpetual"],
+            "callable": base_data["callable"]
+        }
+        return data
+
 
 class OnvistaFundReader(_OnvistaAbstractReader):
     def __init__(self, *kwargs):
