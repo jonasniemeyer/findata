@@ -224,3 +224,14 @@ class OnvistaBondReader(_OnvistaAbstractReader):
 class OnvistaFundReader(_OnvistaAbstractReader):
     def __init__(self, *kwargs):
         super().__init__(*kwargs)
+
+    def top_holdings(self) -> list:
+        data = self._data["fundsHoldingList"]["list"]
+        data = [
+            {
+                "name": item["instrument"]["name"],
+                "percentage": round(item["investmentPct"] / 100, 6)
+            }
+            for item in data
+        ]
+        return data
