@@ -43,7 +43,11 @@ class _OnvistaAbstractReader:
         start: Union[int, str],
         end: Union[int, str] = pd.to_datetime("today").date().isoformat()
     ) -> dict:
-        identifier = self._data["quoteList"]["list"][1]["market"]["idNotation"]
+        exchanges = self._data["quoteList"]["list"]
+        print(exchanges)
+        volumes = [item["volume4Weeks"] if "volume4Weeks" in item.keys() else 0 for item in exchanges]
+        max_volume_index = volumes.index(max(volumes))
+        identifier = self._data["quoteList"]["list"][max_volume_index]["market"]["idNotation"]
         return _OnvistaAbstractReader.get_historical_data(identifier, start, end)
     
     def exchanges(self):
