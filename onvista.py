@@ -221,6 +221,92 @@ class OnvistaBondReader(_OnvistaAbstractReader):
         return data
 
 
+class OnvistaBondReader(_OnvistaAbstractReader):
+    def __init__(self, *kwargs):
+        super().__init__(*kwargs)
+        if "bondsFigures" in self._data:
+            bond_data = self._data["bondsFigures"]
+            self._ytm = round(bond_data["yieldToMaturity"]/100, 6)
+            self._accrued_interest = round(bond_data["accruedInterest"], 4) if "accruedInterest" in bond_data else None
+            self._modified_duration = round(bond_data["modifyDuration"], 4)
+            self._macaulay_duration = round(bond_data["macaulayDuration"], 4)
+            self._convexity = round(bond_data["convexity"], 4)
+            self._interest_elasticity = round(bond_data["interestElasticity"], 4)
+        else:
+            self._ytm = None
+            self._accrued_interest = None
+            self._modified_duration = None
+            self._macaulay_duration = None
+            self._convexity = None
+            self._interest_elasticity = None
+
+    @property
+    def accrued_interest(self) -> Optional[float]:
+        return self._accrued_interest
+
+    @property
+    def convexity(self) -> Optional[float]:
+        return self._convexity
+
+    @property
+    def interest_elasticity(self) -> Optional[float]:
+        return self._interest_elasticity
+
+    @property
+    def macaulay_duration(self) -> Optional[float]:
+        return self._macaulay_duration
+
+    @property
+    def modified_duration(self) -> Optional[float]:
+        return self._modified_duration
+
+    @property
+    def ytm(self) -> Optional[float]:
+        return self._ytm
+
+    def coupon_dates(self, timestamps=True) -> list:
+        data = self._data["bondsCouponList"]["list"]
+        assert all(item["coupon"] == data[0]["coupon"] for item in data)
+        coupons = [
+            int(pd.to_datetime(item["datetimeEndCoupon"]).timestamp()) if timestamps
+            else pd.to_datetime(item["datetimeEndCoupon"]).date().isoformat()
+            for item in data
+        ]
+        return coupons
+
+    def issuer(self) -> dict:
+        data = self._data["bondsIssuer"]
+        return {
+            "issuer_name": data["name"],
+            "country": {
+                "name": data["nameCountry"],
+                "abbr": data["isoCountry"]
+            },
+            "issuer_type": data["nameTypeIssuer"],
+            "issuer_sub_type": data["nameSubTypeIssuer"]
+        }
+
+    def profile(self) -> dict:
+        details = self._data["bondsDetails"]
+        base_data = self._data["bondsBaseData"]
+        data = {
+            "bond_type": details["nameTypeBond"],
+            "coupon_type": details["nameTypeCoupon"],
+            "coupon": details["coupon"] if "coupon" in details else 0,
+            "nominal_value": details["nominal"],
+            "maturity": pd.to_datetime(base_data["datetimeMaturity"]).date().isoformat(),
+            "currency": details["isoCurrency"],
+            "next_coupon_payment": pd.to_datetime(base_data["datetimeNextCoupon"]).date().isoformat() if "datetimeNextCoupon" in base_data else None,
+            "emission_price": base_data["priceEmission"],
+            "emission_volume": base_data["volumeEmission"],
+            "emission_date": pd.to_datetime(base_data["datetimeEmission"]).date().isoformat(),
+            "in_default": base_data["inDefault"],
+            "perpetual": base_data["perpetual"],
+            "callable": base_data["callable"]
+        }
+        return data
+
+
 class OnvistaFundReader(_OnvistaAbstractReader):
     def __init__(self, *kwargs):
         super().__init__(*kwargs)
@@ -245,6 +331,24 @@ class OnvistaFundReader(_OnvistaAbstractReader):
             }
             for item in data
         ]
+        return data
+
+    def profile(self) -> dict:
+        data = self._data["fundsBaseData"]
+        data = {
+            "aum": data["volumeFund"],
+            "emission_date": pd.to_datetime(data["dateEmission"]).date().isoformat(),
+            "currency": data["isoCurrencyFund"],
+            "custodian_bank": data["nameCustodianBank"],
+            "custodian_country": {
+                "name": data["nameCountry"],
+                "abbr": data["isoCountry"]
+            },
+            "intitial_charge": round(data["maxPctInitialFee"]/100, 6),
+            "ter": round(data["ongoingCharges"]/100, 6),
+            "management_fee": round(data["managementFeeExPostMifid"]/100, 6),
+            "custodian_fee": round(data["custodianBankFeePct"]/100, 6) if "custodianBankFeePct" in data else None
+        }
         return data
 
     def reports(self) -> dict:
