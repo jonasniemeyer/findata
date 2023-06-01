@@ -38,25 +38,36 @@ class _OnvistaAbstractReader:
     def name(self) -> str:
         return self._name
 
+    def exchanges(self) -> list:
+        data = self._data["quoteList"]["list"]
+        data = [
+            {
+                "name": item["market"]["name"],
+                "abbr": item["market"]["codeExchange"],
+                "code": item["market"]["codeMarket"],
+                "dataset_id": item["market"]["idNotation"],
+                "country": item["market"]["isoCountry"],
+                "currency": item["isoCurrency"],
+                "volume": item["volume"] if "volume" in item else 0,
+                "4_week_volume": item["volume4Weeks"],
+                "unit": item["unitType"]
+            }
+            for item in data
+        ]
+        return data
+
     def historical_data(
         self,
-        start: Union[int, str],
+        start: Union[int, str] = "1900-01-01",
         end: Union[int, str] = pd.to_datetime("today").date().isoformat()
     ) -> dict:
-        exchanges = self._data["quoteList"]["list"]
-        print(exchanges)
-        volumes = [item["volume4Weeks"] if "volume4Weeks" in item.keys() else 0 for item in exchanges]
-        max_volume_index = volumes.index(max(volumes))
-        identifier = self._data["quoteList"]["list"][max_volume_index]["market"]["idNotation"]
-        return _OnvistaAbstractReader.get_historical_data(identifier, start, end)
-    
-    def exchanges(self):
-        return
+        dataset_id = max(self.exchanges(), key=lambda x: x["4_week_volume"])["dataset_id"]
+        return _OnvistaAbstractReader.get_historical_data(dataset_id, start, end)
 
     @staticmethod
     def get_historical_data(
-        identifier: int,
-        start: Union[int, str],
+        dataset_id: int,
+        start: Union[int, str] = "1900-01-01",
         end: Union[int, str] = pd.to_datetime("today").date().isoformat()
     ) -> dict:
         if isinstance(start, int):
@@ -69,7 +80,7 @@ class _OnvistaAbstractReader:
         elif isinstance(end, str):
             end = pd.to_datetime(end)
 
-        js = requests.get(f"https://api.onvista.de/api/v1/instruments/STOCK/{identifier}/eod_history?idNotation={identifier}&range=5Y&startDate=1900-01-01", headers=HEADERS).json()
+        js = requests.get(f"https://api.onvista.de/api/v1/instruments/STOCK/{dataset_id}/eod_history?idNotation={dataset_id}&range=5Y&startDate=1900-01-01", headers=HEADERS).json()
         dataset_start = pd.to_datetime(pd.to_datetime(js["datetimeStartAvailableHistory"]).date())
         dataset_end = pd.to_datetime(pd.to_datetime(js["datetimeEndAvailableHistory"]).date())
 
@@ -92,7 +103,7 @@ class _OnvistaAbstractReader:
         end_reached = False
         subsamples = []
         while not end_reached:
-            js = requests.get(f"https://api.onvista.de/api/v1/instruments/STOCK/{identifier}/eod_history?idNotation={identifier}&range=5Y&startDate={start}", headers=HEADERS).json()
+            js = requests.get(f"https://api.onvista.de/api/v1/instruments/STOCK/{dataset_id}/eod_history?idNotation={dataset_id}&range=5Y&startDate={start}", headers=HEADERS).json()
             start = start + pd.offsets.DateOffset(years=5)
             if start >= end or start >= dataset_end:
                 end_reached = True
