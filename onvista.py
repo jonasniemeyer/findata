@@ -230,6 +230,14 @@ class OnvistaFundReader(_OnvistaAbstractReader):
     def manager(self) -> str:
         return self._manager
 
+    def reports(self) -> dict:
+        data = self._data["fundsIssuerReports"]
+        data = {
+            item["nameTypeFundsReport"]: item["url"]
+            for item in  data
+        }
+        return data
+
     def sector_breakdown(self) -> dict:
         data = self._data["branchFundsBreakdownList"]["list"]
         data = {
