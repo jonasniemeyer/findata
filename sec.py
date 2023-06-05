@@ -2171,7 +2171,7 @@ class FilingNPORT(_SECFiling):
         if coupon_type == "N/A" or coupon_type is None:
             raise ValueError
         coupon_rate = debt_section.find("annualizedrt").text
-        coupon_rate = None if coupon_rate == "N/A" else float(coupon_rate) / 100
+        coupon_rate = None if coupon_rate == "N/A" else round(float(coupon_rate) / 100, 6)
 
         in_default = debt_section.find("isdefault").text
         if in_default == "Y":
