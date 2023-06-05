@@ -242,27 +242,29 @@ class TestFilingNPORT:
             self.file.portfolio(sorted_by=var)
 
         security = portfolio[0]
-        assert security["issuer"]["name"] == "Domino's Pizza Enterprises Ltd"
-        assert security["issuer"]["lei"] == "54930034RFI409JZ3179"
+        assert security["issuer"]["name"] == "Apple Inc"
+        assert security["issuer"]["lei"] == "HWUPKR0MPOU8FGXBT394"
         assert security["issuer"]["type"]["name"] == "Corporate"
         assert security["issuer"]["type"]["abbr"] == "CORP"
-        assert security["issuer"]["country"] == "AU"
-        assert security["title"] == "Domino's Pizza Enterprises Ltd"
-        assert security["identifier"]["isin"] == "AU000000DMP0"
-        assert security["amount"]["percentage"] == 0.000051
-        assert security["amount"]["market_value"] == 109220.68
-        assert security["amount"]["quantity"] == 2534.0
+        assert security["issuer"]["country"] == "US"
+        assert security["title"] == "Apple Inc"
+        assert security["identifier"]["cusip"] == "037833100"
+        assert security["identifier"]["isin"] == "US0378331005"
+        assert security["amount"]["percentage"] == 0.050511
+        assert security["amount"]["market_value"] == 107420879.44
+        assert security["amount"]["quantity"] == 683252.0
         assert security["amount"]["quantity_type"]["name"] == "Number of shares"
         assert security["amount"]["quantity_type"]["abbr"] == "NS"
-        assert security["amount"]["currency"]["name"] == "AUD"
-        assert security["amount"]["currency"]["exchange_rate"] == 1.461454
+        assert security["amount"]["currency"]["abbr"] == "USD"
+        assert security["amount"]["currency"]["exchange_rate"] is None
         assert security["payoff_direction"] == "Long"
         assert security["asset_type"]["name"] == "Equity-common"
         assert security["asset_type"]["abbr"] == "EC"
         assert security["restricted_security"] is False
-        assert security["us_gaap_fair_value_hierarchy"] == 2
+        assert security["liquidity_classification"] is None
+        assert security["us_gaap_fair_value_hierarchy"] == 1
         assert security["debt_information"] is None
-        assert security["repurchase_information"] is None
+        assert security["repo_information"] is None
         assert security["derivative_information"] is None
         assert security["securities_lending"]["cash_collateral"] is None
         assert security["securities_lending"]["non_cash_collateral"] is None
@@ -286,7 +288,7 @@ class TestFilingNPORT:
             assert isinstance(item["amount"]["quantity"], float)
             assert isinstance(item["amount"]["quantity_type"]["name"], str)
             assert isinstance(item["amount"]["quantity_type"]["abbr"], str)
-            assert isinstance(item["amount"]["currency"]["name"], str)
+            assert isinstance(item["amount"]["currency"]["abbr"], str)
             assert isinstance(item["amount"]["currency"]["exchange_rate"], (float, NoneType))
 
             assert item["payoff_direction"] in ("Long", "Short", None)
@@ -306,8 +308,8 @@ class TestFilingNPORT:
         portfolio = [security for security in portfolio if security["debt_information"] is not None]
         
         info = portfolio[0]["debt_information"]
-        assert info["maturity"] == "2050-05-15"
-        assert info["coupon"]["rate"] == 0.0125
+        assert info["maturity"] == "2051-02-15"
+        assert info["coupon"]["rate"] == 0.0188
         assert info["coupon"]["type"] == "Fixed"
         assert info["in_default"] is False
         assert info["coupon_payments_deferred"] is False
@@ -329,8 +331,8 @@ class TestFilingNPORT:
         portfolio = [security for security in portfolio if security["debt_information"] is not None]
 
         info = portfolio[0]["debt_information"]
-        assert info["maturity"] == "2026-09-15"
-        assert info["coupon"]["rate"] == 0.0025
+        assert info["maturity"] == "2025-06-01"
+        assert info["coupon"]["rate"] == 0.0038
         assert info["coupon"]["type"] == "Fixed"
         assert info["in_default"] is False
         assert info["coupon_payments_deferred"] is False
@@ -338,13 +340,13 @@ class TestFilingNPORT:
         convertible_info = info["convertible_information"]
         assert convertible_info["mandatory_convertible"] is False
         assert convertible_info["contingent_convertible"] is True
-        assert convertible_info["conversion_asset"]["name"] == "Sea Ltd"
-        assert convertible_info["conversion_asset"]["title"] == "Sea Ltd"
+        assert convertible_info["conversion_asset"]["name"] == "Palo Alto Networks Inc"
+        assert convertible_info["conversion_asset"]["title"] == "Palo Alto Networks Inc"
         assert convertible_info["conversion_asset"]["currency"] == "USD"
-        assert convertible_info["conversion_asset"]["identifier"]["cusip"] == "81141R100"
-        assert convertible_info["conversion_asset"]["identifier"]["isin"] == "US81141R1005"
-        assert convertible_info["conversion_ratio"]["ratio"] == 2.0964
-        assert convertible_info["conversion_ratio"]["currency"] == "USD"
+        assert convertible_info["conversion_asset"]["identifier"]["cusip"] == "697435105"
+        assert convertible_info["conversion_asset"]["identifier"]["isin"] == "US6974351057"
+        assert convertible_info["conversion_information"]["ratio"] == 3.3602
+        assert convertible_info["conversion_information"]["currency"] == "USD"
         assert convertible_info["delta"] is None
         
         for security in portfolio:
@@ -364,8 +366,8 @@ class TestFilingNPORT:
             for identifier, value in convertible_info["conversion_asset"]["identifier"].items():
                 assert isinstance(identifier, str)
                 assert isinstance(value, str)
-            assert isinstance(convertible_info["conversion_ratio"]["ratio"], float)
-            assert isinstance(convertible_info["conversion_ratio"]["currency"], str)
+            assert isinstance(convertible_info["conversion_information"]["ratio"], float)
+            assert isinstance(convertible_info["conversion_information"]["currency"], str)
             assert isinstance(convertible_info["delta"], NoneType)
 
     def test_derivative_currency_forward(self):
@@ -374,13 +376,14 @@ class TestFilingNPORT:
         info = portfolio[0]["derivative_information"]
         assert info["type"]["name"] == "Forward"
         assert info["type"]["abbr"] == "FWD"
-        assert info["counterparties"][0]["name"] == "Citibank"
-        assert info["counterparties"][0]["lei"] == "MBNUM2BPBDO7JBLYG310"
-        assert info["purchased"]["amount"] == 53434501.0
-        assert info["purchased"]["currency"] == "JPY"
-        assert info["sold"]["amount"] == 374429.88
-        assert info["sold"]["currency"] == "USD"
-        assert info["unrealized_appreciation"] == -1827.79
+        assert info["counterparties"][0]["name"] == "JP Morgan Chase Bank"
+        assert info["counterparties"][0]["lei"] == "7H6GLXDRUGQFU57RNE97"
+        assert info["purchased"]["amount"] == 2651403.32
+        assert info["purchased"]["currency"] == "USD"
+        assert info["sold"]["amount"] == 4350500.0
+        assert info["sold"]["currency"] == "NZD"
+        assert info["settlement_date"] == "2022-12-21"
+        assert info["unrealized_appreciation"] == 215522.7
 
         for item in portfolio:
             info = item["derivative_information"]
@@ -401,16 +404,16 @@ class TestFilingNPORT:
         info = portfolio[0]["derivative_information"]
         assert info["type"]["name"] == "Future"
         assert info["type"]["abbr"] == "FUT"
-        assert info["counterparties"][0]["name"] == "ICE Clear Europe"
-        assert info["counterparties"][0]["lei"] == "5R6J7JCQRIPQR1EEP713"
-        assert info["reference_asset"]["name"] is None
-        assert info["reference_asset"]["title"] == "3 Month SONIA"
-        assert info["reference_asset"]["identifier"]["ticker"] == "SFIM4 Comdty"
+        assert info["counterparties"][0]["name"] == "CME Clearing House"
+        assert info["counterparties"][0]["lei"] == "LCZ7XYGSLJUHFXXNXD88"
+        assert info["reference_asset"]["name"] == "S&P 500 E-Mini Index"
+        assert info["reference_asset"]["title"] is None
+        assert info["reference_asset"]["identifier"] == "US78378X1072"
         assert info["trade_direction"] == "Short"
-        assert info["expiration_date"] == "2024-09-17"
-        assert info["notional_amount"] == -944450.0
-        assert info["currency"] == "GBP"
-        assert info["unrealized_appreciation"] == 26717.03
+        assert info["expiration_date"] == "2022-12-16"
+        assert info["notional_amount"] == -19988325.0
+        assert info["currency"] == "USD"
+        assert info["unrealized_appreciation"] == 2149974.91
 
         for item in portfolio:
             info = item["derivative_information"]
