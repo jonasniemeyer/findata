@@ -3,34 +3,40 @@ import requests
 import pandas as pd
 import numpy as np
 from typing import Union, Optional
-from finance_data.utils import HEADERS
+from finance_data.utils import HEADERS, DatasetError
 
 class _OnvistaAbstractReader:
     """
     _OnvistaAbstractReader is the base class for OnvistaStockReader and OnvistaBondReader.
     It implements shared attributes and methods across all readers and how the historical price data is parsed, while
     the derived classes implement their own security-specific methods (e.g. OnvistaBondReader.duration and OnvistaStockReader.income_statement).
+
+    Each OnvistaReader class is called with an identifier that automatically redirects to the onvista page. The identifier can be an ISIN, the first part of an isin
+    or the security's ticker. If the identifier is not related to a security and hence the redirect fails, a DatasetError is raised instead.
     """
-    def __init__(self, isin) -> None:
-        self._isin = isin
-        self._data = self._get_data()
+    def __init__(self, identifier) -> None:
+        self._data = self._get_data(identifier)
         self._name = self._data["instrument"]["name"]
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(Name: {self.name}, ISIN: {self.isin})"
 
-    def _get_data(self) -> dict:
+    def _get_data(self, identifier: str) -> dict:
         if self.__class__.__name__ == "OnvistaStockReader":
-            section = "aktien"
+            self._section = "aktien"
         elif self.__class__.__name__ == "OnvistaBondReader":
-            section = "anleihen"
+            self._section = "anleihen"
         elif self.__class__.__name__ == "OnvistaFundReader":
-            section = "fonds"
+            self._section = "fonds"
         else:
             raise NotImplementedError()
 
-        html = requests.get(f"https://www.onvista.de/{section}/handelsplaetze/{self.isin}", headers=HEADERS).text
-        data = json.loads(html.split('type="application/json">')[-1].split("</script>")[0])["props"]["pageProps"]["data"]["snapshot"]
+        html = requests.get(f"https://www.onvista.de/{self._section}/{identifier}", headers=HEADERS).text
+        try:
+            data = json.loads(html.split('type="application/json">')[-1].split("</script>")[0])["props"]["pageProps"]["data"]["snapshot"]
+        except KeyError:
+            raise DatasetError(f"No Data found for identifier '{identifier}'")
+        self._isin = data["instrument"]["isin"]
         return data
 
     @property
@@ -42,7 +48,9 @@ class _OnvistaAbstractReader:
         return self._name
 
     def exchanges(self) -> list:
-        data = self._data["quoteList"]["list"]
+        if not hasattr(self, "_exchange_data"):
+            html = requests.get(f"https://www.onvista.de/{self._section}/handelsplaetze/{self.isin}", headers=HEADERS).text
+            self._exchange_data = json.loads(html.split('type="application/json">')[-1].split("</script>")[0])["props"]["pageProps"]["data"]["snapshot"]["quoteList"]["list"]
         data = [
             {
                 "name": item["market"]["name"],
@@ -52,10 +60,10 @@ class _OnvistaAbstractReader:
                 "country": item["market"]["isoCountry"],
                 "currency": item["isoCurrency"],
                 "volume": item["volume"] if "volume" in item else 0,
-                "4_week_volume": item["volume4Weeks"],
+                "4_week_volume": item["volume4Weeks"] if "4_week_volume" in item else 0,
                 "unit": item["unitType"]
             }
-            for item in data
+            for item in self._exchange_data
         ]
         return data
 
