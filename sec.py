@@ -1690,7 +1690,9 @@ class Filing13F(_SECFiling):
         summary = self._soup.find(f"{prefix}summarypage")
 
         number_of_investments = int(summary.find(f"{prefix}tableentrytotal").text)
-        portfolio_value = int(summary.find(f"{prefix}tablevaluetotal").text) * 1000
+        portfolio_value = int(summary.find(f"{prefix}tablevaluetotal").text)
+        if pd.to_datetime(self.date_filed) < pd.to_datetime("2023-01-01"):
+            portfolio_value *= 1_000
         confidential_omitted = summary.find(f"{prefix}isconfidentialomitted")
         if confidential_omitted is not None:
             confidential_omitted = confidential_omitted.text.lower()
@@ -1740,6 +1742,8 @@ class Filing13F(_SECFiling):
             title = entry.find(f"{prefix}titleofclass").text
             cusip = entry.find(f"{prefix}cusip").text
             market_value = int(float(entry.find(f"{prefix}value").text))
+            if pd.to_datetime(self.date_filed) < pd.to_datetime("2023-01-01"):
+                market_value *= 1_000
             amount = int(float(entry.find(f"{prefix}sshprnamt").text))
             amount_type = entry.find(f"{prefix}sshprnamttype").text
             quantity = {
