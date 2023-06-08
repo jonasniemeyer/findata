@@ -13,6 +13,11 @@ from .news import (
     SANews,
     WSJNews
 )
+from .onvista import (
+    OnvistaBondReader,
+    OnvistaFundReader,
+    OnvistaStockReader,
+)
 from .sec import (
     latest_sec_filings,
     sec_companies,
@@ -55,6 +60,9 @@ __all__ = [
     "MarketscreenerReader",
     "MSCIReader",
     "NasdaqNews",
+    "OnvistaBondReader",
+    "OnvistaFundReader",
+    "OnvistaStockReader",
     "SANews",
     "sec_companies",
     "sec_filings",
