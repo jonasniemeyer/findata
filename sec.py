@@ -3068,7 +3068,9 @@ class FilingNPORT(_SECFiling):
                 name = tag.find("class-contract-name").find(text=True).strip()
                 ticker = tag.find("class-contract-ticker-symbol")
                 if ticker is not None:
-                    ticker = ticker.find(text=True).strip()
+                    ticker = ticker.find(text=True).strip().upper().replace("(", "").replace(")", "")
+                    if ticker == "N/A":
+                        ticker = None
                 classes.append(
                     {
                         "cik": cik,
