@@ -71,6 +71,9 @@ class FrenchReader:
             self._dataset = dataset
         self.timestamps = timestamps
 
+    def __repr__(self) -> str:
+        return f"FrenchReader({self.dataset})"
+
     def _read_zip(self, http_response) -> str:
         with TemporaryFile() as temp_file:
             temp_file.write(http_response)

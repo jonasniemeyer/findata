@@ -13,6 +13,9 @@ class FREDReader:
         self._dataset = dataset
         self.timestamps = timestamps
 
+    def __repr__(self) -> str:
+        return f"FREDReader({self.dataset})"
+
     def _get_description_data(self) -> dict:        
         html = requests.get(
             url = self._description_url.format(self.dataset), 

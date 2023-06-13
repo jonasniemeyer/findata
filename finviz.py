@@ -16,6 +16,9 @@ class FinvizReader:
         if "This IP address has performed an unusual high number of requests and has been temporarily rate limited. If you believe this to be in error, please contact us." in self._html:
             raise PermissionError("Requests have been rate limited")
         self._soup = BeautifulSoup(self._html, "lxml")
+
+    def __repr__(self) -> str:
+        return f"FinvizReader({self.ticker})"
     
     def analyst_recommendations(self, timestamps=False) -> list:
         table = self._soup.find_all("table", {"class": "fullview-ratings-outer"})
@@ -140,3 +143,7 @@ class FinvizReader:
                 }
             )
         return news
+
+    @property
+    def ticker(self) -> str:
+        return self._ticker
