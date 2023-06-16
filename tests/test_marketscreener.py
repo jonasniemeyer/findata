@@ -1,5 +1,5 @@
 import re
-from finance_data import MarketscreenerReader
+from findata import MarketscreenerReader
 
 NoneType = type(None)
 

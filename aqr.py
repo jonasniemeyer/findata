@@ -2,7 +2,6 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 class AQRReader:
-
     @classmethod
     def _from_excel_ordinal(cls, ordinal, epoch=datetime(1899, 12, 31)):
         if ordinal >= 60:

@@ -1,8 +1,8 @@
 import re
 import requests
-from finance_data.sec import _SECFiling
-from finance_data.utils import HEADERS
-from finance_data import (
+from findata.sec import _SECFiling
+from findata.utils import HEADERS
+from findata import (
     latest_sec_filings,
     sec_companies,
     sec_mutualfunds,

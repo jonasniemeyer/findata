@@ -1,5 +1,5 @@
 import datetime as dt
-from finance_data import StratosphereReader
+from findata import StratosphereReader
 
 NoneType = type(None)
 

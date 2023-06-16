@@ -1,5 +1,5 @@
 import re
-from finance_data import (
+from findata import (
     EconomistNews,
     FTNews,
     NasdaqNews,

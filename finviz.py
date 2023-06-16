@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 import re
 from bs4 import BeautifulSoup
-from finance_data.utils import HEADERS
+from .utils import HEADERS
 
 class FinvizReader:
     _base_url = "https://finviz.com/quote.ashx?t={}"

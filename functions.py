@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-from finance_data.utils import HEADERS
+from .utils import HEADERS
 
 def finra_margin_debt(timestamps=False) -> dict:
     dataset_url = "https://www.finra.org/investors/learn-to-invest/advanced-investing/margin-statistics"

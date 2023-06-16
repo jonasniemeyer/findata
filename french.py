@@ -6,7 +6,7 @@ from io import StringIO
 import pandas as pd
 import numpy as np
 import re
-from finance_data.utils import HEADERS, DatasetError
+from .utils import HEADERS, DatasetError
 
 class FrenchReader:
     _base_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"

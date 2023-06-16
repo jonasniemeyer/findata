@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 import re
 from bs4 import BeautifulSoup
-from finance_data.utils import HEADERS, DatasetError
+from .utils import HEADERS, DatasetError
 
 class MarketscreenerReader:
     _base_url = "https://www.marketscreener.com"

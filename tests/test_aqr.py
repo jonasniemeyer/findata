@@ -1,4 +1,4 @@
-from finance_data import AQRReader
+from findata import AQRReader
 import pandas as pd
 
 def test_esg_efficient_frontier_portfolios():

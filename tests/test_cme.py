@@ -1,3 +1,3 @@
-from finance_data import CMEReader
+from findata import CMEReader
 import pandas as pd
 import pytest

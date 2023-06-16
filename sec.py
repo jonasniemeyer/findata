@@ -2,10 +2,10 @@ import requests
 import re
 import datetime as dt
 import pandas as pd
-from finance_data.utils import (
+from .utils import (
+    DatasetError,
     HEADERS,
-    HEADERS_FAKE,
-    DatasetError
+    HEADERS_FAKE
 )
 from typing import Union
 from bs4 import BeautifulSoup

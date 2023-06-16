@@ -1,4 +1,4 @@
-from finance_data import MacrotrendsReader, TickerError
+from findata import MacrotrendsReader, TickerError
 import pytest
 
 NoneType = type(None)

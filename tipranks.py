@@ -2,7 +2,11 @@ import pandas as pd
 import requests
 import re
 from bs4 import BeautifulSoup
-from finance_data.utils import HEADERS, TIPRANKS_HEADERS, DatasetError
+from .utils import (
+    DatasetError,
+    HEADERS,
+    TIPRANKS_HEADERS
+)
 
 class TipranksAnalystReader:
     _base_url = "https://www.tipranks.com/experts/analysts/"

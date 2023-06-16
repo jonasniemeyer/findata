@@ -1,4 +1,4 @@
-from finance_data import FrenchReader
+from findata import FrenchReader
 import pandas as pd
 import numpy as np
 

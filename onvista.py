@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 import numpy as np
 from typing import Union, Optional
-from finance_data.utils import HEADERS, DatasetError
+from .utils import HEADERS, DatasetError
 
 class _OnvistaAbstractReader:
     """

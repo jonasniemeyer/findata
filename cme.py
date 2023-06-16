@@ -1,6 +1,6 @@
 import time
 import pandas as pd
-from finance_data.utils import CHROMEDRIVER_PATH
+from .utils import CHROMEDRIVER_PATH
 from bs4 import BeautifulSoup
 from selenium import webdriver, common
 from selenium.webdriver.chrome.service import Service

@@ -7,7 +7,7 @@ import re
 import time
 from bs4 import BeautifulSoup
 from html import unescape
-from finance_data.utils import (
+from .utils import (
     TickerError,
     HEADERS,
     PLACEHOLDER_LOGO,

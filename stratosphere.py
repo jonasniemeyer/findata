@@ -2,7 +2,7 @@ import requests
 import json
 import pandas as pd
 import re
-from finance_data.utils import HEADERS
+from .utils import HEADERS
 from typing import Optional
 
 NoneType = type(None)

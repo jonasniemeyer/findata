@@ -4,7 +4,7 @@ import numpy as np
 import datetime as dt
 from bs4 import BeautifulSoup
 from io import StringIO
-from finance_data.utils import HEADERS, FRED_API_KEY
+from .utils import HEADERS, FRED_API_KEY
 
 class FREDReader:
     _description_url = "https://fred.stlouisfed.org/series/{}"

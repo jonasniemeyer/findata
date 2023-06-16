@@ -1,4 +1,4 @@
-from finance_data import FREDReader
+from findata import FREDReader
 import pandas as pd
 import pytest
 

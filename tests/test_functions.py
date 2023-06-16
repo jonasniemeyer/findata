@@ -1,4 +1,4 @@
-from finance_data import (
+from findata import (
     finra_margin_debt,
     shiller_data,
     sp_index_data

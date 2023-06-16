@@ -6,7 +6,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from finance_data.utils import TickerError
+from .utils import TickerError
 
 class MacrotrendsReader:
     _base_url = "https://www.macrotrends.net/stocks/charts/{}/{}/{}?freq={}"

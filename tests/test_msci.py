@@ -1,4 +1,4 @@
-from finance_data import MSCIReader
+from findata import MSCIReader
 import pandas as pd
 from pandas.tseries.offsets import BDay
 

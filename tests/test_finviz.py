@@ -1,4 +1,4 @@
-from finance_data import FinvizReader
+from findata import FinvizReader
 
 NoneType = type(None)
 

@@ -1,4 +1,4 @@
-from finance_data import TipranksStockReader
+from findata import TipranksStockReader
 import datetime as dt
 
 NoneType = type(None)

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import datetime as dt
 import pytest
-from finance_data import YahooReader
+from findata import YahooReader
 
 NoneType = type(None)
 
