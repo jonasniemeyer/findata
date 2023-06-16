@@ -11,6 +11,7 @@ If you use it, you should refer to the respective terms of service of each websi
 - [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/)
 - [numpy](https://www.numpy.org)
 - [pandas](https://pandas.pydata.org/)
+- [pytest](https://docs.pytest.org/)
 - [requests](https://docs.python-requests.org/en/master/)
 - [selenium](https://selenium-python.readthedocs.io/)
 
