@@ -30,6 +30,7 @@ if "private.cfg" in os.listdir(Path(__file__).parent):
     TIPRANKS_HEADERS["cookie"] = cfg.get("COOKIES", "tipranks_cookies")
 else:
     FRED_API_KEY = None
+    CHROMEDRIVER_PATH = f"{Path(__file__).parents[3]}/chromedriver.exe"
 
 SERVER_ERROR_MESSAGE = b"<?xml version='1.0' encoding='UTF-8'?><Error><Code>AccessDenied</Code><Message>Access denied.</Message><Details>Anonymous caller does not have storage.objects.get access to the Google Cloud Storage object. Permission 'storage.objects.get' denied on resource (or it may not exist).</Details></Error>"
 
