@@ -13,12 +13,11 @@ If you use it, you should refer to the respective terms of service of each websi
 - [pandas](https://pandas.pydata.org/)
 - [requests](https://docs.python-requests.org/en/master/)
 - [selenium](https://selenium-python.readthedocs.io/)
-<br>
-<br>
 
 # Documentation
 
 *There will be a thorough documentation in the near future.*
+<br>
 The package provides the following classes to scrape financial and economic datasets:
 - AQRReader
 - CMEReader
