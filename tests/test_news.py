@@ -1,4 +1,3 @@
-import re
 from findata import (
     EconomistNews,
     FTNews,
@@ -6,16 +5,20 @@ from findata import (
     SANews,
     WSJNews
 )
+import pandas as pd
+from pandas.tseries.offsets import DateOffset
+import re
 
 NoneType = type(None)
+last_month = (pd.to_datetime("today") - DateOffset(months=1)).date()
 
 def test_economist_news():
     for section in EconomistNews.sections:
-        articles = EconomistNews.articles(section=section, start="2023-01-01")
-        if len(articles) == 0:
-            articles = EconomistNews.articles(section=section, start="2022-01-01")
-            if len(articles) == 0:
-                articles = EconomistNews.articles(section=section, start="2021-01-01")
+        start = last_month
+        articles = []
+        while len(articles) == 0:
+            articles = EconomistNews.articles(section=section, start=start.isoformat())
+            start = start - DateOffset(months=1)
         assert isinstance(articles, list)
         assert len(articles) != 0
 
@@ -25,7 +28,7 @@ def test_economist_news():
             assert article["date"] is None or len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", article["date"])) == 1
             assert isinstance(article["url"], str)
     
-    articles = EconomistNews.articles(section="Europe", start="2023-01-01", timestamps=True)
+    articles = EconomistNews.articles(section="Europe", start=last_month.isoformat(), timestamps=True)
     assert len(articles) != 0
     for article in articles:
         assert isinstance(article["date"], (int, NoneType))
@@ -41,11 +44,11 @@ def test_ft_news():
         FTNews.columnists
     ):
         for section in sections:
-            articles = FTNews.articles(section=section, start="2023-01-01")
-            if len(articles) == 0:
-                articles = FTNews.articles(section=section, start="2022-01-01")
-                if len(articles) == 0:
-                    articles = FTNews.articles(section=section, start="2021-01-01")
+            start = last_month
+            articles = []
+            while len(articles) == 0:
+                articles = FTNews.articles(section=section, start=start.isoformat())
+                start = start - DateOffset(months=1)
             assert isinstance(articles, list)
             assert len(articles) != 0
 
@@ -56,7 +59,7 @@ def test_ft_news():
                 assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", article["datetime"])) == 1
                 assert isinstance(article["url"], str)
 
-    articles = FTNews.articles(section="Tech Sector", start="2023-01-01", timestamps=True)
+    articles = FTNews.articles(section="Tech Sector", start=last_month.isoformat(), timestamps=True)
     assert len(articles) != 0
     for article in articles:
         assert isinstance(article["datetime"], int)
@@ -115,11 +118,11 @@ def test_wsj_news():
         WSJNews.reviews
     ):
         for section in sections:
-            articles = WSJNews.articles(section=section, start="2023-01-01")
-            if len(articles) == 0:
-                articles = WSJNews.articles(section=section, start="2022-01-01")
-                if len(articles) == 0:
-                    articles = WSJNews.articles(section=section, start="2021-01-01")
+            start = last_month
+            articles = []
+            while len(articles) == 0:
+                articles = WSJNews.articles(section=section, start=start.isoformat())
+                start = start - DateOffset(months=1)
             assert isinstance(articles, list)
             assert len(articles) != 0
 
@@ -133,7 +136,7 @@ def test_wsj_news():
                 assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", article["date"])) == 1
                 assert isinstance(article["url"], str)
 
-    articles = WSJNews.articles(section="Europe", start="2023-01-01", timestamps=True)
+    articles = WSJNews.articles(section="Europe", start=last_month.isoformat(), timestamps=True)
     assert len(articles) != 0
     for article in articles:
         assert isinstance(article["date"], int)
