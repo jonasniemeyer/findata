@@ -132,3 +132,4 @@ class TestMarketscreenerReader:
             assert isinstance(shareholder["company"], str)
             assert isinstance(shareholder["shares"], int)
             assert isinstance(shareholder["percentage"], float)
+            assert isinstance(shareholder["value"], float)

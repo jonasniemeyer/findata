@@ -417,7 +417,7 @@ class MarketscreenerReader:
             cells = row.find_all("td")
             name = cells[0].find("div").find("span").text.strip()
             for index, cell in enumerate(cells[1:-1:2]):
-                data[years[index]][name] = float(cell.text.strip().replace(",", ".")) * 1e6 if cell.text != "-" else None
+                data[years[index]][name] = float(cell.text.strip().replace(",", ".")) * 1e7 if cell.text != "-" else None
         
         return data
 
@@ -426,18 +426,27 @@ class MarketscreenerReader:
             self._get_company_information()
         
         shareholders = []
-        rows = self._company_soup.find("b", string="Shareholders").find_next("tr").find("td", recursive=False).find("table").find_all("tr")[1:]
+        rows = self._company_soup.find("h3", string="Shareholders").find_next("tbody").find_all("tr")
         for row in rows:
             cells = row.find_all("td")
-            company = cells[0].text.strip()
+            company = cells[0].find("div").find("span").text.strip()
             shares = int(cells[1].text.replace(",", ""))
             percentage = round(float(cells[2].text.replace("%", ""))/100, 4)
+            value = cells[3].text
+            if "B" in value:
+                value = value.replace("B", "")
+                multiplier = 1e9
+            elif "M" in value:
+                value = value.replace("M", "")
+                multiplier = 1e6
+            value = int(value.replace("$", "").replace(" ", "").strip()) * multiplier
             
             shareholders.append(
                 {
                     "company": company,
                     "shares": shares,
-                    "percentage": percentage
+                    "percentage": percentage,
+                    "value": value
                 }
             )
         
@@ -448,4 +457,4 @@ class MarketscreenerReader:
         return self._ticker
 
 if __name__ == "__main__":
-    print(MarketscreenerReader("AAPL").segment_information())
+    print(MarketscreenerReader("AAPL").shareholders())
