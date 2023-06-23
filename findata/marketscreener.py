@@ -2,7 +2,7 @@ import pandas as pd
 import requests
 import re
 from bs4 import BeautifulSoup
-from .utils import HEADERS, DatasetError
+from findata.utils import HEADERS, DatasetError
 
 class MarketscreenerReader:
     _base_url = "https://www.marketscreener.com"
@@ -21,12 +21,12 @@ class MarketscreenerReader:
         self._header_parsed = False
 
     def _get_company_information(self) -> None:
-        url = f"{self._company_url}/company/"
+        url = f"{self._company_url}company/"
         html = requests.get(url=url, headers=HEADERS).text
         self._company_soup = BeautifulSoup(html, "lxml")
 
     def _get_financial_information(self) -> None:
-        url = f"{self._company_url}/financials/"
+        url = f"{self._company_url}financials/"
         html = requests.get(url=url, headers=HEADERS).text
         self._financial_soup = BeautifulSoup(html, "lxml")
 
@@ -60,10 +60,11 @@ class MarketscreenerReader:
             self._get_company_information()
         
         board_members = []
-        rows = self._company_soup.find("b", text="Members of the board").find_next("tr").find("td", recursive=False).find("table").find_all("tr")[1:]
+        
+        rows = self._company_soup.find("h3", string=re.compile("\s*Members of the board\s*")).find_next("tbody").find_all("tr")
         for row in rows:
             cells = row.find_all("td")
-            name = cells[0].text.strip()
+            name = cells[0].find("div").find("a").text.strip()
             title = cells[1].text.strip()
             age = cells[2].text
             if age == "-":
@@ -271,17 +272,17 @@ class MarketscreenerReader:
             self._get_company_information()
         
         managers = []
-        rows = self._company_soup.find("b", text="Managers").find_next("tr").find("td", recursive=False).find("table").find_all("tr")[1:]
+        rows = self._company_soup.find("h3", string=re.compile("\s*Managers\s*")).find_next("tbody").find_all("tr")
         for row in rows:
             cells = row.find_all("td")
-            name = cells[0].text.strip()
+            name = cells[0].find("div").find("a").text.strip()
             title = cells[1].text.strip()
-            age = cells[2].text
+            age = cells[2].text.strip()
             if age == "-":
                 age = None
             else:
                 age = int(age)
-            joined = cells[3].text
+            joined = cells[3].text.strip()
             if joined == "-":
                 joined = None
             else:
@@ -341,7 +342,7 @@ class MarketscreenerReader:
         
         while start_reached is False:
             page_counter+=1
-            url = f"{self._company_url}/{source}/fpage={page_counter}"
+            url = f"{self._company_url}{source}/fpage={page_counter}"
             html = requests.get(url=url, headers=HEADERS).text
             soup = BeautifulSoup(html, "lxml")
             
@@ -457,4 +458,4 @@ class MarketscreenerReader:
         return self._ticker
 
 if __name__ == "__main__":
-    print(MarketscreenerReader("AAPL").latest_price())
+    print(MarketscreenerReader("AAPL").managers())
