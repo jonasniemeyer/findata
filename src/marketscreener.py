@@ -2,7 +2,7 @@ import pandas as pd
 import requests
 import re
 from bs4 import BeautifulSoup
-from .utils import HEADERS, DatasetError
+from findata.utils import HEADERS, DatasetError
 
 class MarketscreenerReader:
     _base_url = "https://www.marketscreener.com"
@@ -33,6 +33,7 @@ class MarketscreenerReader:
     def _parse_header(self) -> None:
         if self._header_parsed:
             return
+
         if hasattr(self, "_financial_soup"):
             soup = self._financial_soup
         elif hasattr(self, "_company_soup"):
@@ -41,15 +42,16 @@ class MarketscreenerReader:
             self._get_financial_information()
             soup = self._financial_soup
 
-        ticker, isin = soup.find("div", {"class": "bc_pos"}).find("span", {"class": "bc_add"}).find_all("span")
+        header = soup.find("div", {"class": "card-content p-10"})
+        ticker, isin = header.find("div", {"class": "c-12 cm-auto grid align-center"}).find_all("span")[:2]
         self._ticker = ticker.text.strip()
         self._isin = isin.text.strip()
 
-        self._name = re.findall("(.+)\(.+\)", soup.find("h1").parent.text.strip())[0].strip()
+        self._name = header.find("h1").text.strip()
 
-        price_tag = soup.find("span", {"class": "last variation--no-bg txt-bold"})
+        price_tag = header.find("span", {"class": "last no-animation txt-bold js-last"})
         self._price = float(price_tag.text)
-        self._currency = price_tag.find_next("td").text.strip()
+        self._currency = price_tag.find_next("sup").text.strip()
 
         self._header_parsed = True
 
@@ -453,3 +455,6 @@ class MarketscreenerReader:
     def ticker(self) -> str:
         self._parse_header()
         return self._ticker
+
+if __name__ == "__main__":
+    print(MarketscreenerReader("AAPL").isin())
