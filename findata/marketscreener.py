@@ -245,9 +245,9 @@ class MarketscreenerReader:
             self._get_company_information()
 
         industries = []
-        rows = self._company_soup.find("b", string="Sector").find_next("div").find("table").find_all("tr")
+        rows = self._company_soup.find("h3", string="Sector").find_next("div").find("table").find_all("tr")
         for row in rows:
-            industry = row.find_all("td")[-1].find("a").text
+            industry = row.find_all("td")[-1].find("a").text.strip()
             industries.append(industry)
         
         self._industry = industries[-1]
@@ -453,4 +453,4 @@ class MarketscreenerReader:
         return self._ticker
 
 if __name__ == "__main__":
-    print(MarketscreenerReader("AAPL").country_information())
+    print(MarketscreenerReader("AAPL").industry_information())
