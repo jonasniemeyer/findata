@@ -92,31 +92,26 @@ class MarketscreenerReader:
         if not hasattr(self, "_company_soup"):
             self._get_company_information()
 
-        header = self._company_soup.find("b", text="Sales per region")
+        header = self._company_soup.find("h3", string="Sales per region")
         if header is None:
             raise DatasetError(f"no country data found for stock '{self.name}'")
         else:
-            rows = header.find_next("tr").find("td", recursive=False).find("table").find_all("tr")
-        
-        if rows[0].find_all("td")[-1].text == "Delta":
-            years = {
-                index+1: int(tag.find("b").text)
-                for index, tag in enumerate(rows[0].find_all("td")[1:-1])
-            }
-        else:
-            years = {
-                index+1: int(tag.find("b").text)
-                for index, tag in enumerate(rows[0].find_all("td")[1:])
-            }
+            headers = header.find_next("thead").find("tr").find_all("th")
+            rows = header.find_next("tbody").find_all("tr")
+
+        years = {
+            index: int(tag.text)
+            for index, tag in enumerate(headers[1:-1:2])
+        }
         data = {}
         for year in sorted(years.values(), reverse=True):
             data[year] = {}
 
-        for row in rows[1:-1]:
+        for row in rows:
             cells = row.find_all("td")
-            name = cells[0].text.title()
+            name = cells[0].find("div").find("span").text.strip()
             for index, cell in enumerate(cells[1:-1:2]):
-                data[years[index+1]][name] = float(cell.text.replace(" ", "")) * 1e6 if cell.text != "-" else None
+                data[years[index]][name] = float(cell.text.strip().replace(",", ".")) * 1e6 if cell.text != "-" else None
         
         return data
 
@@ -129,13 +124,13 @@ class MarketscreenerReader:
             self._get_financial_information()
         
         if quarterly:
-            rows = self._financial_soup.find("b", text="Income Statement Evolution (Quarterly data)").find_next("tr").find("td", recursive=False).find("table").find_all("tr")
+            rows = self._financial_soup.find("b", string="Income Statement Evolution (Quarterly data)").find_next("tr").find("td", recursive=False).find("table").find_all("tr")
             years = {
                 index+1: tag.find("b").text
                 for index, tag in enumerate(rows[0].find_all("td")[1:])
             }
         else:
-            rows = self._financial_soup.find("b", text="Income Statement Evolution (Annual data)").find_next("tr").find("td", recursive=False).find("table").find_all("tr")
+            rows = self._financial_soup.find("b", string="Income Statement Evolution (Annual data)").find_next("tr").find("td", recursive=False).find("table").find_all("tr")
             years = {
                 index+1: int(tag.find("b").text)
                 for index, tag in enumerate(rows[0].find_all("td")[1:])
@@ -177,7 +172,7 @@ class MarketscreenerReader:
         
         # if annual data is parsed, parse also Balance Sheet and Cashflow Items
         if not quarterly:
-            rows = self._financial_soup.find("b", text="Balance Sheet Analysis").find_next("tr").find("td", recursive=False).find("table").find_all("tr")
+            rows = self._financial_soup.find("b", string="Balance Sheet Analysis").find_next("tr").find("td", recursive=False).find("table").find_all("tr")
             years = {
                 index+1: int(tag.find("b").text)
                 for index, tag in enumerate(rows[0].find_all("td")[1:])
@@ -215,7 +210,7 @@ class MarketscreenerReader:
                         analysts = int(re.findall("Number of financial analysts who provided an estimate : ([0-9]+)", analysts)[0])
                     data[year][f"{name} Analysts"] = analysts
             
-            header = self._financial_soup.find("b", text="Valuation")
+            header = self._financial_soup.find("b", string="Valuation")
             if header is None:
                 for year in data:
                     data[year]["Shares Outstanding"] = None
@@ -250,7 +245,7 @@ class MarketscreenerReader:
             self._get_company_information()
 
         industries = []
-        rows = self._company_soup.find("b", text="Sector").find_next("div").find("table").find_all("tr")
+        rows = self._company_soup.find("b", string="Sector").find_next("div").find("table").find_all("tr")
         for row in rows:
             industry = row.find_all("td")[-1].find("a").text
             industries.append(industry)
@@ -346,7 +341,7 @@ class MarketscreenerReader:
             html = requests.get(url=url, headers=HEADERS).text
             soup = BeautifulSoup(html, "lxml")
             
-            rows = soup.find("b", text=header).find_next("tr").find("td", recursive=False).find("table").find_all("tr")
+            rows = soup.find("b", string=header).find_next("tr").find("td", recursive=False).find("table").find_all("tr")
             for row in rows:
                 cells = row.find_all("td")
                 date = cells[0].text
@@ -403,7 +398,7 @@ class MarketscreenerReader:
         if not hasattr(self, "_company_soup"):
             self._get_company_information()
         
-        header = self._company_soup.find("b", text="Sales per Business")
+        header = self._company_soup.find("b", string="Sales per Business")
         if header is None:
             raise DatasetError(f"no segment data found for stock '{self.name}'")
         else:
@@ -436,7 +431,7 @@ class MarketscreenerReader:
             self._get_company_information()
         
         shareholders = []
-        rows = self._company_soup.find("b", text="Shareholders").find_next("tr").find("td", recursive=False).find("table").find_all("tr")[1:]
+        rows = self._company_soup.find("b", string="Shareholders").find_next("tr").find("td", recursive=False).find("table").find_all("tr")[1:]
         for row in rows:
             cells = row.find_all("td")
             company = cells[0].text.strip()
@@ -458,4 +453,4 @@ class MarketscreenerReader:
         return self._ticker
 
 if __name__ == "__main__":
-    print(MarketscreenerReader("AAPL").managers())
+    print(MarketscreenerReader("AAPL").country_information())

@@ -31,7 +31,7 @@ class TestMarketscreenerReader:
                     "United States",
                     "Europe",
                     "Greater China",
-                    "Rest Of Asia Pacific",
+                    "Rest of Asia Pacific",
                     "Japan",
                     "Americas"
                 )
