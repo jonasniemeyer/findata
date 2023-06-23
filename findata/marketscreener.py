@@ -2,7 +2,7 @@ import pandas as pd
 import requests
 import re
 from bs4 import BeautifulSoup
-from findata.utils import HEADERS, DatasetError
+from .utils import HEADERS, DatasetError
 
 class MarketscreenerReader:
     _base_url = "https://www.marketscreener.com"
@@ -457,4 +457,4 @@ class MarketscreenerReader:
         return self._ticker
 
 if __name__ == "__main__":
-    print(MarketscreenerReader("AAPL").isin())
+    print(MarketscreenerReader("AAPL").latest_price())
