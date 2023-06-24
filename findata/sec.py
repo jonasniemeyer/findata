@@ -3053,8 +3053,8 @@ class FilingNPORT(_SECFiling):
             classes = None
         else:
             series_section = series_section.find("existing-series-and-classes-contracts").find("series")
-            series_cik = series_section.find("series-id").find(text=True).strip()
-            series_name = series_section.find("series-name").find(text=True).strip()
+            series_cik = series_section.find("series-id").find(string=True).strip()
+            series_name = series_section.find("series-name").find(string=True).strip()
             lei = form_data.find("geninfo").find("serieslei").text
 
             if lei in ("00000000000000000000", "N/A"):
@@ -3064,11 +3064,11 @@ class FilingNPORT(_SECFiling):
             classes = []
             class_tags = series_section.find_all("class-contract")
             for tag in class_tags:
-                cik = tag.find("class-contract-id").find(text=True).strip()
-                name = tag.find("class-contract-name").find(text=True).strip()
+                cik = tag.find("class-contract-id").find(string=True).strip()
+                name = tag.find("class-contract-name").find(string=True).strip()
                 ticker = tag.find("class-contract-ticker-symbol")
                 if ticker is not None:
-                    ticker = ticker.find(text=True).strip().upper().replace("(", "").replace(")", "")
+                    ticker = ticker.find(string=True).strip().upper().replace("(", "").replace(")", "")
                     if ticker == "N/A":
                         ticker = None
                 classes.append(
