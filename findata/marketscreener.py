@@ -146,7 +146,7 @@ class MarketscreenerReader:
             data[year] = {}
         for row in rows[:-1]:
             cells = row.find_all("td")
-            name = row.find("th").find(text=True).strip()
+            name = row.find("th").find(string=True).strip()
             if name == "FCF margin":
                 name = "FCF Margin"
             elif name not in ("EBITDA", "EBIT", "EPS", "FCF Conversion"):
@@ -191,7 +191,7 @@ class MarketscreenerReader:
             
             for row in rows[:-1]:
                 cells = row.find_all("td")
-                name = row.find("th").find(text=True).strip().title()
+                name = row.find("th").find(string=True).strip().title()
                 if name not in (
                     "Net Cash Position"
                     "Free Cash Flow",
@@ -237,7 +237,7 @@ class MarketscreenerReader:
 
                 for row in rows[:-1]:
                     cells = row.find_all("td")
-                    name = row.find("th").find(text=True).strip()
+                    name = row.find("th").find(string=True).strip()
                     if name != "Nbr of stocks (in thousands)":
                         continue
                     name = "Shares Outstanding"
@@ -316,14 +316,16 @@ class MarketscreenerReader:
         timestamps=False
     ) -> list:
         news_types = {
-            "most_relevant": ("news-quality", "Most relevant news about"),
-            "all": ("news-history", "All news about"),
-            "analysts": ("news-broker-research", "Analyst Recommendations on"),
-            "other_languages": ("news-other-languages", "News in other languages on"),
-            "press_releases": ("news-communiques", "Communiqués de presse de la société"),
+            "all": ("news-history", "All News"),
+            "analysts": ("news-broker-research", "Analyst Reco."),
+            "highlights": ("news-key-events", "Highlights"),
+            "insiders": ("news-insiders", "Insiders"),
+            "transcripts": ("news-call-transcripts", "Transcripts"),
+            "press_releases": ("news-press-releases", "Press Releases"),
             "official_publications": ("news-publications", "Official Publications"),
-            "sector": ("news-sector", "Sector news")
+            "other_languages": ("news-other-languages", "Other languages")
         }
+
         if news_type not in news_types:
             raise ValueError(f"news_type has be one of the following: {tuple(news_types.keys())}")
         
@@ -332,76 +334,44 @@ class MarketscreenerReader:
         elif not isinstance(start, (int, float)):
             raise ValueError("start parameter has to be of type str, float or int")        
         
-        source = news_types[news_type][0]
-        if news_type == "sector":
-            if not hasattr(self, "_industry"):
-                self.industry_information()
-            header = f"{news_types[news_type][1]} {self._industry}"
-        elif news_type == "official_publications":
-            header = news_types[news_type][1]
-        else:
-            header = f"{news_types[news_type][1]} {self.name()}"
-        
+        source, header = news_types[news_type]
         articles = []
-        start_reached = False
-        page_counter = 0
-        
-        while start_reached is False:
-            page_counter+=1
-            url = f"{self._company_url}{source}/fpage={page_counter}"
-            html = requests.get(url=url, headers=HEADERS).text
-            soup = BeautifulSoup(html, "lxml")
-            
-            rows = soup.find("b", string=header).find_next("tr").find("td", recursive=False).find("table").find_all("tr")
-            for row in rows:
-                cells = row.find_all("td")
-                date = cells[0].text
-                if ":" in date:
-                    date =  pd.to_datetime("today")
-                elif "/" in date:
-                    current_year = pd.to_datetime("today").year
-                    date =  pd.to_datetime(f"{date}/{current_year}")
-                else:
-                    date = pd.to_datetime(f"{date}-01-01")
+        url = f"{self._company_url}{source}/"
+        html = requests.get(url=url, headers=HEADERS).text
+        soup = BeautifulSoup(html, "lxml")
 
-                if date.timestamp() < start:
-                    start_reached = True
-                    break
-                
-                if timestamps:
-                    date = int(date.timestamp())
-                else:
-                    date = date.date().isoformat()
-                
-                url = cells[1].find("a").get("href")
-                url = f"{self._base_url}{url}"
-                title = cells[1].find("a").text
-                if cells[1].find("a").find("b") is not None:
-                    title = title.replace(" :", ":")
-                news_source = cells[2].find("div")
-                if news_source is None:
-                    news_source = None
-                    news_source_abbr = None
-                else:
-                    news_source_abbr = news_source.text
-                    news_source = news_source.get("title").replace("©", "")
-                
-                articles.append(
-                    {
-                        "title": title,
-                        "date": date,
-                        "source": {
-                            "name": news_source,
-                            "abbreviation": news_source_abbr
-                        },
-                        "url": url
-                    }
-                )
+        rows = soup.find("h3", string=header).find_next("table").find_all("tr")
+        for row in rows:
+            cells = row.find_all("td")
+
+            title = cells[0].find("a").text.strip()
+            url = cells[0].find("a").get("href")
+            url = f"{self._base_url}{url}"
+
+            date = cells[1].find("time").get("datetime")
+            date = pd.to_datetime(pd.to_datetime(date))
+            if timestamps:
+                date = int(date.timestamp())
+            else:
+                date = date.isoformat()
+
+            source_tag = cells[2].find("span")
+            news_source = source_tag.get("title").replace("@", "")
+            news_source_abbr = source_tag.find("span").text.strip()
+            if news_source_abbr == "":
+                news_source_abbr = None
             
-            
-            pages_nav = soup.find("span", {"class": "nPageTable"})
-            if (pages_nav is None) or (pages_nav.find("a", {"class": "nPageEndTab"}) is None):
-                start_reached = True
+            articles.append(
+                {
+                    "title": title,
+                    "date": date,
+                    "source": {
+                        "name": news_source,
+                        "abbreviation": news_source_abbr
+                    },
+                    "url": url
+                }
+            )
             
         return articles
 
@@ -466,6 +436,3 @@ class MarketscreenerReader:
     def ticker(self) -> str:
         self._parse_header()
         return self._ticker
-
-if __name__ == "__main__":
-    print(MarketscreenerReader("AAPL").financial_statement(quarterly=False))
