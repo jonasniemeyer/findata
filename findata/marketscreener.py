@@ -26,7 +26,7 @@ class MarketscreenerReader:
         self._company_soup = BeautifulSoup(html, "lxml")
 
     def _get_financial_information(self) -> None:
-        url = f"{self._company_url}financials/"
+        url = f"{self._company_url}finances/"
         html = requests.get(url=url, headers=HEADERS).text
         self._financial_soup = BeautifulSoup(html, "lxml")
 
@@ -124,34 +124,39 @@ class MarketscreenerReader:
             self._get_financial_information()
         
         if quarterly:
-            rows = self._financial_soup.find("b", string="Income Statement Evolution (Quarterly data)").find_next("tr").find("td", recursive=False).find("table").find_all("tr")
-            years = {
-                index+1: tag.find("b").text
-                for index, tag in enumerate(rows[0].find_all("td")[1:])
-            }
+            header = self._financial_soup.find("h3", string="Income Statement Evolution (Quarterly data)")
         else:
-            rows = self._financial_soup.find("b", string="Income Statement Evolution (Annual data)").find_next("tr").find("td", recursive=False).find("table").find_all("tr")
+            header = self._financial_soup.find("h3", string="Income Statement Evolution (Annual data)")
+
+        rows = header.find_next("tbody").find_all("tr")
+        years = header.find_next("thead").find("tr").find_all("th")[1:]
+        years = {
+            index: tag.find("span").text.strip()
+            for index, tag in enumerate(years)
+        }
+
+        if not quarterly:
             years = {
-                index+1: int(tag.find("b").text)
-                for index, tag in enumerate(rows[0].find_all("td")[1:])
+                index: int(year)
+                for index, year in years.items()
             }
+
         data = {}
         for year in sorted(years.values(), reverse=True):
             data[year] = {}
-
-        for row in rows[1:-3]:
+        for row in rows[:-1]:
             cells = row.find_all("td")
-            name = cells[0].find(text=True)
+            name = row.find("th").find(text=True).strip()
             if name == "FCF margin":
                 name = "FCF Margin"
-            elif name not in ("EBITDA", "EPS", "FCF Conversion"):
+            elif name not in ("EBITDA", "EBIT", "EPS", "FCF Conversion"):
                 name = name.title()
 
             if "(" in name:
                 name = name[:name.index(" (")]
 
-            for index, cell in enumerate(cells[1:]):
-                year = years[index+1]
+            for index, cell in enumerate(cells):
+                year = years[index]
 
                 if cell.text == "-":
                     value = None
@@ -172,19 +177,23 @@ class MarketscreenerReader:
         
         # if annual data is parsed, parse also Balance Sheet and Cashflow Items
         if not quarterly:
-            rows = self._financial_soup.find("b", string="Balance Sheet Analysis").find_next("tr").find("td", recursive=False).find("table").find_all("tr")
+            header = self._financial_soup.find("h3", string="Balance Sheet Analysis")
+            rows = header.find_next("tbody").find_all("tr")
+            years = header.find_next("thead").find("tr").find_all("th")[1:]
             years = {
-                index+1: int(tag.find("b").text)
-                for index, tag in enumerate(rows[0].find_all("td")[1:])
+                index: int(tag.find("span").text.strip())
+                for index, tag in enumerate(years)
             }
+
             for year in sorted(years.values(), reverse=True):
                 if year not in data:
                     data[year] = {}
             
-            for row in rows[1:-3]:
+            for row in rows[:-1]:
                 cells = row.find_all("td")
-                name = cells[0].find(text=True).title()
+                name = row.find("th").find(text=True).strip().title()
                 if name not in (
+                    "Net Cash Position"
                     "Free Cash Flow",
                     "Shareholders' Equity",
                     "Assets",
@@ -193,8 +202,8 @@ class MarketscreenerReader:
                     "Capex"
                 ):
                     continue
-                for index, cell in enumerate(cells[1:]):
-                    year = years[index+1]
+                for index, cell in enumerate(cells):
+                    year = years[index]
                     if cell.text == "-":
                         value = None
                     else:
@@ -209,29 +218,31 @@ class MarketscreenerReader:
                     if analysts is not None:
                         analysts = int(re.findall("Number of financial analysts who provided an estimate : ([0-9]+)", analysts)[0])
                     data[year][f"{name} Analysts"] = analysts
-            
-            header = self._financial_soup.find("b", string="Valuation")
+
+            header = self._financial_soup.find("h3", string="Valuation")
             if header is None:
                 for year in data:
                     data[year]["Shares Outstanding"] = None
             else:
-                rows = header.find_next("tr").find("td", recursive=False).find("table").find_all("tr")
+                rows = header.find_next("tbody").find_all("tr")
+                years = header.find_next("thead").find("tr").find_all("th")[1:]
                 years = {
-                    index+1: int(tag.find("b").text)
-                    for index, tag in enumerate(rows[0].find_all("td")[1:])
+                    index: int(tag.find("span").text)
+                    for index, tag in enumerate(years)
                 }
+
                 for year in sorted(years.values(), reverse=True):
                     if year not in data:
                         data[year] = {}
 
-                for row in rows[1:-3]:
+                for row in rows[:-1]:
                     cells = row.find_all("td")
-                    name = cells[0].find(text=True)
+                    name = row.find("th").find(text=True).strip()
                     if name != "Nbr of stocks (in thousands)":
                         continue
                     name = "Shares Outstanding"
-                    for index, cell in enumerate(cells[1:]):
-                        year = years[index+1]
+                    for index, cell in enumerate(cells):
+                        year = years[index]
                         if cell.text == "-":
                             value = None
                         else:
@@ -457,4 +468,4 @@ class MarketscreenerReader:
         return self._ticker
 
 if __name__ == "__main__":
-    print(MarketscreenerReader("AAPL").shareholders())
+    print(MarketscreenerReader("AAPL").financial_statement(quarterly=False))
