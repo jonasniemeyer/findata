@@ -106,13 +106,23 @@ class TestMarketscreenerReader:
             assert isinstance(manager["joined"], (int, NoneType))
 
     def test_news(self):
-        news = self.reader.news()
-        for article in news:
-            assert isinstance(article["title"], str)
-            assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", article["date"])) == 1
-            assert isinstance(article["source"]["name"], str)
-            assert isinstance(article["source"]["abbreviation"], str)
-            assert isinstance(article["url"], str)
+        for news_type in (
+            "all",
+            "analysts",
+            "highlights",
+            "insiders",
+            "transcripts",
+            "press_releases",
+            "official_publications",
+            "other_languages"
+        ):
+            news = self.reader.news(news_type=news_type)
+            for article in news:
+                assert isinstance(article["title"], str)
+                assert len(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", article["date"])) == 1
+                assert isinstance(article["source"]["name"], str)
+                assert isinstance(article["source"]["abbreviation"], (str, NoneType))
+                assert isinstance(article["url"], str)
 
     def test_segment_information(self):
         info = self.reader.segment_information()
