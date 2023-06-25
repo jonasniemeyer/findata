@@ -283,13 +283,13 @@ class OnvistaBondReader(_OnvistaAbstractReader):
     def issuer(self) -> dict:
         data = self._data["bondsIssuer"]
         return {
-            "issuer_name": data["name"],
+            "name": data["name"],
             "country": {
                 "name": data["nameCountry"],
                 "abbr": data["isoCountry"]
             },
-            "issuer_type": data["nameTypeIssuer"],
-            "issuer_sub_type": data["nameSubTypeIssuer"]
+            "type": data["nameTypeIssuer"],
+            "sub_type": data["nameSubTypeIssuer"]
         }
 
     def profile(self) -> dict:
