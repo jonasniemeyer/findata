@@ -1,14 +1,11 @@
 import time
 import pandas as pd
 from .utils import CHROMEDRIVER_PATH
-from bs4 import BeautifulSoup
 from selenium import webdriver, common
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
 
 class CMEReader:
     commodities = {
@@ -53,16 +50,16 @@ class CMEReader:
     }
 
     def __init__(self, commodity, timestamps=False):
-        self.commodity = commodity
-        self.sector = self.commodities[commodity]["sector"]
-        self.group = self.commodities[commodity]["group"]
-        self.name = self.commodities[commodity]["name"]
-        self.url = "https://www.cmegroup.com/markets/{}/{}/{}.settlements.html".format(
+        self._commodity = commodity
+        self._sector = self.commodities[commodity]["sector"]
+        self._group = self.commodities[commodity]["group"]
+        self._name = self.commodities[commodity]["name"]
+        self._url = "https://www.cmegroup.com/markets/{}/{}/{}.settlements.html".format(
             self.sector,
             self.group,
             self.name
         )
-        self.timestamps = timestamps
+        self._timestamps = timestamps
     
     def _open_website(self, browser="chrome", url=None):
         if not hasattr(self, "driver"):
@@ -96,9 +93,6 @@ class CMEReader:
 
     def _parse(self) -> dict:
         data = {}
-
-        html = self.driver.page_source
-        soup = BeautifulSoup(html, "lxml")
 
         time.sleep(1)
         try:
@@ -162,6 +156,30 @@ class CMEReader:
             df[col] = pd.to_numeric(df[col])
         df = df.rename(columns = {"Est. Volume": "Volume", "Prior day OI": "Open Interest"})
         return df
+
+    @property
+    def commodity(self) -> str:
+        return self._commodity
+
+    @property
+    def group(self) -> str:
+        return self._group
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def sector(self) -> str:
+        return self._sector
+
+    @property
+    def timestamps(self) -> bool:
+        return self._timestamps
+
+    @property
+    def url(self) -> str:
+        return self._url
 
     def read(self) -> dict:
         self._open_website()
