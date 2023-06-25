@@ -5,6 +5,7 @@ from findata import (
 )
 import numpy as np
 import pandas as pd
+from pytest import mark
 
 class TestOnvistaBondReader:
     @classmethod
@@ -168,3 +169,68 @@ class TestOnvistaFundReader:
         for item in holdings:
             assert isinstance(item["name"], str)
             assert round(item["percentage"], 4) == item["percentage"]
+
+
+class TestOnvistaStockReader:
+    @classmethod
+    def setup_class(cls):
+        cls.reader = OnvistaStockReader("DE0005190003")
+
+    def test_attributes(self):
+        self.reader.country == {"name": "Deutschland", "abbr": "DE"}
+        assert self.reader.isin == "DE0005190003"
+        assert self.reader.long_name == "Bayerische Motoren Werke AG Stammaktien EO 1"
+        market_cap = self.reader.market_cap
+        assert isinstance(market_cap["market_cap"], float)
+        assert market_cap["currency"] == "EUR"
+        assert self.reader.name == "BMW"
+        sector = self.reader.sector
+        assert sector["sector"] == "Automobilproduktion"
+        assert sector["description"] == "Kraftfahrzeugindustrie"
+        assert isinstance(self.reader.shares_outstanding, int)
+    
+    @mark.skip(reason="test not implemented")
+    def test_accounting_data(self):
+        data = self.reader.accounting_data()
+
+    def test_exchanges(self):
+        exchanges = self.reader.exchanges()
+        for item in exchanges:
+            assert isinstance(item["name"], str)
+            assert isinstance(item["abbr"], str)
+            assert isinstance(item["code"], str)
+            assert isinstance(item["dataset_id"], int)
+            assert isinstance(item["country"], str)
+            assert isinstance(item["currency"], str)
+            assert isinstance(item["volume"], int)
+            assert isinstance(item["4_week_volume"], int)
+            assert isinstance(item["unit"], str)
+    
+    @mark.skip(reason="test not implemented")
+    def test_financial_ratios(self):
+        ratios = self.reader.financial_ratios()
+
+    def test_historical_data(self):
+        data = self.reader.historical_data()
+        info = data["information"]
+        assert info["instrument_id"] == 81490
+        assert info["dataset_id"] == 143094
+        assert info["start"] == "1991-07-01"
+        assert isinstance(info["end"], str) and pd.to_datetime(info["end"])
+        assert info["exchange"]["name"] == "Xetra"
+        assert info["exchange"]["code"] == "_GER"
+        assert info["exchange"]["country"] == "DE"
+        assert info["currency"] == "EUR"
+
+        df = data["data"]
+        assert all(isinstance(date, pd.Timestamp) for date in df.index)
+        assert df.index.is_unique is True
+        for col in df.columns:
+            assert isinstance(df[col].dtype, (type(np.dtype("float64")), type(np.dtype("int64"))))
+    
+    @mark.skip(reason="test not implemented")
+    def test_price_ratios(self):
+        ratios = self.reader.price_ratios()
+
+    def test_splits(self):
+        assert self.reader.splits() == {"1999-08-23": 26, "1991-06-05": 1.125}
