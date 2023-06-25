@@ -2,7 +2,7 @@
 
 ## Description
 **findata** is a Python library that allows to retrieve finance-related datasets from the web including
-historical stock prices, fundamental data, condensed sec filing data and more.
+historical security prices, fundamental stock data, macroeconomic data, condensed SEC filing data and more.
 <br>
 Since findata scrapes data from websites, the package is just for educational purposes.
 If you use it, you should refer to the respective terms of service of each website first.
