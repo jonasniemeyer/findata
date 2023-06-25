@@ -131,6 +131,7 @@ class _OnvistaAbstractReader:
             df["log_returns"] = np.log(df["close"]/df["close"].shift(1))
             subsamples.append(df)
         data = pd.concat(subsamples)
+        data = data[~data.index.duplicated(keep="first")]
 
         return {
             "information": information,

@@ -426,41 +426,41 @@ class YahooReader:
         parameters = {
             "modules": ",".join(
                 (
-                    'assetProfile',
-                    'balanceSheetHistory',
-                    'balanceSheetHistoryQuarterly',
-                    'calendarEvents',
-                    'cashflowStatementHistory',
-                    'cashflowStatementHistoryQuarterly',
-                    'defaultKeyStatistics',
-                    'earnings',
-                    'earningsHistory',
-                    'earningsTrend',
+                    "assetProfile",
+                    "balanceSheetHistory",
+                    "balanceSheetHistoryQuarterly",
+                    "calendarEvents",
+                    "cashflowStatementHistory",
+                    "cashflowStatementHistoryQuarterly",
+                    "defaultKeyStatistics",
+                    "earnings",
+                    "earningsHistory",
+                    "earningsTrend",
                     "esgScores",
-                    'financialData',
-                    'fundOwnership',
-                    'incomeStatementHistory',
-                    'incomeStatementHistoryQuarterly',
-                    'indexTrend',
-                    'industryTrend',
-                    'insiderHolders',
-                    'insiderTransactions',
-                    'institutionOwnership',
-                    'majorDirectHolders',
-                    'majorHoldersBreakdown',
-                    'netSharePurchaseActivity',
-                    'price',
-                    'quoteType',
-                    'recommendationTrend',
-                    'secFilings',
-                    'sectorTrend',
-                    'summaryDetail',
-                    'summaryProfile', 
-                    'symbol',
-                    'upgradeDowngradeHistory',
-                    'fundProfile',
-                    'topHoldings',
-                    'fundPerformance'
+                    "financialData",
+                    "fundOwnership",
+                    "incomeStatementHistory",
+                    "incomeStatementHistoryQuarterly",
+                    "indexTrend",
+                    "industryTrend",
+                    "insiderHolders",
+                    "insiderTransactions",
+                    "institutionOwnership",
+                    "majorDirectHolders",
+                    "majorHoldersBreakdown",
+                    "netSharePurchaseActivity",
+                    "price",
+                    "quoteType",
+                    "recommendationTrend",
+                    "secFilings",
+                    "sectorTrend",
+                    "summaryDetail",
+                    "summaryProfile",
+                    "symbol",
+                    "upgradeDowngradeHistory",
+                    "fundProfile",
+                    "topHoldings",
+                    "fundPerformance"
                 )
             ),
             "formatted": False
@@ -939,8 +939,8 @@ class YahooReader:
         df["adj_close"] = df["adj_close"].round(6)
 
         if returns:
-            df['simple_returns'] = (df['close'] + df['dividends'].fillna(0)) / df['close'].shift(1) - 1
-            df['log_returns'] = np.log((df['close'] + df['dividends'].fillna(0)) / df['close'].shift(1))
+            df["simple_returns"] = (df["close"] + df["dividends"].fillna(0)) / df["close"].shift(1) - 1
+            df["log_returns"] = np.log((df["close"] + df["dividends"].fillna(0)) / df["close"].shift(1))
 
         if timestamps:
             df.index.name = "timestamps"
@@ -949,7 +949,7 @@ class YahooReader:
         else:
             df.index.name = "datetime"
         
-        df = df[:-1]
+        df = df[~df.index.duplicated(keep="first")]
        
         return {
             "data": df,
