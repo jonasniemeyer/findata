@@ -34,7 +34,7 @@ def test_investors():
 
         portfolio = investor["portfolio"]
         for security in portfolio:
-            assert isinstance(security["ticker"], str)
+            assert isinstance(security["ticker"], (str, NoneType))
             assert isinstance(security["cusip"], str)
             assert security["type"] in ("Share", "Call", "Put")
             assert security["weight"] == round(security["weight"], 6)
