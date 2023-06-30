@@ -146,7 +146,7 @@ class MarketscreenerReader:
             data[year] = {}
         for row in rows[:-1]:
             cells = row.find_all("td")
-            name = row.find("th").find(string=True).strip()
+            name = cells[0].find(string=True).strip()
             if name == "FCF margin":
                 name = "FCF Margin"
             elif name not in ("EBITDA", "EBIT", "EPS", "FCF Conversion"):
@@ -155,10 +155,10 @@ class MarketscreenerReader:
             if "(" in name:
                 name = name[:name.index(" (")]
 
-            for index, cell in enumerate(cells):
+            for index, cell in enumerate(cells[1:]):
                 year = years[index]
 
-                if cell.text == "-":
+                if cell.text.strip() == "-":
                     value = None
                 else:
                     value = cell.text.replace(" ", "").replace(",", ".")
@@ -191,7 +191,7 @@ class MarketscreenerReader:
             
             for row in rows[:-1]:
                 cells = row.find_all("td")
-                name = row.find("th").find(string=True).strip().title()
+                name = cells[0].find(string=True).strip().title()
                 if name not in (
                     "Net Cash Position"
                     "Free Cash Flow",
@@ -202,9 +202,9 @@ class MarketscreenerReader:
                     "Capex"
                 ):
                     continue
-                for index, cell in enumerate(cells):
+                for index, cell in enumerate(cells[1:]):
                     year = years[index]
-                    if cell.text == "-":
+                    if cell.text.strip() == "-":
                         value = None
                     else:
                         value = cell.text.replace(" ", "").replace(",", ".")
@@ -237,13 +237,13 @@ class MarketscreenerReader:
 
                 for row in rows[:-1]:
                     cells = row.find_all("td")
-                    name = row.find("th").find(string=True).strip()
+                    name = cells[0].find(string=True).strip()
                     if name != "Nbr of stocks (in thousands)":
                         continue
                     name = "Shares Outstanding"
-                    for index, cell in enumerate(cells):
+                    for index, cell in enumerate(cells[1:]):
                         year = years[index]
-                        if cell.text == "-":
+                        if cell.text.strip() == "-":
                             value = None
                         else:
                             value = int(float(cell.text.replace(" ", "").replace(",", ".")) * 1e3)
