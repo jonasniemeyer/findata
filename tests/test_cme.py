@@ -2,6 +2,7 @@ from findata import CMEReader
 import numpy as np
 import pandas as pd
 
+
 class TestCMEReader:
     @classmethod
     def setup_class(cls):

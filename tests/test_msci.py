@@ -2,6 +2,7 @@ from findata import MSCIReader
 import pandas as pd
 from pandas.tseries.offsets import BDay
 
+
 def test_indices_list():
     data = MSCIReader.indices()
     assert all(
@@ -18,6 +19,7 @@ def test_indices_list():
     )
     assert data["code"].dtype == "int64"
 
+
 def test_historical_data_default():
     end_date = (pd.to_datetime("today")-BDay(1)).date().isoformat().replace("-", "")
     data = MSCIReader(139245).historical_data()
@@ -30,25 +32,30 @@ def test_historical_data_default():
     assert all(isinstance(date, pd.Timestamp) for date in df.index)
     assert all(df[col].dtype == "float64" for col in df.columns)
 
+
 def test_historical_data_monthly():
     data = MSCIReader(139245, frequency="monthly").historical_data()["data"]
     assert all(isinstance(date, pd.Timestamp) for date in data.index)
     assert all(data[col].dtype == "float64" for col in data.columns)
+
 
 def test_historical_data_netr():
     data = MSCIReader(139245, index_variant="NETR").historical_data()["data"]
     assert all(isinstance(date, pd.Timestamp) for date in data.index)
     assert all(data[col].dtype == "float64" for col in data.columns)
 
+
 def test_historical_data_strd():
     data = MSCIReader(139245, index_variant="STRD").historical_data()["data"]
     assert all(isinstance(date, pd.Timestamp) for date in data.index)
     assert all(data[col].dtype == "float64" for col in data.columns)
 
+
 def test_currency_eur():
     data = MSCIReader(139245, index_currency="EUR").historical_data()["data"]
     assert all(isinstance(date, pd.Timestamp) for date in data.index)
     assert all(data[col].dtype == "float64" for col in data.columns)
+
 
 def test_returns_off():
     data = MSCIReader(139245, returns=False).historical_data()["data"]
@@ -56,11 +63,13 @@ def test_returns_off():
     assert all(data[col].dtype == "float64" for col in data.columns)
     assert ("simple_returns" not in data.columns) and ("log_returns" not in data.columns)
 
+
 def test_normalize():
     data = MSCIReader(139245, normalize=True).historical_data()["data"]
     assert all(isinstance(date, pd.Timestamp) for date in data.index)
     assert all(data[col].dtype == "float64" for col in data.columns)
     assert data.loc[data.index[0], "prices"] == 100
+
 
 def test_timestamps():
     data = MSCIReader(139245, timestamps=True).historical_data()["data"]

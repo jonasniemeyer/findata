@@ -5,6 +5,7 @@ import numpy as np
 from typing import Union, Optional
 from .utils import HEADERS, DatasetError
 
+
 class _OnvistaAbstractReader:
     """
     _OnvistaAbstractReader is the base class for OnvistaStockReader and OnvistaBondReader.

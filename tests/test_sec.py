@@ -17,6 +17,7 @@ from findata import (
 
 NoneType = type(None)
 
+
 def test_sec_companies():
     companies = sec_companies()
     for item in companies:
@@ -25,6 +26,7 @@ def test_sec_companies():
         assert isinstance(item["cik"], int)
         assert isinstance(item["name"], str)
         assert isinstance(item["ticker"], str)
+
 
 def test_sec_mutualfunds():
     funds = sec_mutualfunds()
@@ -35,6 +37,7 @@ def test_sec_mutualfunds():
         assert isinstance(item["class_cik"], str)
         assert isinstance(item["series_cik"], str)
         assert isinstance(item["entity_cik"], int)
+
 
 def test_latest_sec_filings():
     filings = latest_sec_filings(start="2022-12-22")

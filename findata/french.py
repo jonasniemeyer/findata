@@ -8,6 +8,7 @@ import numpy as np
 import re
 from .utils import HEADERS, DatasetError
 
+
 class FrenchReader:
     _base_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
     _dataset_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/{}_CSV.zip"

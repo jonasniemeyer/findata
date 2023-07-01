@@ -3,6 +3,7 @@ from findata import MarketscreenerReader
 
 NoneType = type(None)
 
+
 class TestMarketscreenerReader:
     def setup_class(cls):
         cls.reader = MarketscreenerReader("AAPL")

@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from io import StringIO
 from .utils import HEADERS
 
+
 class NasdaqReader:
     _base_url = "https://www.nasdaq.com/market-activity/stocks/{}/{}"
     def __init__(self, ticker) -> None:
@@ -32,5 +33,3 @@ class NasdaqReader:
     @property
     def ticker(self):
         return self._ticker
-
-NasdaqReader("IBM")._get_earnings_data()

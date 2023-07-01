@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from pytest import mark
 
+
 class TestOnvistaBondReader:
     @classmethod
     def setup_class(cls):

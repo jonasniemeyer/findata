@@ -2,6 +2,7 @@ from findata import FinvizReader
 
 NoneType = type(None)
 
+
 class TestMethods:
     @classmethod
     def setup_class(cls):

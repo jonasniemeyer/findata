@@ -3,6 +3,7 @@ import datetime as dt
 
 NoneType = type(None)
 
+
 def test_trending_stocks():
     data = TipranksStockReader.trending_stocks()
     assert isinstance(data, list)
@@ -23,6 +24,7 @@ def test_trending_stocks():
     data = TipranksStockReader.trending_stocks(timestamps=True)
     for item in data:
         assert isinstance(item["latest_rating"], int)
+
 
 def test_news_sentiment():
     data = TipranksStockReader("AAPL").news_sentiment()
@@ -51,6 +53,7 @@ def test_news_sentiment():
     data = TipranksStockReader("AAPL").news_sentiment(timestamps=True)
     for item in data["articles"]:
         assert isinstance(item["week"], int)
+
 
 class TestRatingData:
     @classmethod

@@ -8,6 +8,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from .utils import TickerError
 
+
 class MacrotrendsReader:
     _base_url = "https://www.macrotrends.net/stocks/charts/{}/{}/{}?freq={}"
 

@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup
 
 NoneType = type(None)
 
+
 def sec_companies() -> list:
     """
     sec_companies returns a list of US-listed companies that file 10-K filings to the SEC.
@@ -41,6 +42,7 @@ def sec_companies() -> list:
         for _, item in items.items()
     ]
     return items
+
 
 def sec_mutualfunds() -> list:
     """
@@ -73,6 +75,7 @@ def sec_mutualfunds() -> list:
         for item in items
     ]
     return items
+
 
 def latest_sec_filings(start=pd.to_datetime("today").isoformat(), timestamps=False) -> list:
     """
@@ -172,6 +175,7 @@ def latest_sec_filings(start=pd.to_datetime("today").isoformat(), timestamps=Fal
             )
         page_counter += 100
     return filings
+
 
 def sec_filings(
     cik=None,

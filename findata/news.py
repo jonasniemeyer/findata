@@ -4,6 +4,7 @@ import re
 from bs4 import BeautifulSoup
 from .utils import HEADERS, DatasetError
 
+
 class EconomistNews:
     _base_url = "https://www.economist.com"
     

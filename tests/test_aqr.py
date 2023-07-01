@@ -1,6 +1,7 @@
 from findata import AQRReader
 import pandas as pd
 
+
 def test_esg_efficient_frontier_portfolios():
     data = AQRReader.esg_efficient_frontier_portfolios()
     assert len(data) == 2
@@ -24,6 +25,7 @@ def test_esg_efficient_frontier_portfolios():
     for key in ("Value-weighted excess returns", "Equal-weighted excess returns"):
         df = data[key]
         assert all(isinstance(ts, int) for ts in df.index)
+
 
 def test_bab_factors_daily():
     data = AQRReader.bab_factors(frequency="daily")
@@ -50,6 +52,7 @@ def test_bab_factors_daily():
         df = data[key]
         assert all(isinstance(ts, int) for ts in df.index)
 
+
 def test_bab_factors_monthly():
     data = AQRReader.bab_factors(frequency="monthly")
     assert len(data) == 7
@@ -74,6 +77,7 @@ def test_bab_factors_monthly():
     for key in ("BAB Factors", "MKT", "SMB", "HML FF", "HML Devil", "UMD", "RF"):
         df = data[key]
         assert all(isinstance(ts, int) for ts in df.index)
+
 
 def test_factor_premia_century():
     df = AQRReader.factor_premia_century()
@@ -108,6 +112,7 @@ def test_factor_premia_century():
     df = AQRReader.factor_premia_century(timestamps=True)
     assert all(isinstance(ts, int) for ts in df.index)
 
+
 def test_commodities_long_run():
     df = AQRReader.commodities_long_run()
     assert all(isinstance(date, pd.Timestamp) for date in df.index)
@@ -132,6 +137,7 @@ def test_commodities_long_run():
     df = AQRReader.commodities_long_run(timestamps=True)
     assert all(isinstance(ts, int) for ts in df.index)
 
+
 def test_momentum_indices():
     data = AQRReader.momentum_indices()
     assert len(data) == 2
@@ -152,6 +158,7 @@ def test_momentum_indices():
     df = data["Yearly"]
     assert all(isinstance(ts, int) for ts in df.index)
 
+
 def test_quality_sorted_portfolios():
     data = AQRReader.quality_sorted_portfolios()
     assert len(data) == 2
@@ -166,6 +173,7 @@ def test_quality_sorted_portfolios():
     for key in ("US", "Global"):
         df = data[key]
         assert all(isinstance(ts, int) for ts in df.index)
+
 
 def test_qmj_factors_daily():
     data = AQRReader.qmj_factors(frequency="daily")
@@ -192,6 +200,7 @@ def test_qmj_factors_daily():
         df = data[key]
         assert all(isinstance(ts, int) for ts in df.index)
 
+
 def test_qmj_factors_monthly():
     data = AQRReader.qmj_factors(frequency="daily")
     assert len(data) == 7
@@ -217,6 +226,7 @@ def test_qmj_factors_monthly():
         df = data[key]
         assert all(isinstance(ts, int) for ts in df.index)
 
+
 def test_quality_size_sorted_portfolios():
     data = AQRReader.quality_size_sorted_portfolios()
     assert len(data) == 2
@@ -231,6 +241,7 @@ def test_quality_size_sorted_portfolios():
     for key in ("US", "Global"):
         df = data[key]
         assert all(isinstance(ts, int) for ts in df.index)
+
 
 def test_hml_devil_factors_daily():
     data = AQRReader.hml_devil_factors(frequency="daily")
@@ -257,6 +268,7 @@ def test_hml_devil_factors_daily():
         df = data[key]
         assert all(isinstance(ts, int) for ts in df.index)
 
+
 def test_hml_devil_factors_monthly():
     data = AQRReader.hml_devil_factors(frequency="daily")
     assert len(data) == 6
@@ -282,6 +294,7 @@ def test_hml_devil_factors_monthly():
         df = data[key]
         assert all(isinstance(ts, int) for ts in df.index)
 
+
 def test_time_series_momentum():
     df = AQRReader.time_series_momentum()
     assert all(isinstance(date, pd.Timestamp) for date in df.index)
@@ -291,6 +304,7 @@ def test_time_series_momentum():
 
     df = AQRReader.time_series_momentum(timestamps=True)
     assert all(isinstance(ts, int) for ts in df.index)
+
 
 def test_value_momentum_everywhere_factors():
     df = AQRReader.value_momentum_everywhere_factors()
@@ -310,6 +324,7 @@ def test_value_momentum_everywhere_factors():
 
     df = AQRReader.value_momentum_everywhere_factors(timestamps=True)
     assert all(isinstance(ts, int) for ts in df.index)
+
 
 def test_value_momentum_everywhere_portfolios():
     df = AQRReader.value_momentum_everywhere_portfolios()

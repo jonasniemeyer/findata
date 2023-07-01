@@ -4,6 +4,7 @@ import re
 from bs4 import BeautifulSoup
 from .utils import HEADERS
 
+
 class FinvizReader:
     _base_url = "https://finviz.com/quote.ashx?t={}"
     

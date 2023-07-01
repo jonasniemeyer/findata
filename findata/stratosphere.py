@@ -7,6 +7,7 @@ from typing import Optional
 
 NoneType = type(None)
 
+
 class StratosphereReader:
     _base_url = "https://www.stratosphere.io/company/{}/{}"
     

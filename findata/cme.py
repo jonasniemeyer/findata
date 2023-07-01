@@ -7,6 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+
 class CMEReader:
     commodities = {
         "Crude Oil": {"sector": "energy", "group": "crude-oil", "name": "light-sweet-crude", "sector_name": "Energy"},

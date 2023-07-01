@@ -8,6 +8,7 @@ from .utils import (
     TIPRANKS_HEADERS
 )
 
+
 class TipranksAnalystReader:
     _base_url = "https://www.tipranks.com/experts/analysts/"
     

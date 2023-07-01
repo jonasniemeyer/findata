@@ -2,10 +2,12 @@ from findata import FrenchReader
 import pandas as pd
 import numpy as np
 
+
 def test_datasets():
     datasets = FrenchReader.datasets()
     assert isinstance(datasets, list)
     assert len(datasets) == 297
+
 
 def test_retrieval():
     data = FrenchReader("F-F_Research_Data_Factors").read()
@@ -15,6 +17,7 @@ def test_retrieval():
     assert all(isinstance(date, pd.Timestamp) for date in data["Annual Factors"].index)
     for col in ("Mkt-RF", "SMB", "HML", "RF"):
         assert data["Main"][col].dtype == np.float64
+
 
 def test_retrieval_sorted_portfolios():
     data = FrenchReader("Portfolios_Formed_on_BE-ME").read()
@@ -36,6 +39,7 @@ def test_retrieval_sorted_portfolios():
         assert all(isinstance(date, pd.Timestamp) for date in data[key].index)
         for col in data[key]:
             assert data[key][col].dtype in (np.int64, np.float64)
+
 
 def test_timestamps():
     data = FrenchReader("Portfolios_Formed_on_BE-ME", timestamps=True).read()

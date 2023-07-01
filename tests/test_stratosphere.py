@@ -3,6 +3,7 @@ from findata import StratosphereReader
 
 NoneType = type(None)
 
+
 def test_fund_letters():
     letters = StratosphereReader.fund_letters()
     for letter in letters:
@@ -15,6 +16,7 @@ def test_fund_letters():
     letters = StratosphereReader.fund_letters(timestamps=True)
     for letter in letters:
         assert isinstance(letter["date"], int)
+
 
 def test_investors():
     investors = StratosphereReader.investors()
@@ -368,6 +370,7 @@ class TestNonUSEquity:
     def test_price_target_consensus(self):
         consensus = self.reader.price_target_consensus()
         assert consensus is None
+
 
 def test_nonexistent_ticker():
     reader = StratosphereReader("Thisisnotaticker")

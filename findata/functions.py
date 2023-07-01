@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import pandas as pd
 from .utils import HEADERS
 
+
 def finra_margin_debt(timestamps=False) -> dict:
     dataset_url = "https://www.finra.org/investors/learn-to-invest/advanced-investing/margin-statistics"
     data = {
@@ -71,6 +72,7 @@ def finra_margin_debt(timestamps=False) -> dict:
 
     return data
 
+
 def shiller_data(timestamps=False) -> pd.DataFrame:
     df = pd.read_excel(
         io="http://www.econ.yale.edu/~shiller/data/ie_data.xls",
@@ -110,6 +112,7 @@ def shiller_data(timestamps=False) -> pd.DataFrame:
     if timestamps:
         df.index = [int(date.timestamp()) for date in df.index]
     return df
+
 
 def sp_index_data(timestamps=False) -> dict:
     response = requests.get(

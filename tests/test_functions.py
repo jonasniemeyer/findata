@@ -6,6 +6,7 @@ from findata import (
 import pandas as pd
 import numpy as np
 
+
 def test_finra_margin_debt():
     data = finra_margin_debt()
     assert all(key in ("combined full", "combined new", "combined old", "finra old", "nyse old") for key in data)
@@ -24,6 +25,7 @@ def test_finra_margin_debt():
     data = finra_margin_debt(timestamps=True)
     for key in data:
         assert all(isinstance(item, int) for item in data[key].index)
+
 
 def test_shiller_data():
     df = shiller_data()
@@ -54,6 +56,7 @@ def test_shiller_data():
 
     df = shiller_data(timestamps=True)
     assert all(isinstance(date, int) for date in df.index)
+
 
 def test_sp_index_data():
     data = sp_index_data()

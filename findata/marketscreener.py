@@ -4,6 +4,7 @@ import re
 from bs4 import BeautifulSoup
 from findata.utils import HEADERS, DatasetError
 
+
 class MarketscreenerReader:
     _base_url = "https://www.marketscreener.com"
     

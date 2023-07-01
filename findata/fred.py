@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from io import StringIO
 from .utils import HEADERS, FRED_API_KEY
 
+
 class FREDReader:
     _description_url = "https://fred.stlouisfed.org/series/{}"
     _dataset_url = "https://fred.stlouisfed.org/graph/fredgraph.csv"

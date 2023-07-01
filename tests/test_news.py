@@ -12,6 +12,7 @@ import re
 NoneType = type(None)
 last_month = (pd.to_datetime("today") - DateOffset(months=1)).date()
 
+
 def test_economist_news():
     for section in EconomistNews.sections:
         start = last_month
@@ -32,6 +33,7 @@ def test_economist_news():
     assert len(articles) != 0
     for article in articles:
         assert isinstance(article["date"], (int, NoneType))
+
 
 def test_ft_news():
     for sections in (
@@ -64,6 +66,7 @@ def test_ft_news():
     for article in articles:
         assert isinstance(article["datetime"], int)
 
+
 def test_nasdaq_news():
     articles = NasdaqNews.rss_feed("AAPL")
     assert isinstance(articles, list)
@@ -86,6 +89,7 @@ def test_nasdaq_news():
     for article in articles:
         assert isinstance(article["datetime"], int)
 
+
 def test_sa_news():
     articles = SANews.rss_feed("AAPL")
     assert isinstance(articles, list)
@@ -102,6 +106,7 @@ def test_sa_news():
     assert len(articles) != 0
     for article in articles:
         assert isinstance(article["datetime"], int)
+
 
 def test_wsj_news():
     for sections in (
@@ -140,6 +145,7 @@ def test_wsj_news():
     assert len(articles) != 0
     for article in articles:
         assert isinstance(article["date"], int)
+
 
 def test_wsj_rss():
     for section in WSJNews.rss_sections:

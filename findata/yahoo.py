@@ -15,6 +15,7 @@ from .utils import (
 )
 from typing import Optional
 
+
 class YahooReader:
     _main_url = "https://query1.finance.yahoo.com/v10/finance/quoteSummary/{}"
     _price_url = "https://query1.finance.yahoo.com/v8/finance/chart/{}"
