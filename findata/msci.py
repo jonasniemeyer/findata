@@ -1,10 +1,10 @@
-import requests
+from bs4 import BeautifulSoup
 import datetime as dt
 import numpy as np
 import pandas as pd
 from pandas.tseries.offsets import BDay
-from bs4 import BeautifulSoup
-from .utils import HEADERS
+import requests
+import utils
 
 
 class MSCIReader:
@@ -122,7 +122,7 @@ class MSCIReader:
         response = requests.get(
             url=self._base_url,
             params=parameters,
-            headers=HEADERS
+            headers=utils.HEADERS
         )
 
         url = response.url
@@ -160,7 +160,7 @@ class MSCIReader:
     def indices(cls) -> pd.DataFrame:
         html = requests.get(
             url="https://www.msci.com/ticker-codes",
-            headers=HEADERS
+            headers=utils.HEADERS
         ).content
 
         soup = BeautifulSoup(html, "lxml")

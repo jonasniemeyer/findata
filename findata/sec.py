@@ -1,14 +1,10 @@
-import requests
-import re
+from bs4 import BeautifulSoup
 import datetime as dt
 import pandas as pd
-from .utils import (
-    DatasetError,
-    HEADERS,
-    HEADERS_FAKE
-)
+import requests
+import re
 from typing import Union
-from bs4 import BeautifulSoup
+import utils
 
 NoneType = type(None)
 
@@ -32,7 +28,7 @@ def sec_companies() -> list:
         name : str
             The name of the entity
     """
-    items = requests.get("https://www.sec.gov/files/company_tickers.json", headers=HEADERS).json()
+    items = requests.get("https://www.sec.gov/files/company_tickers.json", headers=utils.HEADERS).json()
     items = [
         {
             "cik": item["cik_str"],
@@ -64,7 +60,7 @@ def sec_mutualfunds() -> list:
         entity_cik : int
             The CIK of the issuing entity
     """
-    items = requests.get("https://www.sec.gov/files/company_tickers_mf.json", headers=HEADERS).json()["data"]
+    items = requests.get("https://www.sec.gov/files/company_tickers_mf.json", headers=utils.HEADERS).json()["data"]
     items = [
         {
             "ticker": item[3].replace("(", "").replace(")", "").upper() if item[3] not in ("", "N/A") else None,
@@ -122,7 +118,7 @@ def latest_sec_filings(start=pd.to_datetime("today").isoformat(), timestamps=Fal
             "start": page_counter,
             "count": 100
         }
-        html = requests.get(url="https://www.sec.gov/cgi-bin/browse-edgar", params=params, headers=HEADERS).text
+        html = requests.get(url="https://www.sec.gov/cgi-bin/browse-edgar", params=params, headers=utils.HEADERS).text
         soup = BeautifulSoup(html, "lxml")
         tables = soup.find_all("table")
         if len(tables) != 8:
@@ -237,7 +233,7 @@ def sec_filings(
         else:
             params["entityName"] = cik
 
-    files = requests.post(base_url, json=params, headers=HEADERS_FAKE).json()["hits"]["hits"]
+    files = requests.post(base_url, json=params, headers=utils.HEADERS_FAKE).json()["hits"]["hits"]
     filings = []
     for file in files:
         info = file["_source"]
@@ -340,7 +336,7 @@ class _SECFiling:
         elif "<IMS-HEADER>" in self.file:
             header_open, header_close = "<IMS-HEADER>", "</IMS-HEADER>"
         else:
-            raise DatasetError(f"Could not find a header section")
+            raise utils.DatasetError(f"Could not find a header section")
         self._header = self._file[self.file.find(header_open):self.file.find(header_close)] + header_close
         self._document = self.file[self.file.find("<DOCUMENT>"):]
         
@@ -368,10 +364,10 @@ class _SECFiling:
         """
         file = requests.get(
             url=url,
-            headers=HEADERS
+            headers=utils.HEADERS
         ).text
         if "<Message>The specified key does not exist.</Message>" in file:
-            raise DatasetError(f'No filing exists for url "{url}"')
+            raise utils.DatasetError(f'No filing exists for url "{url}"')
         return file
 
     def _check_amendment(self) -> bool:
@@ -4204,7 +4200,7 @@ class SECFundamentals:
         self._var_keys = set()
 
         url = f"https://data.sec.gov/api/xbrl/companyfacts/CIK{self.cik:010}.json"
-        json = requests.get(url=url, headers=HEADERS).json()
+        json = requests.get(url=url, headers=utils.HEADERS).json()
 
         self._name = json["entityName"]
         facts = json["facts"]

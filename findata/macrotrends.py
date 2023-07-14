@@ -1,12 +1,12 @@
-import re
-import pandas as pd
 from bs4 import BeautifulSoup
+import pandas as pd
+import re
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from .utils import TickerError
+import utils
 
 
 class MacrotrendsReader:
@@ -131,7 +131,7 @@ class MacrotrendsReader:
             name = self.driver.current_url.split("/")[-2]
             if name == "":
                 self.driver.quit()
-                raise TickerError(f"cannot find data with ticker {self.ticker}")
+                raise utils.TickerError(f"cannot find data with ticker {self.ticker}")
             self.name = name
             self.url = self._base_url.format(
                 self.ticker,

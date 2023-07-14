@@ -1,11 +1,11 @@
-import time
 import pandas as pd
-from .utils import CHROMEDRIVER_PATH
 from selenium import webdriver, common
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import time
+import utils
 
 
 class CMEReader:
@@ -67,7 +67,7 @@ class CMEReader:
             if browser == "chrome":
                 options = webdriver.ChromeOptions()
                 options.add_experimental_option('excludeSwitches', ['enable-logging'])
-                self.driver = webdriver.Chrome(service=Service(CHROMEDRIVER_PATH), options=options)
+                self.driver = webdriver.Chrome(service=Service(utils.CHROMEDRIVER_PATH), options=options)
             else:
                 raise NotImplementedError("CMEReader is only implemented for the Google Chrome Browser")
         self.driver.get(self.url)

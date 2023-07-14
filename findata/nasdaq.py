@@ -1,11 +1,6 @@
-import requests
-import pandas as pd
-import numpy as np
-import datetime as dt
-import re
 from bs4 import BeautifulSoup
-from io import StringIO
-from .utils import HEADERS
+import requests
+import utils
 
 
 class NasdaqReader:
@@ -17,7 +12,7 @@ class NasdaqReader:
         
         data = requests.get(
             url=self._base_url.format(self.ticker, "earnings"),
-            headers=HEADERS
+            headers=utils.HEADERS
         ).content
         soup = BeautifulSoup(data, "lxml")
         earnings_estimates_tables = soup.find_all("tbody", {"class": "earnings-forecast__table-body"})

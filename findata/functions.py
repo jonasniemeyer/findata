@@ -1,7 +1,7 @@
-import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-from .utils import HEADERS
+import requests
+import utils
 
 
 def finra_margin_debt(timestamps=False) -> dict:
@@ -13,7 +13,7 @@ def finra_margin_debt(timestamps=False) -> dict:
         "combined old": []
     }
     
-    html = requests.get(url=dataset_url, headers=HEADERS).text
+    html = requests.get(url=dataset_url, headers=utils.HEADERS).text
     
     finra = html.index("FINRA Statistics (shown in $ millions)")
     nyse = html.index("NYSE Statistics (shown in $ millions)")
@@ -117,7 +117,7 @@ def shiller_data(timestamps=False) -> pd.DataFrame:
 def sp_index_data(timestamps=False) -> dict:
     response = requests.get(
         url="https://www.spglobal.com/spdji/en/documents/additional-material/sp-500-eps-est.xlsx",
-        headers=HEADERS
+        headers=utils.HEADERS
     ).content
 
     data = {}

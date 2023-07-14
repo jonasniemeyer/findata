@@ -1,10 +1,9 @@
-import requests
-import pandas as pd
-import numpy as np
-import datetime as dt
 from bs4 import BeautifulSoup
 from io import StringIO
-from .utils import HEADERS, FRED_API_KEY
+import numpy as np
+import pandas as pd
+import requests
+import utils
 
 
 class FREDReader:
@@ -20,7 +19,7 @@ class FREDReader:
     def _get_description_data(self) -> dict:        
         html = requests.get(
             url = self._description_url.format(self.dataset), 
-            headers=HEADERS
+            headers=utils.HEADERS
         ).text
 
         soup = BeautifulSoup(html, "lxml")
@@ -60,7 +59,7 @@ class FREDReader:
 
         response = requests.get(
             url=self._dataset_url,
-            headers=HEADERS,
+            headers=utils.HEADERS,
             params=parameters
         ).text
 

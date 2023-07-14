@@ -1,8 +1,8 @@
-import requests
+from bs4 import BeautifulSoup
 import pandas as pd
 import re
-from bs4 import BeautifulSoup
-from .utils import HEADERS, DatasetError
+import requests
+import utils
 
 
 class EconomistNews:
@@ -55,7 +55,7 @@ class EconomistNews:
         while start_reached is False:
             page_counter+=1
             url = f"{cls._base_url}/{section}?page={page_counter}"
-            response = requests.get(url=url, headers=HEADERS)
+            response = requests.get(url=url, headers=utils.HEADERS)
             
             if int(response.url.split("page=")[1]) != page_counter:
                 break
@@ -67,7 +67,7 @@ class EconomistNews:
                 div = soup.find_all("div", {"class": "layout-section-collection ds-layout-grid"})[0]
                 tags = div.find_all("div", {"class": "css-e6sfh4 e1mrg8dy0"}, recursive=False)
             except IndexError:
-                raise DatasetError(f"No articles found for section '{section}'")
+                raise utils.DatasetError(f"No articles found for section '{section}'")
             assert len(tags) != 0
             
             for tag in tags:
@@ -344,12 +344,12 @@ class FTNews:
             if page_counter == 201:
                 break
             url = f"{cls._base_url}/{section}?page={page_counter}"
-            html = requests.get(url=url, headers=HEADERS).text
+            html = requests.get(url=url, headers=utils.HEADERS).text
             soup = BeautifulSoup(html, "lxml")
             try:
                 tags = soup.find_all("ul", {"class": "o-teaser-collection__list js-stream-list"})[0].find_all("li")
             except IndexError:
-                raise DatasetError(f"No articles found for section '{section}'")
+                raise utils.DatasetError(f"No articles found for section '{section}'")
             assert len(tags) != 0
             
             for tag in tags:
@@ -392,7 +392,7 @@ class NasdaqNews:
     @staticmethod
     def rss_feed(ticker, timestamps=False) -> list:
         url = f"https://www.nasdaq.com/feed/rssoutbound?symbol={ticker}"
-        response = requests.get(url=url, headers=HEADERS).text
+        response = requests.get(url=url, headers=utils.HEADERS).text
         soup = BeautifulSoup(response, "lxml")
         tags = soup.find_all("item")
         
@@ -433,7 +433,7 @@ class SANews:
     @staticmethod
     def rss_feed(ticker, timestamps=False) -> list:
         url = f"https://seekingalpha.com/api/sa/combined/{ticker}.xml"
-        response = requests.get(url=url, headers=HEADERS).text
+        response = requests.get(url=url, headers=utils.HEADERS).text
         soup = BeautifulSoup(response, "lxml")
         tags = soup.find_all("item")
         
@@ -658,14 +658,14 @@ class WSJNews:
 
             retry = True
             while retry:
-                html = requests.get(url=url, headers=HEADERS).text
+                html = requests.get(url=url, headers=utils.HEADERS).text
                 soup = BeautifulSoup(html, "lxml")
 
                 tag_section = soup.find("div", {"id": "latest-stories"})
                 if tag_section is None:
                     tag_section = soup.find("div", {"id": "author-articles"})
                 if tag_section is None:
-                    raise DatasetError(f"No articles found for section '{section}'")
+                    raise utils.DatasetError(f"No articles found for section '{section}'")
                 tags = tag_section.find_all("article")
 
                 if len(tags) != 0:
@@ -740,7 +740,7 @@ class WSJNews:
         elif section == "Lifestyle":
             url = url.format("RSSLifestyle")
         
-        response = requests.get(url=url, headers=HEADERS).text
+        response = requests.get(url=url, headers=utils.HEADERS).text
         soup = BeautifulSoup(response, "lxml")
         tags = soup.find_all("item")
 

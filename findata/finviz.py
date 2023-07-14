@@ -1,8 +1,8 @@
-import requests
-import pandas as pd
-import re
 from bs4 import BeautifulSoup
-from .utils import HEADERS
+import pandas as pd
+import requests
+import re
+import utils
 
 
 class FinvizReader:
@@ -12,7 +12,7 @@ class FinvizReader:
         self._ticker = ticker.upper()
         self._html = requests.get(
             url=self._base_url.format(self._ticker),
-            headers=HEADERS
+            headers=utils.HEADERS
         ).text
         if "This IP address has performed an unusual high number of requests and has been temporarily rate limited. If you believe this to be in error, please contact us." in self._html:
             raise PermissionError("Requests have been rate limited")

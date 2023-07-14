@@ -1,8 +1,8 @@
+from bs4 import BeautifulSoup
 import pandas as pd
 import requests
 import re
-from bs4 import BeautifulSoup
-from findata.utils import HEADERS, DatasetError
+import utils
 
 
 class MarketscreenerReader:
@@ -10,25 +10,25 @@ class MarketscreenerReader:
     
     def __init__(self, identifier) -> None:
         params = {"q": identifier}
-        html = requests.get(url=f"{self._base_url}/search/", params=params, headers=HEADERS).text
+        html = requests.get(url=f"{self._base_url}/search/", params=params, headers=utils.HEADERS).text
         soup = BeautifulSoup(html, "lxml")
         
         try:
             company_tag = soup.find("table", {"class": "table table--small table--hover table--centered table--bordered"}).find("tbody").find_all("tr")[0].find("td").find("a")
         except AttributeError:
-            raise DatasetError(f"no stock found for identifier '{identifier}'")
+            raise utils.DatasetError(f"no stock found for identifier '{identifier}'")
         
         self._company_url = f"{self._base_url}{company_tag.get('href')}"
         self._header_parsed = False
 
     def _get_company_information(self) -> None:
         url = f"{self._company_url}company/"
-        html = requests.get(url=url, headers=HEADERS).text
+        html = requests.get(url=url, headers=utils.HEADERS).text
         self._company_soup = BeautifulSoup(html, "lxml")
 
     def _get_financial_information(self) -> None:
         url = f"{self._company_url}finances/"
-        html = requests.get(url=url, headers=HEADERS).text
+        html = requests.get(url=url, headers=utils.HEADERS).text
         self._financial_soup = BeautifulSoup(html, "lxml")
 
     def _parse_header(self) -> None:
@@ -95,7 +95,7 @@ class MarketscreenerReader:
 
         header = self._company_soup.find("h3", string="Sales per region")
         if header is None:
-            raise DatasetError(f"no country data found for stock '{self.name}'")
+            raise utils.DatasetError(f"no country data found for stock '{self.name}'")
         else:
             headers = header.find_next("thead").find("tr").find_all("th")
             rows = header.find_next("tbody").find_all("tr")
@@ -338,7 +338,7 @@ class MarketscreenerReader:
         source, header = news_types[news_type]
         articles = []
         url = f"{self._company_url}{source}/"
-        html = requests.get(url=url, headers=HEADERS).text
+        html = requests.get(url=url, headers=utils.HEADERS).text
         soup = BeautifulSoup(html, "lxml")
 
         rows = soup.find("h3", string=header).find_next("table").find_all("tr")
@@ -382,7 +382,7 @@ class MarketscreenerReader:
         
         header = self._company_soup.find("h3", string="Sales per Business")
         if header is None:
-            raise DatasetError(f"no segment data found for stock '{self.name}'")
+            raise utils.DatasetError(f"no segment data found for stock '{self.name}'")
         else:
             headers = header.find_next("thead").find("tr").find_all("th")
             rows = header.find_next("tbody").find_all("tr")

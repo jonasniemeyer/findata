@@ -1,12 +1,8 @@
-import pandas as pd
-import requests
-import re
 from bs4 import BeautifulSoup
-from .utils import (
-    DatasetError,
-    HEADERS,
-    TIPRANKS_HEADERS
-)
+import pandas as pd
+import re
+import requests
+import utils
 
 
 class TipranksAnalystReader:
@@ -19,8 +15,8 @@ class TipranksAnalystReader:
         if not hasattr(self, "_analyst_data"):
             name_encoded = self.name.lower().replace(" ", "-")
             self._analyst_data = requests.get(
-                url = f"{self._base_url}{name_encoded}",
-                headers = HEADERS
+                url=f"{self._base_url}{name_encoded}",
+                headers=utils.HEADERS
             ).text
             self._analyst_data = BeautifulSoup(self._analyst_data, "lxml")
         
@@ -39,7 +35,7 @@ class TipranksAnalystReader:
     def _get_profile(self) -> dict:
         profile_divs = self._get_analyst_data().find("div", {"data-sc": "Profile"})
         if profile_divs is None:
-            raise DatasetError(f"No profile data found for analyst '{self.name}'")
+            raise utils.DatasetError(f"No profile data found for analyst '{self.name}'")
 
         profile_divs = profile_divs.find_all("div", recursive=False)[1].find_all("div", recursive=False)        
         personal = profile_divs[0]
@@ -96,7 +92,7 @@ class TipranksAnalystReader:
     def ratings(self, timestamps=False) -> list:
         table = self._get_analyst_data().find("div", {"data-sc": "StockCoverage"})
         if table is None:
-            raise DatasetError(f"No ratings data found for analyst '{self.name}'")
+            raise utils.DatasetError(f"No ratings data found for analyst '{self.name}'")
         
         rows = table.find_all("div", {"class": "rt-tr-group"})
         ratings = []
@@ -150,9 +146,9 @@ class TipranksStockReader:
     def _get_ratings_data(self):
         if not hasattr(self, "_ratings_data"):
             self._ratings_data = requests.get(
-                url = f"{self._base_url}getData/",
-                headers = TIPRANKS_HEADERS,
-                params = {"name": self.ticker}
+                url=f"{self._base_url}getData/",
+                headers=utils.TIPRANKS_HEADERS,
+                params={"name": self.ticker}
             ).json()
         return self._ratings_data
 
@@ -325,9 +321,9 @@ class TipranksStockReader:
     
     def news_sentiment(self, timestamps=False) -> dict:
         data = requests.get(
-            url = f"{self._base_url}getNewsSentiments/",
-            headers = TIPRANKS_HEADERS,
-            params = {"ticker": self.ticker}
+            url=f"{self._base_url}getNewsSentiments/",
+            headers=utils.TIPRANKS_HEADERS,
+            params={"ticker": self.ticker}
         ).json()
         
         data = {
@@ -478,9 +474,9 @@ class TipranksStockReader:
     @classmethod
     def trending_stocks(cls, timestamps=False) -> list:
         data = requests.get(
-            url = f"{cls._base_url}gettrendingstocks/",
-            headers = TIPRANKS_HEADERS,
-            params = {
+            url=f"{cls._base_url}gettrendingstocks/",
+            headers=utils.TIPRANKS_HEADERS,
+            params={
                 "daysago": 30,
                 "which": "most"
             }

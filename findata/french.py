@@ -1,13 +1,12 @@
-import requests
 from bs4 import BeautifulSoup
-from tempfile import TemporaryFile
-from zipfile import ZipFile, BadZipFile
 from io import StringIO
-import pandas as pd
 import numpy as np
+import pandas as pd
 import re
-from .utils import HEADERS, DatasetError
-
+import requests
+from tempfile import TemporaryFile
+import utils
+from zipfile import ZipFile, BadZipFile
 
 class FrenchReader:
     _base_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
@@ -83,11 +82,11 @@ class FrenchReader:
                     raw_data = zip_file.open(zip_file.namelist()[0]).read().decode(encoding="cp1252")
                     return raw_data
             except BadZipFile:
-                raise DatasetError(f"Could not fetch data for {self._dataset}")
+                raise utils.DatasetError(f"Could not fetch data for {self._dataset}")
           
     def read(self) -> dict:
         time_series = {}
-        response = requests.get(url=self._dataset_url.format(self.dataset), headers=HEADERS).content
+        response = requests.get(url=self._dataset_url.format(self.dataset), headers=utils.HEADERS).content
         data = self._read_zip(response)
         data = data.split("\r\n\r\n")
         for chunk in data:

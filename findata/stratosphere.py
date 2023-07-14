@@ -1,9 +1,9 @@
-import requests
 import json
 import pandas as pd
 import re
-from .utils import HEADERS
+import requests
 from typing import Optional
+import utils
 
 NoneType = type(None)
 
@@ -21,7 +21,7 @@ class StratosphereReader:
     def _get_data(self, suffix) -> dict:
         html = requests.get(
             url=self._base_url.format(self.ticker, suffix),
-            headers=HEADERS
+            headers=utils.HEADERS
         ).text
         json_str = html.split('type="application/json">')[1].split("</script></body></html>")[0]
         data = json.loads(json_str)
@@ -271,7 +271,7 @@ class StratosphereReader:
     def fund_letters(timestamps=False) -> list:
         html = requests.get(
             url="https://www.stratosphere.io/fund-letters/",
-            headers=HEADERS
+            headers=utils.HEADERS
         ).text
         json_str = html.split('type="application/json">')[1].split("</script></body></html>")[0]
         data = json.loads(json_str)["props"]["pageProps"]["letters"]
@@ -294,7 +294,7 @@ class StratosphereReader:
     def investors() -> list:
         html = requests.get(
             url="https://www.stratosphere.io/super-investors/",
-            headers=HEADERS
+            headers=utils.HEADERS
         ).text
         json_str = html.split('type="application/json">')[1].split("</script></body></html>")[0]
         investors = json.loads(json_str)["props"]["pageProps"]["superinvestors"]

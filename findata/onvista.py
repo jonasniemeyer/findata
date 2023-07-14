@@ -1,9 +1,9 @@
 import json
-import requests
-import pandas as pd
 import numpy as np
+import pandas as pd
+import requests
 from typing import Union, Optional
-from .utils import HEADERS, DatasetError
+import utils
 
 
 class _OnvistaAbstractReader:
@@ -32,11 +32,11 @@ class _OnvistaAbstractReader:
         else:
             raise NotImplementedError()
 
-        html = requests.get(f"https://www.onvista.de/{self._section}/{identifier}", headers=HEADERS).text
+        html = requests.get(f"https://www.onvista.de/{self._section}/{identifier}", headers=utils.HEADERS).text
         try:
             data = json.loads(html.split('type="application/json">')[-1].split("</script>")[0])["props"]["pageProps"]["data"]["snapshot"]
         except KeyError:
-            raise DatasetError(f"No Data found for identifier '{identifier}'")
+            raise utils.DatasetError(f"No Data found for identifier '{identifier}'")
         self._isin = data["instrument"]["isin"]
         return data
 
@@ -50,7 +50,7 @@ class _OnvistaAbstractReader:
 
     def exchanges(self) -> list:
         if not hasattr(self, "_exchange_data"):
-            html = requests.get(f"https://www.onvista.de/{self._section}/handelsplaetze/{self.isin}", headers=HEADERS).text
+            html = requests.get(f"https://www.onvista.de/{self._section}/handelsplaetze/{self.isin}", headers=utils.HEADERS).text
             self._exchange_data = json.loads(html.split('type="application/json">')[-1].split("</script>")[0])["props"]["pageProps"]["data"]["snapshot"]["quoteList"]["list"]
         data = [
             {
@@ -94,7 +94,7 @@ class _OnvistaAbstractReader:
         elif isinstance(end, str):
             end = pd.to_datetime(end)
 
-        js = requests.get(f"https://api.onvista.de/api/v1/instruments/STOCK/{dataset_id}/eod_history?idNotation={dataset_id}&range=5Y&startDate=1900-01-01", headers=HEADERS).json()
+        js = requests.get(f"https://api.onvista.de/api/v1/instruments/STOCK/{dataset_id}/eod_history?idNotation={dataset_id}&range=5Y&startDate=1900-01-01", headers=utils.HEADERS).json()
         dataset_start = pd.to_datetime(pd.to_datetime(js["datetimeStartAvailableHistory"]).date())
         dataset_end = pd.to_datetime(pd.to_datetime(js["datetimeEndAvailableHistory"]).date())
 
@@ -117,7 +117,7 @@ class _OnvistaAbstractReader:
         end_reached = False
         subsamples = []
         while not end_reached:
-            js = requests.get(f"https://api.onvista.de/api/v1/instruments/STOCK/{dataset_id}/eod_history?idNotation={dataset_id}&range=5Y&startDate={start}", headers=HEADERS).json()
+            js = requests.get(f"https://api.onvista.de/api/v1/instruments/STOCK/{dataset_id}/eod_history?idNotation={dataset_id}&range=5Y&startDate={start}", headers=utils.HEADERS).json()
             start = start + pd.offsets.DateOffset(years=5)
             if start >= end or start >= dataset_end:
                 end_reached = True
