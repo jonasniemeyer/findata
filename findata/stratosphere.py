@@ -3,7 +3,7 @@ import pandas as pd
 import re
 import requests
 from typing import Optional
-import utils
+from . import utils
 
 NoneType = type(None)
 
@@ -304,19 +304,19 @@ class StratosphereReader:
                 {
                     "ticker": position["ticker"],
                     "cusip": position["cusip"],
-                    "type": position["putCall"],
+                    "type": position["putCall"].title(),
                     "weight": round(position["weight"]/100, 6)
                 }
                 for position in item["positions"]
             ]
             statistics = {
-                "market_value": item["stats"]["marketValue"],
-                "no_holdings": item["stats"]["portfolioSize"],
-                "purchased": item["stats"]["securitiesAdded"],
-                "sold": item["stats"]["securitiesRemoved"],
-                "average_holding_period": item["stats"]["averageHoldingPeriod"],
-                "concentration": round(item["stats"]["concentration"]/100, 4),
-                "turnover": round(item["stats"]["turnover"], 4)
+                "market_value": item["stats"]["marketValue"] if "marketValue" in item["stats"] else None,
+                "no_holdings": item["stats"]["portfolioSize"] if "portfolioSize" in item["stats"] else None,
+                "purchased": item["stats"]["securitiesAdded"] if "securitiesAdded" in item["stats"] else None,
+                "sold": item["stats"]["securitiesRemoved"] if "securitiesRemoved" in item["stats"] else None,
+                "average_holding_period": item["stats"]["averageHoldingPeriod"] if "averageHoldingPeriod" in item["stats"] else None,
+                "concentration": round(item["stats"]["concentration"]/100, 4) if "concentratione" in item["stats"] else None,
+                "turnover": round(item["stats"]["turnover"], 4) if "turnover" in item["stats"] else None
             }
             data.append(
                 {
