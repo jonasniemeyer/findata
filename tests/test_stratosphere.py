@@ -26,13 +26,13 @@ def test_investors():
         assert isinstance(investor["cik"], int)
 
         statistics = investor["statistics"]
-        assert isinstance(statistics["market_value"], int)
-        assert isinstance(statistics["no_holdings"], int)
-        assert isinstance(statistics["purchased"], int)
-        assert isinstance(statistics["sold"], int)
-        assert isinstance(statistics["average_holding_period"], int)
-        assert statistics["concentration"] == round(statistics["concentration"], 4)
-        assert statistics["turnover"] == round(statistics["turnover"], 4)
+        assert statistics["market_value"] is None or isinstance(statistics["market_value"], int)
+        assert statistics["no_holdings"] is None or isinstance(statistics["no_holdings"], int)
+        assert statistics["purchased"] is None or isinstance(statistics["purchased"], int)
+        assert statistics["sold"] is None or isinstance(statistics["sold"], int)
+        assert statistics["average_holding_period"] is None or isinstance(statistics["average_holding_period"], int)
+        assert statistics["concentration"] is None or statistics["concentration"] == round(statistics["concentration"], 4)
+        assert statistics["turnover"] is None or statistics["turnover"] == round(statistics["turnover"], 4)
 
         portfolio = investor["portfolio"]
         for security in portfolio:

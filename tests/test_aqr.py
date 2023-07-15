@@ -1,5 +1,5 @@
-from findata import AQRReader
 import pandas as pd
+from findata import AQRReader
 
 
 def test_esg_efficient_frontier_portfolios():

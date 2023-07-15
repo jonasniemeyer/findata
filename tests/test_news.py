@@ -90,7 +90,7 @@ def test_nasdaq_news():
         assert isinstance(article["datetime"], int)
 
 
-def test_sa_news():
+def test_sa_rss():
     articles = SANews.rss_feed("AAPL")
     assert isinstance(articles, list)
     assert len(articles) != 0
@@ -102,6 +102,8 @@ def test_sa_news():
         assert isinstance(article["author"], str)
         assert isinstance(article["type"], str)
 
+
+def test_nasdaq_rss():
     articles = NasdaqNews.rss_feed("AAPL", timestamps=True)
     assert len(articles) != 0
     for article in articles:
