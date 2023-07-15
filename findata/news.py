@@ -1,8 +1,11 @@
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
 import pandas as pd
 import re
 import requests
-import utils
+import warnings
+from . import utils
+
+warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning, module='bs4')
 
 
 class EconomistNews:
