@@ -5,8 +5,8 @@ import pandas as pd
 import re
 import requests
 from tempfile import TemporaryFile
-import utils
 from zipfile import ZipFile, BadZipFile
+from . import utils
 
 class FrenchReader:
     _base_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"

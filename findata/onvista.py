@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import requests
 from typing import Union, Optional
-import utils
+from . import utils
 
 
 class _OnvistaAbstractReader:

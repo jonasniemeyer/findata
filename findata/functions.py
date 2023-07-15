@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 import pandas as pd
 import requests
-import utils
+from . import utils
 
 
 def finra_margin_debt(timestamps=False) -> dict:

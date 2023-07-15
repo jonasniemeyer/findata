@@ -4,7 +4,7 @@ import pandas as pd
 import requests
 import re
 from typing import Union
-import utils
+from . import utils
 
 NoneType = type(None)
 

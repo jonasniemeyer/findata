@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import re
 import requests
-import utils
+from . import utils
 
 
 class TipranksAnalystReader:

@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
-import utils
+from . import utils
 
 
 class NasdaqReader:
