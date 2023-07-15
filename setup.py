@@ -8,5 +8,5 @@ setup(
     version="0.0.1",
     author="Jonas Niemeyer",
     description="Functionalities to scrape financial and macroeconomic data sets from the web",
-    packages=find_packages()
+    packages=["findata"]
 )
