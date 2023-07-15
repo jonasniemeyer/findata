@@ -8,8 +8,7 @@ import re
 import requests
 import time
 from typing import Optional
-import utils
-
+from . import utils
 
 class YahooReader:
     _main_url = "https://query1.finance.yahoo.com/v10/finance/quoteSummary/{}"
@@ -169,7 +168,7 @@ class YahooReader:
             data = json_data
         else:
             # parse html data
-            html = requests.get(f"https://finance.yahoo.com/quote/{self.ticker}/{suffix}", headers=utils.HEADERS).text
+            html = requests.get(f"https://finance.yahoo.com/quote/{self.ticker}/{suffix}", headers=utils.YAHOO_HEADERS).text
             soup = BeautifulSoup(html, "lxml")
 
             html_data = {}
@@ -459,21 +458,16 @@ class YahooReader:
                     "fundPerformance"
                 )
             ),
-            "formatted": False
+            "formatted": False,
+            "crumb": utils.YAHOO_CRUMB
         }
         
         data = requests.get(
             url=self._main_url.format(self.ticker),
             params=parameters,
-            headers=utils.HEADERS
+            headers=utils.YAHOO_HEADERS
         ).json()
-        print(requests.get(
-            url=self._main_url.format(self.ticker),
-            params=parameters,
-            headers=utils.HEADERS
-        ).url)
-        return
-        
+
         if data["quoteSummary"]["error"] is not None:
             raise utils.TickerError(f"no data found for ticker '{self.ticker}'")
         data = data["quoteSummary"]["result"][0]
@@ -542,7 +536,7 @@ class YahooReader:
             html = requests.get(
                 url=f"https://finance.yahoo.com/calendar/earnings",
                 params=params,
-                headers=utils.HEADERS
+                headers=utils.YAHOO_HEADERS
             ).text
             soup = BeautifulSoup(html, "lxml")
             tables = soup.find_all("table")
@@ -818,7 +812,7 @@ class YahooReader:
         reponse = requests.get(
             url=self._price_url.format(self.ticker),
             params=parameters,
-            headers=utils.HEADERS
+            headers=utils.YAHOO_HEADERS
         )
 
         url = reponse.url
@@ -1107,7 +1101,7 @@ class YahooReader:
     def logo(self) -> Optional[bytes]:
         response = requests.get(
             url=f"https://storage.googleapis.com/iexcloud-hl37opg/api/logos/{self.ticker.replace('-', '.')}.png",
-            headers=utils.HEADERS
+            headers=utils.YAHOO_HEADERS
         ).content
         if response != utils.PLACEHOLDER_LOGO and response != utils.SERVER_ERROR_MESSAGE:
             if response == b"\n":
@@ -1117,7 +1111,7 @@ class YahooReader:
         if self.profile() is not None and "website" in self.profile().keys():
             response = requests.get(
                 url=f"https://logo.clearbit.com/{self.profile()['website']}",
-                headers=utils.HEADERS
+                headers=utils.YAHOO_HEADERS
             ).content
             if response == b"\n":
                 return None
@@ -1159,7 +1153,7 @@ class YahooReader:
 
         options_list = requests.get(
             url=self._options_url.format(self.ticker),
-            headers=utils.HEADERS,
+            headers=utils.YAHOO_HEADERS,
             params=parameters
         ).json()
         
@@ -1395,7 +1389,7 @@ class YahooReader:
         If there is no corresponding ticker found, None is returned instead.
         """
         params = {"yfin-usr-qry": identifier}
-        response = requests.get(cls._quote_url, params=params, headers=utils.HEADERS)
+        response = requests.get(cls._quote_url, params=params, headers=utils.YAHOO_HEADERS)
         try:
             ticker = re.findall(f"{cls._quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response.url)[0].strip()
             return ticker
@@ -1405,7 +1399,7 @@ class YahooReader:
             while limited:
                 try:
                     params_appl = {"yfin-usr-qry": "US0378331005"}
-                    response_appl = requests.get(cls._quote_url, params=params_appl, headers=utils.HEADERS)
+                    response_appl = requests.get(cls._quote_url, params=params_appl, headers=utils.YAHOO_HEADERS)
                     ticker = re.findall(f"{cls._quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response_appl.url)[0].strip()
                     limited = False
                 except IndexError:
@@ -1421,7 +1415,7 @@ class YahooReader:
     def currencies() -> list:
         data = requests.get(
             url="https://query1.finance.yahoo.com/v1/finance/currencies",
-            headers=utils.HEADERS
+            headers=utils.YAHOO_HEADERS
         ).json()
 
         data = data["currencies"]["result"]
