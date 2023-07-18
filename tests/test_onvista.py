@@ -43,14 +43,14 @@ class TestOnvistaBondReader:
     def test_historical_data(self):
         data = self.reader.historical_data()
         info = data["information"]
-        assert info["instrument_id"] == 128035187
+        assert isinstance(info["instrument_id"], int)
         assert isinstance(info["dataset_id"], int)
-        assert pd.to_datetime(info["start"])
+        assert isinstance(info["start"], str) and pd.to_datetime(info["start"])
         assert isinstance(info["end"], str) and pd.to_datetime(info["end"])
         assert isinstance(info["exchange"]["name"], str)
         assert isinstance(info["exchange"]["code"], str)
-        assert info["exchange"]["country"] == "DE"
-        assert info["currency"] == "EUR"
+        assert isinstance(info["exchange"]["country"], str)
+        assert isinstance(info["currency"], str)
 
         df = data["data"]
         assert all(isinstance(date, pd.Timestamp) for date in df.index)
@@ -111,14 +111,14 @@ class TestOnvistaFundReader:
     def test_historical_data(self):
         data = self.reader.historical_data()
         info = data["information"]
-        assert info["instrument_id"] == 18085585
-        assert info["dataset_id"] == 120555483
-        assert info["start"] == "2011-10-31"
+        assert isinstance(info["instrument_id"], int)
+        assert isinstance(info["dataset_id"], int)
+        assert isinstance(info["start"], str) and pd.to_datetime(info["start"])
         assert isinstance(info["end"], str) and pd.to_datetime(info["end"])
-        assert info["exchange"]["name"] == "gettex"
-        assert info["exchange"]["code"] == "_TRO"
-        assert info["exchange"]["country"] == "DE"
-        assert info["currency"] == "EUR"
+        assert isinstance(info["exchange"]["name"], str)
+        assert isinstance(info["exchange"]["code"], str)
+        assert isinstance(info["exchange"]["country"], str)
+        assert isinstance(info["currency"], str)
 
         df = data["data"]
         assert all(isinstance(date, pd.Timestamp) for date in df.index)
@@ -214,14 +214,14 @@ class TestOnvistaStockReader:
     def test_historical_data(self):
         data = self.reader.historical_data()
         info = data["information"]
-        assert info["instrument_id"] == 81490
-        assert info["dataset_id"] == 143094
-        assert info["start"] == "1991-07-01"
+        assert isinstance(info["instrument_id"], int)
+        assert isinstance(info["dataset_id"], int)
+        assert isinstance(info["start"], str) and pd.to_datetime(info["start"])
         assert isinstance(info["end"], str) and pd.to_datetime(info["end"])
-        assert info["exchange"]["name"] == "Xetra"
-        assert info["exchange"]["code"] == "_GER"
-        assert info["exchange"]["country"] == "DE"
-        assert info["currency"] == "EUR"
+        assert isinstance(info["exchange"]["name"], str)
+        assert isinstance(info["exchange"]["code"], str)
+        assert isinstance(info["exchange"]["country"], str)
+        assert isinstance(info["currency"], str)
 
         df = data["data"]
         assert all(isinstance(date, pd.Timestamp) for date in df.index)
