@@ -40,7 +40,6 @@ class CMEReader:
 
         "Aluminum": {"sector": "metals", "group": "base", "name": "aluminum", "sector_name": "Industrial Metals"},
         "Cobalt": {"sector": "metals", "group": "battery-metals", "name": "cobalt-metal-fastmarkets", "sector_name": "Industrial Metals"},
-        "Uranium U308": {"sector": "metals", "group": "other", "name": "uranium", "sector_name": "Industrial Metals"},
         "Copper": {"sector": "metals", "group": "base", "name": "copper", "sector_name": "Industrial Metals"},
         "Lead": {"sector": "metals", "group": "base", "name": "lead", "sector_name": "Industrial Metals"},
         "Zinc": {"sector": "metals", "group": "base", "name": "zinc", "sector_name": "Industrial Metals"},
