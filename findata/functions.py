@@ -4,7 +4,7 @@ import requests
 from . import utils
 
 
-def finra_margin_debt(timestamps=False) -> dict:
+def finra_margin_debt(timestamps=False) -> pd.DataFrame:
     df = pd.read_excel("https://www.finra.org/sites/default/files/2021-03/margin-statistics.xlsx", index_col=0)
     df.index = pd.to_datetime(df.index)
     if timestamps:
