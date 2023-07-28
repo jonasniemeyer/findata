@@ -8,23 +8,13 @@ import numpy as np
 
 
 def test_finra_margin_debt():
-    data = finra_margin_debt()
-    assert all(key in ("combined full", "combined new", "combined old", "finra old", "nyse old") for key in data)
-    for key in data:
-        df = data[key]
-        assert all(isinstance(date, pd.Timestamp) for date in df.index)
-        assert all(df[col].dtype == "int64" for col in df.columns)
-    assert all(col in ("debit", "credit") for col in data["combined full"])
-    assert all(col in ("debit", "credit cash accounts", "credit margin accounts") for col in data["combined new"])
-    assert all(col in ("debit", "credit") for col in data["combined old"])
-    assert all(col in ("debit", "credit") for col in data["finra old"])
-    assert all(col in ("debit", "credit cash accounts", "credit margin accounts") for col in data["nyse old"])
+    df = finra_margin_debt()
+    assert all(col in ("debit", "credit_cash_accounts", "credit_margin_accounts") for col in df)
+    assert all(isinstance(date, pd.Timestamp) for date in df.index)
+    assert all(df[col].dtype in ("int64", "float64") for col in df.columns)
 
-    assert all(pd.concat([data["combined old"], data["combined new"]])["debit"] == data["combined full"]["debit"])
-
-    data = finra_margin_debt(timestamps=True)
-    for key in data:
-        assert all(isinstance(item, int) for item in data[key].index)
+    df = finra_margin_debt(timestamps=True)
+    assert all(isinstance(item, int) for item in df.index)
 
 
 def test_shiller_data():
