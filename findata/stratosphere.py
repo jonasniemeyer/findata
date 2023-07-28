@@ -315,8 +315,8 @@ class StratosphereReader:
                 "purchased": item["stats"]["securitiesAdded"] if "securitiesAdded" in item["stats"] else None,
                 "sold": item["stats"]["securitiesRemoved"] if "securitiesRemoved" in item["stats"] else None,
                 "average_holding_period": item["stats"]["averageHoldingPeriod"] if "averageHoldingPeriod" in item["stats"] else None,
-                "concentration": round(item["stats"]["concentration"]/100, 4) if "concentratione" in item["stats"] else None,
-                "turnover": round(item["stats"]["turnover"], 4) if "turnover" in item["stats"] else None
+                "concentration": round(item["stats"]["concentration"]/100, 4) if "concentratione" in item["stats"] and item["stats"]["concentration"] is not None else None,
+                "turnover": round(item["stats"]["turnover"], 4) if "turnover" in item["stats"] and item["stats"]["turnover"] is not None else None
             }
             data.append(
                 {
