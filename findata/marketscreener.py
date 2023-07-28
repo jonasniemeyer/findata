@@ -150,7 +150,7 @@ class MarketscreenerReader:
             name = cells[0].find(string=True).strip()
             if name == "FCF margin":
                 name = "FCF Margin"
-            elif name not in ("EBITDA", "EBIT", "EPS", "FCF Conversion"):
+            elif name not in ("EBITDA", "EBIT", "EPS", "FCF Conversion (EBITDA)", "FCF Conversion (Net income)"):
                 name = name.title()
 
             if "(" in name:
@@ -162,7 +162,7 @@ class MarketscreenerReader:
                 if cell.text.strip() == "-":
                     value = None
                 else:
-                    value = cell.text.replace(" ", "").replace(",", ".")
+                    value = cell.text.replace(" ", "").replace(",", ".").strip()
                     if name in ("Operating Margin", "Net Margin", "FCF Margin", "FCF Conversion"):
                         value = float(value.replace("%", ""))  / 100
                     elif name in ("EPS", "Dividend Per Share"):
@@ -208,7 +208,7 @@ class MarketscreenerReader:
                     if cell.text.strip() == "-":
                         value = None
                     else:
-                        value = cell.text.replace(" ", "").replace(",", ".")
+                        value = cell.text.replace(" ", "").replace(",", ".").strip()
                         if name in ("Book Value Per Share", "Cash Flow Per Share"):
                             value = float(value)
                         else:
