@@ -159,14 +159,14 @@ class MSCIReader:
     @classmethod
     def indices(cls) -> pd.DataFrame:
         html = requests.get(
-            url="https://www.msci.com/ticker-codes",
+            url="https://www.msci.com/our-solutions/indexes/index-resources/index-tools",
             headers=utils.HEADERS
         ).content
 
         soup = BeautifulSoup(html, "lxml")
 
-        paragraph = [paragraph for paragraph in soup.find_all("p") if "Tickers for MSCI Indexes as of " in paragraph][0]
-        href = f"https://www.msci.com/{paragraph.find('a').get('href')}"
+        page = soup.find("h3", string="Ticker Codes").find("a").get("href")
+        href = f"https://www.msci.com/{page}"
 
         data = pd.read_excel(href, engine="openpyxl")
 
