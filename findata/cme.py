@@ -105,7 +105,6 @@ class CMEReader:
             time.sleep(1)
             button_expand.click()
 
-        self.driver.execute_script(f"window.scrollBy(0, 600)")
         deleted = False
         index = 0
         while not deleted and index < 20:
@@ -118,7 +117,7 @@ class CMEReader:
             except common.exceptions.TimeoutException:
                 index += 1
 
-        self.driver.execute_script(f"window.scrollBy(0, {-y_distance})")
+        self.driver.execute_script(f"window.scrollBy(0, {-y_distance+300})")
         time.sleep(1)
 
         div = self.driver.find_element(by=By.XPATH, value="/html/body/main/div/div[3]/div[3]/div/div/div/div/div/div[2]/div/div/div/div/div/div[5]/div/div/div")
@@ -186,3 +185,6 @@ class CMEReader:
         data = self._parse()
         self.driver.quit()
         return data
+
+if __name__ == "__main__":
+    print(CMEReader("WTI Crude Oil").read())
