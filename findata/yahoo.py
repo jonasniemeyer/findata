@@ -1262,6 +1262,7 @@ class YahooReader:
         
         if "fullTimeEmployees" in data.keys():
             data["employees"] = data.pop("fullTimeEmployees")
+
         if "longBusinessSummary" in data.keys():
             data["description"] = data.pop("longBusinessSummary")
             if data["description"] is not None:
@@ -1272,6 +1273,7 @@ class YahooReader:
             data["industry"] = None if data["industry"] == "" else data["industry"]
         if "sector" in data.keys():
             data["sector"] = None if data["sector"] == "" else data["sector"]
+
         data["executives"] = [
             {
                 "name": entry["name"],
@@ -1284,10 +1286,10 @@ class YahooReader:
             }
             for entry in data["companyOfficers"]
         ]
-        if data["executives"] == []:
-            data.pop("executives")
+
         for key in (
             "industryDisp",
+            "sectorDisp",
             "companyOfficers",
             "auditRisk",
             "boardRisk",
