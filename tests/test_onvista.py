@@ -182,7 +182,7 @@ class TestOnvistaStockReader:
         assert self.reader.isin == "DE0005190003"
         assert self.reader.long_name == "Bayerische Motoren Werke AG Stammaktien EO 1"
         market_cap = self.reader.market_cap
-        assert isinstance(market_cap["market_cap"], float)
+        assert isinstance(market_cap["market_cap"], (int, float))
         assert market_cap["currency"] == "EUR"
         assert self.reader.name == "BMW"
         sector = self.reader.sector
