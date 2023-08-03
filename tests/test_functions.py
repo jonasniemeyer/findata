@@ -1,5 +1,6 @@
 from findata import (
     finra_margin_debt,
+    lei_to_cik,
     shiller_data,
     sp_index_data
 )
@@ -15,6 +16,15 @@ def test_finra_margin_debt():
 
     df = finra_margin_debt(timestamps=True)
     assert all(isinstance(item, int) for item in df.index)
+
+
+def test_lei_to_cik():
+    # Apple
+    assert lei_to_cik("HWUPKR0MPOU8FGXBT394") == 320193
+    # BASF
+    assert lei_to_cik("529900PM64WH8AF1E917") is None
+    # fake LEI
+    assert lei_to_cik("THISISNOTALEI") is None
 
 
 def test_shiller_data():
