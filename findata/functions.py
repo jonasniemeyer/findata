@@ -1,6 +1,8 @@
 from bs4 import BeautifulSoup
 import pandas as pd
+import re
 import requests
+from typing import Optional
 from . import utils
 
 
@@ -12,6 +14,16 @@ def finra_margin_debt(timestamps=False) -> pd.DataFrame:
     df = df.iloc[::-1, :] * 1_000_000
     df.columns = ["debit", "credit_cash_accounts", "credit_margin_accounts"]
     return df
+
+
+def lei_to_cik(lei: str) -> Optional[int]:
+    html = requests.get(url=f"https://lei.info/{lei}", headers=utils.HEADERS).text
+    html = BeautifulSoup(html, "lxml")
+    label = html.find("div", string=re.compile("\\s*CIK code\\s*"))
+    if label is None:
+        return None
+    cik = label.find_next_sibling("div").text.strip()
+    return int(cik)
 
 
 def shiller_data(timestamps=False) -> pd.DataFrame:
@@ -163,5 +175,4 @@ def sp_index_data(timestamps=False) -> dict:
         "operating_data": operating_data,
         "reported_data": reported_data
     }
-
     return data
