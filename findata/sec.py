@@ -2045,13 +2045,17 @@ class FilingNPORT(_SECFiling):
             if isin is not None:
                 isin_value = isin.get("value")
                 if isin_value is None:
-                    isin_value = isin.text                
+                    isin_value = isin.text
+                if isin_value == "N/A":
+                    isin_value = None
                 identifier["isin"] = isin_value
             ticker = other_identifier.find("ticker")
             if ticker is not None:
                 ticker_value = ticker.get("value")
                 if ticker_value is None:
-                    ticker_value = ticker.text                
+                    ticker_value = ticker.text
+                if ticker_value == "N/A":
+                    ticker_value = None  
                 identifier["ticker"] = ticker_value
             other = other_identifier.find_all("other")
             for item in other:
@@ -2305,6 +2309,8 @@ class FilingNPORT(_SECFiling):
         tri_party = True if tri_party == "Y" else False
         repurchase_rate = float(repurchase_section.find("repurchasert").text)
         maturity = repurchase_section.find("maturitydt").text
+        if maturity == "N/A":
+            maturity = None
 
         collaterals = []
         collateral_section = repurchase_section.find("repurchasecollaterals")
