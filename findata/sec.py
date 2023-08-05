@@ -2224,6 +2224,8 @@ class FilingNPORT(_SECFiling):
             conversion_asset_name = conversion_asset_section.find("name").text
             conversion_asset_title = conversion_asset_section.find("title").text
             conversion_asset_currency = conversion_asset_section.find("curcd").text
+            if conversion_asset_currency == "N/A":
+                conversion_asset_currency = None
             conversion_asset_identifier = {}
             conversion_asset_cusip = conversion_asset_section.find("cusip")
             if conversion_asset_cusip is not None:
@@ -2248,6 +2250,8 @@ class FilingNPORT(_SECFiling):
             conversion_ratio = conversion_information.get("convratio")
             conversion_ratio = None if conversion_ratio == "N/A" else float(conversion_ratio)                
             conversion_currency = conversion_information.get("curcd")
+            if conversion_currency == "N/A":
+                conversion_currency = None
             conversion_information = {
                 "ratio": conversion_ratio,
                 "currency": conversion_currency
