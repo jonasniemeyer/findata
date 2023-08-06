@@ -12,6 +12,7 @@ class StratosphereReader:
     _base_url = "https://www.stratosphere.io/company/{}/{}"
     
     def __init__(self, ticker: str) -> None:
+        raise NotImplementedError("Stratosphere changed their website structure. The reader will be updated soon.")
         self._ticker = ticker.upper()
         self._profile = None
     
