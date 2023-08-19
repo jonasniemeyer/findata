@@ -164,8 +164,9 @@ class MSCIReader:
         ).content
 
         soup = BeautifulSoup(html, "lxml")
-
-        page = soup.find("h3", string="Ticker Codes").find("a").get("href")
+        for item in soup.find_all("h3"):
+            if item.text.startswith("Ticker Codes"):
+                page = item.find("a").get("href")
         href = f"https://www.msci.com/{page}"
 
         data = pd.read_excel(href, engine="openpyxl")
