@@ -9,7 +9,7 @@ from zipfile import ZipFile, BadZipFile
 from . import utils
 
 class FrenchReader:
-    _base_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
+    _base_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/"
     _dataset_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/{}_CSV.zip"
     _factor_datasets = {
         "US 3-Factors": "F-F_Research_Data_Factors",
@@ -140,6 +140,33 @@ class FrenchReader:
                 df.index = [int(date.timestamp()) for date in df.index]
             
             time_series[name] = df
+
+            # If the dataset is industry data, also fetch the industry definitions
+        if "Industry_Portfolios" in self.dataset:
+            response = requests.get(f"{self._base_url}data_library.html", headers=utils.HEADERS).content
+            soup = BeautifulSoup(response, "lxml")
+            def_url = soup.find("a", {"href": f"ftp/{self.dataset}_CSV.zip"}).find_next("a").get("href")
+            def_url = f"{self._base_url}{def_url}"
+
+            response = requests.get(def_url, headers=utils.HEADERS).content
+            soup = BeautifulSoup(response, "lxml")
+            text_url = soup.find("a", string=re.compile("Download\s+industry\s+definitions")).get("href").replace("../", "")
+            text_url = f"{self._base_url}{text_url}"
+
+            response = requests.get(url=text_url, headers=utils.HEADERS).content
+            industries = {}
+            definitions = self._read_zip(response)
+            for line in definitions.splitlines():
+                if re.findall("^\s*[0-9]+\s+[A-Za-z]+", line) != []:
+                    abbr, sector_name = re.findall("[0-9]+\s+([A-Za-z]+)\s+(.+)", line)[0]
+                    industries[abbr] = {"name": sector_name, "sic_codes": []}
+                elif line == "":
+                    continue
+                else:
+                    lower, upper, industry = re.findall("([0-9]+)-([0-9]+)\s+(.+)", line)[0]
+                    industries[abbr]["sic_codes"].append({"name": industry, "lower": int(lower), "upper": int(upper)})
+            time_series["industries"] = industries
+
         return time_series
 
     @property
@@ -148,7 +175,7 @@ class FrenchReader:
     
     @classmethod
     def datasets(cls) -> list:
-        response = requests.get(cls._base_url).content
+        response = requests.get(f"{cls._base_url}data_library.html", headers=utils.HEADERS).content
         soup = BeautifulSoup(response, "lxml")
         datasets = [a_tag.get("href") for a_tag in soup.find_all("a")]
         datasets = [
