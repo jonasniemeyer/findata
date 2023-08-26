@@ -159,12 +159,14 @@ class FrenchReader:
             for line in definitions.splitlines():
                 if re.findall("^\s*[0-9]+\s+[A-Za-z]+", line) != []:
                     abbr, sector_name = re.findall("[0-9]+\s+([A-Za-z]+)\s+(.+)", line)[0]
-                    industries[abbr] = {"name": sector_name, "sic_codes": []}
+                    industries[abbr] = {"name": sector_name, "sic": []}
                 elif line == "":
                     continue
                 else:
-                    lower, upper, industry = re.findall("([0-9]+)-([0-9]+)\s+(.+)", line)[0]
-                    industries[abbr]["sic_codes"].append({"name": industry, "lower": int(lower), "upper": int(upper)})
+                    lower, upper, industry = re.findall("\s*([0-9]+)-([0-9]+)\s*(.*)", line)[0]
+                    if industry.strip() == "":
+                        industry = None
+                    industries[abbr]["sic"].append({"name": industry, "lower": int(lower), "upper": int(upper)})
             time_series["industries"] = industries
 
         return time_series
