@@ -50,7 +50,7 @@ class MarketscreenerReader:
 
         self._name = header.find("h1").text.strip()
 
-        price_tag = header.find("span", {"class": "last no-animation txt-bold js-last"})
+        price_tag = header.find("span", {"class": "last txt-bold js-last"})
         self._price = float(price_tag.text)
         self._currency = price_tag.find_next("sup").text.strip()
 
