@@ -68,8 +68,8 @@ def test_industry_portfolios():
 
     for col in data["Average Value Weighted Returns Monthly"].columns:
         assert isinstance(data["industries"][col]["name"], str)
-        assert len(data["industries"][col]["sic_codes"]) > 0
-        for item in data["industries"][col]["sic_codes"]:
+        assert len(data["industries"][col]["sic"]) > 0
+        for item in data["industries"][col]["sic"]:
             assert isinstance(item["name"], str)
             assert isinstance(item["lower"], int)
             assert isinstance(item["upper"], int)
