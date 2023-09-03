@@ -22,7 +22,7 @@ def lei_to_cik(lei: str) -> Optional[int]:
     label = html.find("div", string=re.compile("\\s*CIK code\\s*"))
     if label is None:
         return None
-    cik = label.find_next_sibling("div").find("span").text.strip()
+    cik = label.find_next_sibling("div").text.strip()
     return int(cik)
 
 
