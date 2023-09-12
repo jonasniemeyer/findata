@@ -124,12 +124,16 @@ class FinvizReader:
         rows = table.find_all("tr")
         for row in rows:
             datetime = row.find_all("td")[0].text.strip()
-            if len(datetime) > 7:
+            if "Today" in datetime:
+                date = pd.to_datetime("today").date()
+            elif len(datetime) > 7:
                 date = pd.to_datetime(datetime).date()
-                if timestamps:
-                    date_ = int(pd.to_datetime(date).timestamp())
-                else:
-                    date_ = date.isoformat()
+
+            if timestamps:
+                date_ = int(pd.to_datetime(date).timestamp())
+            else:
+                date_ = date.isoformat()
+
             source = row.find_all("div")[2].text.strip()
             source = re.sub("\s*[\-+]?[0-9]{,3}\.?[0-9]{2}%", "", source)
             title = row.find_all("td")[1].find_all("a")[0].text.strip()
