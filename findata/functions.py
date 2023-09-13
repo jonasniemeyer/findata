@@ -19,7 +19,7 @@ def finra_margin_debt(timestamps=False) -> pd.DataFrame:
 def lei_to_cik(lei: str) -> Optional[int]:
     response = requests.get(url=f"https://lei.info/{lei}", headers=utils.HEADERS)
     if response.status_code != 200:
-        raise utils.DatasetError(f"HTTP Response Code: {response.status_code}")
+        raise requests.HTTPError(f"HTTP Response Code: {response.status_code}")
     html = response.text
     html = BeautifulSoup(html, "lxml")
     label = html.find("div", string=re.compile("\\s*CIK code\\s*"))
