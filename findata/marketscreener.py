@@ -44,11 +44,11 @@ class MarketscreenerReader:
             soup = self._financial_soup
 
         header = soup.find("div", {"class": "card-content p-10"})
-        ticker, isin = header.find("div", {"class": "c-12 cm-auto grid align-center"}).find_all("span")[:2]
+        ticker, isin = header.find("div", {"class": "mt-10 py-5 py-m-0 mt-m-5 c-flex align-center badge-container"}).find_all("h2", recursive=False)
         self._ticker = ticker.text.strip()
         self._isin = isin.text.strip()
 
-        self._name = header.find("h1").text.strip()
+        self._name = header.find("h1").text.replace("Financials", "").replace("Company", "").strip()
 
         price_tag = header.find("span", {"class": "last txt-bold js-last"})
         self._price = float(price_tag.text)
