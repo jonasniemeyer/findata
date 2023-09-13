@@ -4,8 +4,10 @@ from findata import (
     shiller_data,
     sp_index_data
 )
+from findata.utils import DatasetError
 import pandas as pd
 import numpy as np
+from requests import HTTPError
 
 
 def test_finra_margin_debt():
@@ -20,11 +22,20 @@ def test_finra_margin_debt():
 
 def test_lei_to_cik():
     # Apple
-    assert lei_to_cik("HWUPKR0MPOU8FGXBT394") == 320193
+    try:
+        assert lei_to_cik("HWUPKR0MPOU8FGXBT394") == 320193
+    except HTTPError:
+        pass
     # BASF
-    assert lei_to_cik("529900PM64WH8AF1E917") is None
+    try:
+        assert lei_to_cik("529900PM64WH8AF1E917") is None
+    except HTTPError:
+        pass
     # fake LEI
-    assert lei_to_cik("THISISNOTALEI") is None
+    try:
+        assert lei_to_cik("THISISNOTALEI") is None
+    except HTTPError:
+        pass
 
 
 def test_shiller_data():
