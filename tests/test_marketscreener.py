@@ -12,7 +12,7 @@ class TestMarketscreenerReader:
         assert self.reader.currency() == "USD"
         assert self.reader.isin() == "US0378331005"
         assert isinstance(self.reader.latest_price(), float)
-        assert self.reader.name() == "APPLE INC."
+        assert self.reader.name() == "Apple Inc."
         assert self.reader.ticker() == "AAPL"
 
     def test_board_members(self):
