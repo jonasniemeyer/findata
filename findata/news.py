@@ -1,11 +1,8 @@
-from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
+from bs4 import BeautifulSoup
 import pandas as pd
 import re
 import requests
-import warnings
 from . import utils
-
-warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning, module='bs4')
 
 
 class EconomistNews:
@@ -68,7 +65,7 @@ class EconomistNews:
             
             try:
                 div = soup.find_all("div", {"class": "layout-section-collection ds-layout-grid"})[0]
-                tags = div.find_all("div", {"class": "css-e6sfh4 e1mrg8dy0"}, recursive=False)
+                tags = div.find_all("div", {"class": "css-e6sfh4 e1mdktgm0"}, recursive=False)
             except IndexError:
                 raise utils.DatasetError(f"No articles found for section '{section}'")
             assert len(tags) != 0
@@ -471,16 +468,6 @@ class SANews:
 class WSJNews:
     _base_url = "https://www.wsj.com/news/"
     
-    world_sections = {
-        "Africa": "types/africa-news",
-        "Asia": "types/asia-news",
-        "Canada": "types/canada-news",
-        "China": "types/china-news",
-        "Europe": "types/europe-news",
-        "Latin America": "types/latin-america-news",
-        "Middle East": "types/middle-east-news"
-    }
-    
     us_sections = {
         "Capital Account": "types/capital-account"
     }
@@ -499,8 +486,7 @@ class WSJNews:
         "Manufacturing": "business/industrial-services",
         "Media & Marketing": "business/media-marketing",
         "Natural Resources": "business/natural-resources",
-        "Retail": "business/retail-industry",
-        "Obituaries": "types/obituaries"
+        "Retail": "business/retail-industry"
     }
     
     markets_sections = {
@@ -529,31 +515,14 @@ class WSJNews:
     
     life_work_sections = {
         "Cars": "life-work/automotive",
-        "Careers": "types/management-careers",
         "Food & Drink": "life-work/food-cooking-drink",
-        "Home & Design": "types/design",
         "Ideas": "life-work/ideas",
-        "Personal Finance": "types/personal-finance",
         "Travel": "life-work/travel",
         "Wellness": "life-work/health-wellness"
     }
     
     style_sections = {
-        "Fashion": "style-entertainment/fashion",
-        "Film": "types/film",
-        "Television": "types/television",
-        "Music": "types/music",
-        "Art & Auctions": "types/art-auctions"
-    }
-    
-    sports_sections= {
-        "Beijing 2022 Olympics": "types/olympics",
-        "MLB": "types/mlb",
-        "NBA": "types/nba",
-        "NFL": "types/nfl",
-        "Golf": "types/sports-golf",
-        "Tennis": "types/tennis",
-        "Soccer": "types/soccer"
+        "Fashion": "style-entertainment/fashion"
     }
     
     columns = {
@@ -630,9 +599,7 @@ class WSJNews:
         start_reached = False
         page_counter = 0
 
-        if section in cls.world_sections:
-            key = cls.world_sections[section]
-        elif section in cls.us_sections:
+        if section in cls.us_sections:
             key = cls.us_sections[section]
         elif section in cls.business_sections:
             key = cls.business_sections[section]
@@ -646,8 +613,6 @@ class WSJNews:
             key = cls.life_work_sections[section]
         elif section in cls.style_sections:
             key = cls.style_sections[section]
-        elif section in cls.sports_sections:
-            key = cls.sports_sections[section]
         elif section in cls.columns:
             key = cls.columns[section]
         elif section in cls.reviews:
