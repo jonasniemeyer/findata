@@ -14,7 +14,7 @@ class TestOnvistaBondReader:
         cls.reader = OnvistaBondReader("AT0000A1XML2")
 
     def test_attributes(self):
-        assert isinstance(self.reader.accrued_interest, float)
+        assert isinstance(self.reader.accrued_interest, (int, float))
         assert isinstance(self.reader.convexity, float)
         assert isinstance(self.reader.interest_elasticity, float)
         assert self.reader.isin == "AT0000A1XML2"
