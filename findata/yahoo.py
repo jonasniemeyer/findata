@@ -1290,6 +1290,8 @@ class YahooReader:
         for key in (
             "industryDisp",
             "sectorDisp",
+            "industryKey",
+            "sectorKey",
             "companyOfficers",
             "auditRisk",
             "boardRisk",
