@@ -14,7 +14,7 @@ class MarketscreenerReader:
         soup = BeautifulSoup(html, "lxml")
         
         try:
-            company_tag = soup.find("table", {"class": "table table--small table--hover table--centered table--bordered"}).find("tbody").find_all("tr")[0].find("td").find("a")
+            company_tag = soup.find("table", {"class": "table table--small table--hover table--bordered table--fixed"}).find("tbody").find("tr").find_all("td")[1].find("span").find("a")
         except AttributeError:
             raise utils.DatasetError(f"no stock found for identifier '{identifier}'")
         
