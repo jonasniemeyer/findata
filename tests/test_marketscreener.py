@@ -92,6 +92,9 @@ class TestMarketscreenerReader:
         info = self.reader.industry_information()
         assert info == [
             "Technology",
+            "Technology Equipment",
+            "Computers, Phones & Household Electronics",
+            "Phones & Handheld Devices",
             "Phones & Smart Phones"
         ]
 
