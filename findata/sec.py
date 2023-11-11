@@ -4160,13 +4160,23 @@ class SECFundamentals:
         )
     }
 
-    def __init__(self, cik: Union[str, int]) -> None:
+    def __init__(
+        self,
+        cik: Union[str, int] = None,
+        ticker: str = None
+    ) -> None:
         if isinstance(cik, str):
             self._cik = int(cik)
         elif isinstance(cik, int):
             self._cik = cik
+        elif isinstance(ticker, str):
+            companies = sec_companies()
+            cik = [item["cik"] for item in companies if item["ticker"] == ticker]
+            if cik == []:
+                raise ValueError(f'Could not find a corresponding CIK to the ticker "{ticker}".')
+            self._cik = cik[0]
         else:
-            raise ValueError('cik has to be of type "int" or "str"')
+            raise ValueError('Either CIK has to be of type "int" or "str" or ticker has to be of type "str".')
 
         self._get_data()
 
