@@ -4017,6 +4017,7 @@ class SECFundamentals:
         ),
         "Inventory": (
             "InventoryNet",
+            "InventoryFinishedGoodsNetOfReserves"
         ),
         "Other Current Assets": (
             "OtherAssetsCurrent",
@@ -4114,6 +4115,7 @@ class SECFundamentals:
         ),
         "Change In Inventory": (
             "IncreaseDecreaseInInventories",
+            "IncreaseDecreaseInFinishedGoodsAndWorkInProcessInventories"
         ),
         "Change In Accounts Payable": (
             "IncreaseDecreaseInAccountsPayable",
@@ -4138,6 +4140,7 @@ class SECFundamentals:
         ),
         "Investing Cashflow": (
             "NetCashProvidedByUsedInInvestingActivities",
+            "NetCashProvidedByUsedInInvestingActivitiesContinuingOperations"
         ),
 
         "Dividends Paid": (
