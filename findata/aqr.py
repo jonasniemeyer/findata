@@ -208,6 +208,7 @@ class AQRReader:
         df.index = pd.to_datetime(df.index, format="%m/%d/%Y")
         if timestamps:
             df.index = [int(date.timestamp()) for date in df.index]
+        df = df[~df.index.duplicated(keep='first')]
         return df
     
     @classmethod
