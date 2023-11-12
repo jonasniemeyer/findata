@@ -14,6 +14,8 @@ from findata import (
     Filing4,
     Filing5
 )
+import pandas as pd
+from pandas.tseries.offsets import DateOffset
 
 NoneType = type(None)
 
@@ -40,7 +42,8 @@ def test_sec_mutualfunds():
 
 
 def test_latest_sec_filings():
-    filings = latest_sec_filings(start="2022-12-22")
+    yesterday = (pd.to_datetime("today") - DateOffset(days=1)).date().isoformat()
+    filings = latest_sec_filings(start=yesterday)
     for filing in filings:
         for key in filing.keys():
             assert key in ("name", "cik", "form_type", "url", "accession_number", "accepted", "date_filed", "file_number", "film_number")
@@ -54,7 +57,7 @@ def test_latest_sec_filings():
         assert isinstance(filing["file_number"], (str, NoneType))
         assert isinstance(filing["film_number"], (int, NoneType))
     
-    filings = latest_sec_filings(start="2022-12-22", timestamps=True)
+    filings = latest_sec_filings(start=yesterday, timestamps=True)
     for filing in filings:
         assert isinstance(filing["accepted"], int)
         assert isinstance(filing["date_filed"], int)
