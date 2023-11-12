@@ -577,7 +577,11 @@ class YahooReader:
                     absolute_diff = None
                     relative_diff = None
 
-                if date not in [item["date"] for item in earnings]:
+                if (
+                    date not in [item["date"] for item in earnings]
+                    and pd.to_datetime(date) - pd.DateOffset(days=7) <= pd.to_datetime("today")
+                    and not all(item is None for item in (estimate, actual))
+                ):
                     earnings.append(
                         {
                             "date": date,
