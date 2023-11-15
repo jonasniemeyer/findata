@@ -66,7 +66,7 @@ class MacrotrendsReader:
         table = soup.find("div", {"id":"jqxgrid"})
         row = table.find_all("div", {"role": "row"})[0]
         cell = row.find_all("div", {"role": "gridcell"})[2].get("style")
-        width = re.findall("width:\s?([0-9]+)px", cell)[0]
+        width = re.findall(r"width:\s?([0-9]+)px", cell)[0]
         width = int(width)
         return width
 
@@ -82,7 +82,7 @@ class MacrotrendsReader:
         row = table.find_all("div", {"role": "row"})[0]
         cell = row.find_all("div", {"role": "gridcell"})[0].get("style")
         try:
-            margin = re.findall("margin-left:\s?([0-9]+)px", cell)[0]
+            margin = re.findall(r"margin-left:\s?([0-9]+)px", cell)[0]
             margin = int(margin)
             return margin / 10
         except:
@@ -95,7 +95,7 @@ class MacrotrendsReader:
         """
         html = self.driver.page_source
         width = BeautifulSoup(html, "lxml").find("div", {"id": "jqxScrollAreaDownhorizontalScrollBarjqxgrid"}).get("style")
-        width = int(re.findall("width: ([0-9]+)px", width)[0])
+        width = int(re.findall(r"width: ([0-9]+)px", width)[0])
         return width
 
     def _move_slider(self, pixels) -> None:
@@ -169,7 +169,7 @@ class MacrotrendsReader:
         Parses the table and returns a dictionary of dates as keys and dictionaries as values,
         each having the variables as keys and the data of the variable at the respective date as values
         """
-        footer = self.driver.find_element(by=By.XPATH, value="/html/body/div[3]/footer")
+        footer = self.driver.find_element(by=By.XPATH, value="/html/body/div[2]/footer")
         actions = ActionChains(self.driver)
         actions.move_to_element(footer).perform()
         self.slider = self.driver.find_element(by=By.ID, value="jqxScrollThumbhorizontalScrollBarjqxgrid")
