@@ -127,7 +127,7 @@ def latest_sec_filings(start=pd.to_datetime("today").isoformat(), timestamps=Fal
         entries = tables[-2].find_all("tr")[1:]
         for index in range(0, len(entries), 2):
             name = entries[index].find_all("td")[-1].text.strip()
-            name, cik = re.findall("(.+) \(([0-9]{,10})\) \([A-Za-z ]+\)", name)[0]
+            name, cik = re.findall(r"(.+) \(([0-9]{,10})\) \([A-Za-z ]+\)", name)[0]
             cik = int(cik)
 
             cells = entries[index+1].find_all("td")
@@ -135,9 +135,9 @@ def latest_sec_filings(start=pd.to_datetime("today").isoformat(), timestamps=Fal
             url = cells[1].find_all("a")[-1].get("href")
             url = f"https://www.sec.gov{url}"
             accession_number = cells[2].text
-            accession_number = re.findall("Accession Number: ([0-9-]+)", accession_number)[0]
+            accession_number = re.findall(r"Accession Number: ([0-9-]+)", accession_number)[0]
             accepted = cells[3].text
-            accepted = re.sub("([0-9]{4}-[0-9]{2}-[0-9]{2})([0-9]{2}:[0-9]{2}:[0-9]{2})", r"\1T\2", accepted)
+            accepted = re.sub(r"([0-9]{4}-[0-9]{2}-[0-9]{2})([0-9]{2}:[0-9]{2}:[0-9]{2})", r"\1T\2", accepted)
 
             if pd.to_datetime(accepted) < pd.to_datetime(start):
                 start_reached = True
@@ -225,7 +225,7 @@ def sec_filings(
 
     # If the given cik string is a valid mutualfund-series or -class cik,
     # the POST request has to change the entityName parameter to q to fetch filings
-    if isinstance(cik, str) and re.match("(S|C)[0-9]{9}", cik):
+    if isinstance(cik, str) and re.match(r"(S|C)[0-9]{9}", cik):
         params["q"] = cik
     else:
         if isinstance(cik, int):
@@ -343,13 +343,13 @@ class _SECFiling:
         self._is_html = True if ("<html>" in self.file or "<HTML>" in self.file) else False
         self._is_xml = True if ("<xml>" in self.file or "<XML>" in self.file) else False
         
-        file_number = re.findall("SEC FILE NUMBER:\t([0-9\-]+)", self.header)
+        file_number = re.findall(r"SEC FILE NUMBER:\t([0-9\-]+)", self.header)
         if len(file_number) == 0:
             file_number = None
         else:
             self._file_number = file_number[0]
         
-        film_number = re.findall("FILM NUMBER:\t{2}([0-9\-]+)", self.header)
+        film_number = re.findall(r"FILM NUMBER:\t{2}([0-9\-]+)", self.header)
         if len(film_number) == 0:
             film_number = None
         else:
@@ -384,12 +384,12 @@ class _SECFiling:
         Some documents only have a filer entity (e.g. Form 10-K), some documents have filer and subject entities (e.g. Form 13D) and some have
         reporting owner and issuer entities (e.g. Form 4).
         """
-        self._document_count = int(re.findall("PUBLIC DOCUMENT COUNT:\t{2}([0-9]+)", self.header)[0])
-        self._accession_number = re.findall("ACCESSION NUMBER:\t{2}([0-9\-]+)", self.header)[0]
-        self._submission_type = re.findall("CONFORMED SUBMISSION TYPE:\t(.+)", self.header)[0]
+        self._document_count = int(re.findall(r"PUBLIC DOCUMENT COUNT:\t{2}([0-9]+)", self.header)[0])
+        self._accession_number = re.findall(r"ACCESSION NUMBER:\t{2}([0-9\-]+)", self.header)[0]
+        self._submission_type = re.findall(r"CONFORMED SUBMISSION TYPE:\t(.+)", self.header)[0]
         self._is_amendment = self._check_amendment()
         
-        date_filed = re.findall("FILED AS OF DATE:\t{2}([0-9]{8})", self.header)[0]
+        date_filed = re.findall(r"FILED AS OF DATE:\t{2}([0-9]{8})", self.header)[0]
         date_filed = dt.date(
             year=int(date_filed[:4]),
             month=int(date_filed[4:6]),
@@ -397,7 +397,7 @@ class _SECFiling:
         ).isoformat()
         self._date_filed = date_filed
         
-        date_of_period = re.findall("CONFORMED PERIOD OF REPORT:\t([0-9]{8})", self.header)
+        date_of_period = re.findall(r"CONFORMED PERIOD OF REPORT:\t([0-9]{8})", self.header)
         if len(date_of_period) == 0:
             date_of_period = None
         else:
@@ -409,7 +409,7 @@ class _SECFiling:
             ).isoformat()
         self._date_of_period = date_of_period
 
-        date_of_change = re.findall("DATE AS OF CHANGE:\t{2}([0-9]{8})", self.header)
+        date_of_change = re.findall(r"DATE AS OF CHANGE:\t{2}([0-9]{8})", self.header)
         if len(date_of_change) == 0:
             date_of_change = None
         else:
@@ -421,7 +421,7 @@ class _SECFiling:
             ).isoformat()
             self._date_of_change = date_of_change
 
-        effectiveness_date = re.findall("EFFECTIVENESS DATE:\t{2}([0-9]{8})", self.header)
+        effectiveness_date = re.findall(r"EFFECTIVENESS DATE:\t{2}([0-9]{8})", self.header)
         if len(effectiveness_date) == 0:
             effectiveness_date = None
         else:
@@ -435,9 +435,9 @@ class _SECFiling:
         
         indices = []
         
-        filer_indices = [item.start() for item in re.finditer("FILER:", self.header)]
+        filer_indices = [item.start() for item in re.finditer(r"FILER:", self.header)]
         if len(filer_indices) == 0:
-            filer_indices = [item.start() for item in re.finditer("FILED BY:", self.header)]
+            filer_indices = [item.start() for item in re.finditer(r"FILED BY:", self.header)]
         
         for index in filer_indices:
             indices.append(index)
@@ -446,7 +446,7 @@ class _SECFiling:
         if subject_index != -1:
             indices.append(subject_index)
         
-        reporting_owner_indices = [item.start() for item in re.finditer("REPORTING-OWNER:", self.header)]
+        reporting_owner_indices = [item.start() for item in re.finditer(r"REPORTING-OWNER:", self.header)]
         for index in reporting_owner_indices:
             indices.append(index)
         
@@ -493,12 +493,12 @@ class _SECFiling:
         Parses entity-related data and returns a dictionary of structured data.
         """
         
-        name = re.findall("COMPANY CONFORMED NAME:\t{3}(.+)", section)[0]
+        name = re.findall(r"COMPANY CONFORMED NAME:\t{3}(.+)", section)[0]
         name = name.strip()
         
-        cik = int(re.findall("CENTRAL INDEX KEY:\t{3}([0-9]+)", section)[0])
+        cik = int(re.findall(r"CENTRAL INDEX KEY:\t{3}([0-9]+)", section)[0])
         
-        sic = re.findall("STANDARD INDUSTRIAL CLASSIFICATION:\t{1}([^\[0-9]+)\[([0-9]+)\]", section)
+        sic = re.findall(r"STANDARD INDUSTRIAL CLASSIFICATION:\t{1}([^\[0-9]+)\[([0-9]+)\]", section)
         if len(sic) == 0:
             sic_name, sic_code = None, None
         else:
@@ -508,19 +508,19 @@ class _SECFiling:
                 sic_name = None
             sic_code = int(sic_code)
         
-        irs = re.findall("IRS NUMBER:\t{4}([0-9]+)", section)
+        irs = re.findall(r"IRS NUMBER:\t{4}([0-9]+)", section)
         if len(irs) == 0:
             irs = None
         else:
             irs = int(irs[0])
         
-        state = re.findall("STATE OF INCORPORATION:\t{3}([A-Z]{2})", section)
+        state = re.findall(r"STATE OF INCORPORATION:\t{3}([A-Z]{2})", section)
         if len(state) == 0:
             state = None
         else:
             state = state[0].strip()
         
-        fiscal_year_end = re.findall("FISCAL YEAR END:\t{3}([0-9]{4})", section)
+        fiscal_year_end = re.findall(r"FISCAL YEAR END:\t{3}([0-9]{4})", section)
         if len(fiscal_year_end) == 0:
             fiscal_year_end = None
         else:
@@ -536,7 +536,7 @@ class _SECFiling:
         if self.header.find("FORMER COMPANY:") == -1:
             former_names = None
         else:
-            former_names = re.findall("FORMER CONFORMED NAME:\t(.+)\n\s+DATE OF NAME CHANGE:\t([0-9]{8})", section)
+            former_names = re.findall(r"FORMER CONFORMED NAME:\t(.+)\n\s+DATE OF NAME CHANGE:\t([0-9]{8})", section)
             former_names = [
                 {
                     "name": item[0],
@@ -607,27 +607,27 @@ class _SECFiling:
         Returns the data of a specific address, either the business of the mail address.
         """
         if "STREET 1:" in section:
-            street1 = re.findall("STREET 1:\t{2}(.*)", section)[0]
+            street1 = re.findall(r"STREET 1:\t{2}(.*)", section)[0]
         else:
             street1 = None
         
         if "STREET 2:" in section:
-            street2 = re.findall("STREET 2:\t{2}(.*)", section)[0]
+            street2 = re.findall(r"STREET 2:\t{2}(.*)", section)[0]
         else:
             street2 = None
         
         if "CITY:" in section:
-            city = re.findall("CITY:\t{3}(.+)", section)[0]
+            city = re.findall(r"CITY:\t{3}(.+)", section)[0]
         else:
             city = None
         
         if "STATE:" in section:
-            state = re.findall("STATE:\t{3}(.+)", section)[0]
+            state = re.findall(r"STATE:\t{3}(.+)", section)[0]
         else:
             state = None
         
         if "ZIP:" in section:
-            zip_ = re.findall("ZIP:\t{3}(.+)", section)
+            zip_ = re.findall(r"ZIP:\t{3}(.+)", section)
             try:
                 zip_ = int(zip_[0])
             except ValueError:
@@ -636,7 +636,7 @@ class _SECFiling:
             zip_ = None
         
         if "BUSINESS PHONE:" in section:
-            phone = re.findall("BUSINESS PHONE:\t{2}(.+)", section)[0].upper()
+            phone = re.findall(r"BUSINESS PHONE:\t{2}(.+)", section)[0].upper()
         else:
             phone = None
 
@@ -1420,27 +1420,27 @@ class Filing13G(_SECFiling):
             document = self.document
 
         for match in (
-            "(?i)([A-Z]+[,\s]*[0-9]{1,2}[,\s]+[0-9]{2,4})\[?[0-9]*\]?[\s\-_]*\(?Date\s*of\s*Event[\s,]*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?",
-            "(?i)([0-9]{2}[/-][0-9]{2}[/-][0-9]{2,4})\[?[0-9]*\]?[\s\-_]*\(?Date\s*of\s*Event\s*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?",
-            "(?i)([0-9]{2}[\s/-][A-Z]+[\s/-][0-9]{2,4})\[?[0-9]*\]?[\s\-_]*\(?Date\s*of\s*Event\s*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?",
-            "(?i)\(?Date\s*of\s*Event[\s,]*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?[\s\-_]*([A-Z]+[,\s]*[0-9]{2}[,\s]+[0-9]{2,4})",
-            "(?i)\(?Date\s*of\s*Event\s*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?[\s\-_]*([0-9]{2}[/-][0-9]{2}[/-][0-9]{2,4})",
-            "(?i)Date\s*of\s*Event\s*Which\s*Requires\s*Filing\s*of\s*(?:this|the)\s*Statement:\s*([A-Z]+\s[0-9]{2},\s+[0-9]{4})",
-            "(?i)Date\s*of\s*Event\s*Which\s*Requires\s*Filing\s*of\s*(?:this|the)\s*Statement:\s*([0-9]{2}[/-][0-9]{2}[/-][0-9]{4})"
+            r"(?i)([A-Z]+[,\s]*[0-9]{1,2}[,\s]+[0-9]{2,4})\[?[0-9]*\]?[\s\-_]*\(?Date\s*of\s*Event[\s,]*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?",
+            r"(?i)([0-9]{2}[/-][0-9]{2}[/-][0-9]{2,4})\[?[0-9]*\]?[\s\-_]*\(?Date\s*of\s*Event\s*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?",
+            r"(?i)([0-9]{2}[\s/-][A-Z]+[\s/-][0-9]{2,4})\[?[0-9]*\]?[\s\-_]*\(?Date\s*of\s*Event\s*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?",
+            r"(?i)\(?Date\s*of\s*Event[\s,]*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?[\s\-_]*([A-Z]+[,\s]*[0-9]{2}[,\s]+[0-9]{2,4})",
+            r"(?i)\(?Date\s*of\s*Event\s*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?[\s\-_]*([0-9]{2}[/-][0-9]{2}[/-][0-9]{2,4})",
+            r"(?i)Date\s*of\s*Event\s*Which\s*Requires\s*Filing\s*of\s*(?:this|the)\s*Statement:\s*([A-Z]+\s[0-9]{2},\s+[0-9]{4})",
+            r"(?i)Date\s*of\s*Event\s*Which\s*Requires\s*Filing\s*of\s*(?:this|the)\s*Statement:\s*([0-9]{2}[/-][0-9]{2}[/-][0-9]{4})"
         ):
             self._date_of_period = re.findall(match, document)
             if self._date_of_period != []:
                 self._date_of_period = self._date_of_period[0].replace("\n", "").replace(",", ", ")
-                self._date_of_period = re.sub("([A-Z+]+)([0-9]+)", r"\1 \2", self._date_of_period)
+                self._date_of_period = re.sub(r"([A-Z+]+)([0-9]+)", r"\1 \2", self._date_of_period)
                 break
         self._date_of_period = pd.to_datetime(self._date_of_period).date().isoformat()
 
-        self._group_members = re.findall("GROUP MEMBERS:\t{2}(.+)", self.header)
+        self._group_members = re.findall(r"GROUP MEMBERS:\t{2}(.+)", self.header)
 
         if self.is_amendment:
             for match in (
-                "(?i)\(\s*Amendment\s+(?:No.|)([0-9\s_NA//]*)\)",
-                "(?i)Amendment No.:? ([0-9_\s]+)"
+                r"(?i)\(\s*Amendment\s+(?:No.|)([0-9\s_NA//]*)\)",
+                r"(?i)Amendment No.:? ([0-9_\s]+)"
             ):
                 self._amendment_number = re.findall(match, document)
                 if self._amendment_number != []:
@@ -1451,9 +1451,9 @@ class Filing13G(_SECFiling):
             self._amendment_number = None
 
         for match in (
-            "(?i)([0-9A-Z]{3}[- ]*[0-9][0-9A-Z][- ]*[0-9A-Z][- (]*[0-9A-Z]{0,2}[- )]*[0-9]*)[\*]*[\s\-_]*\(CUSIP\s+Number\)",
-            "(?i)\(CUSIP\s+Number\)[\s\-]*([0-9A-Z]{3}[- ]*[0-9][0-9A-Z][- ]*[0-9A-Z][- ]*[0-9A-Z]{0,2}[- ]*[0-9])",
-            "(?i)CUSIP\s+(?:Number:|No.)\s*([0-9A-Z]{3}[- ]*[0-9][0-9A-Z][- ]*[0-9A-Z][- ]*[0-9A-Z]{0,2}[- ]*[0-9])"
+            r"(?i)([0-9A-Z]{3}[- ]*[0-9][0-9A-Z][- ]*[0-9A-Z][- (]*[0-9A-Z]{0,2}[- )]*[0-9]*)[\*]*[\s\-_]*\(CUSIP\s+Number\)",
+            r"(?i)\(CUSIP\s+Number\)[\s\-]*([0-9A-Z]{3}[- ]*[0-9][0-9A-Z][- ]*[0-9A-Z][- ]*[0-9A-Z]{0,2}[- ]*[0-9])",
+            r"(?i)CUSIP\s+(?:Number:|No.)\s*([0-9A-Z]{3}[- ]*[0-9][0-9A-Z][- ]*[0-9A-Z][- ]*[0-9A-Z]{0,2}[- ]*[0-9])"
         ):
             self._class_cusip = re.findall(match, document)
             if self._class_cusip != []:
@@ -1468,7 +1468,7 @@ class Filing13G(_SECFiling):
         raise NotImplementedError
         persons = []
         for section in sections:
-            name = re.findall("Name of Reporting Person\s+.+", document)
+            name = re.findall(r"Name of Reporting Person\s+.+", document)
             group_member = None
             country = None
             sole_voting = None
@@ -1760,7 +1760,7 @@ class Filing13F(_SECFiling):
                 if included_managers in ("", "NONE"):
                     included_managers = None
                 else:
-                    included_managers = re.findall("([0-9]+)", included_managers)
+                    included_managers = re.findall(r"([0-9]+)", included_managers)
                     included_managers = [int(index[0]) for index in included_managers]
             voting_authority = {
                 "sole" : int(float(entry.find(f"{prefix}sole").text)),
