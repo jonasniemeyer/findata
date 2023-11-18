@@ -169,7 +169,7 @@ class MacrotrendsReader:
         Parses the table and returns a dictionary of dates as keys and dictionaries as values,
         each having the variables as keys and the data of the variable at the respective date as values
         """
-        footer = self.driver.find_element(by=By.XPATH, value="/html/body/div[2]/footer")
+        footer = self.driver.find_element(by=By.XPATH, value="/html/body/div[3]/footer")
         actions = ActionChains(self.driver)
         actions.move_to_element(footer).perform()
         self.slider = self.driver.find_element(by=By.ID, value="jqxScrollThumbhorizontalScrollBarjqxgrid")
