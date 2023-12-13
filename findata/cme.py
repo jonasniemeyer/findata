@@ -53,7 +53,8 @@ class CMEReader:
         "Platinum": {"sector": "metals", "group": "precious", "name": "platinum", "sector_name": "Precious Metals"},
         "Silver": {"sector": "metals", "group": "precious", "name": "silver", "sector_name": "Precious Metals"},
         "Lithium": {"sector": "metals", "group": "battery-metals", "name": "lithium-hydroxide-cif-cjk-fastmarkets", "sector_name": "Industrial Metals"},
-        "Steel": {"sector": "metals", "group": "ferrous", "name": "hrc-steel", "sector_name": "Industrial Metals"}
+        "Steel": {"sector": "metals", "group": "ferrous", "name": "hrc-steel", "sector_name": "Industrial Metals"},
+        "Uranium U308": {"sector": "metals", "group": "other", "name": "uranium", "sector_name": "Industrial Metals"}
     }
 
     def __init__(self, commodity, timestamps=False):
