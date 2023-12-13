@@ -10,6 +10,7 @@ from . import utils
 
 class CMEReader:
     commodities = {
+        # Energy
         "Crude Oil": {"sector": "energy", "group": "crude-oil", "name": "light-sweet-crude", "sector_name": "Energy"},
         "WTI Crude Oil": {"sector": "energy", "group": "crude-oil", "name": "west-texas-intermediate-wti-crude-oil-calendar-swap-futures", "sector_name": "Energy"},
         "Brent Crude Oil": {"sector": "energy", "group": "crude-oil", "name": "brent-ice-calendar-swap-futures", "sector_name": "Energy"},
@@ -22,7 +23,7 @@ class CMEReader:
         "Butane": {"sector": "energy", "group": "petrochemicals", "name": "mont-belvieu-normal-butane-5-decimals-swap", "sector_name": "Energy"},
         "Ethane": {"sector": "energy", "group": "petrochemicals", "name": "mont-belvieu-ethane-opis-5-decimals-swap", "sector_name": "Energy"},
         "Ethanol": {"sector": "energy", "group": "biofuels", "name": "chicago-ethanol-platts-swap", "sector_name": "Energy"},
-
+        # Agriculture
         "Cocoa": {"sector": "agriculture", "group": "lumber-and-softs", "name": "cocoa", "sector_name": "Agriculture"},
         "Coffee": {"sector": "agriculture", "group": "lumber-and-softs", "name": "coffee", "sector_name": "Agriculture"},
         "Corn": {"sector": "agriculture", "group": "grains", "name": "corn", "sector_name": "Agriculture"},
@@ -37,7 +38,11 @@ class CMEReader:
         "Feeder Cattle": {"sector": "agriculture", "group": "livestock", "name": "feeder-cattle", "sector_name": "Livestock"},
         "Lean Hogs": {"sector": "agriculture", "group": "livestock", "name": "lean-hogs", "sector_name": "Livestock"},
         "Live Cattle": {"sector": "agriculture", "group": "livestock", "name": "live-cattle", "sector_name": "Livestock"},
-
+        "Lumber": {"sector": "agriculture", "group": "lumber-and-softs", "name": "lumber", "sector_name": "Agriculture"},
+        "Rice": {"sector": "agriculture", "group": "grains", "name": "rough-rice", "sector_name": "Agriculture"},
+        "Cheese": {"sector": "agriculture", "group": "dairy", "name": "cheese", "sector_name": "Agriculture"},
+        "Palm Oil": {"sector": "agriculture", "group": "oilseeds", "name": "usd-malaysian-crude-palm-oil-calendar", "sector_name": "Agriculture"},
+        # Metals
         "Aluminum": {"sector": "metals", "group": "base", "name": "aluminum", "sector_name": "Industrial Metals"},
         "Cobalt": {"sector": "metals", "group": "battery-metals", "name": "cobalt-metal-fastmarkets", "sector_name": "Industrial Metals"},
         "Copper": {"sector": "metals", "group": "base", "name": "copper", "sector_name": "Industrial Metals"},
@@ -46,7 +51,9 @@ class CMEReader:
         "Gold": {"sector": "metals", "group": "precious", "name": "gold", "sector_name": "Precious Metals"},
         "Palladium": {"sector": "metals", "group": "precious", "name": "palladium", "sector_name": "Precious Metals"},
         "Platinum": {"sector": "metals", "group": "precious", "name": "platinum", "sector_name": "Precious Metals"},
-        "Silver": {"sector": "metals", "group": "precious", "name": "silver", "sector_name": "Precious Metals"}
+        "Silver": {"sector": "metals", "group": "precious", "name": "silver", "sector_name": "Precious Metals"},
+        "Lithium": {"sector": "metals", "group": "battery-metals", "name": "lithium-hydroxide-cif-cjk-fastmarkets", "sector_name": "Industrial Metals"},
+        "Steel": {"sector": "metals", "group": "ferrous", "name": "hrc-steel", "sector_name": "Industrial Metals"}
     }
 
     def __init__(self, commodity, timestamps=False):
