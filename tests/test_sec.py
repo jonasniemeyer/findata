@@ -74,13 +74,10 @@ class TestSECFiling:
         assert self.file.date_filed == "2019-02-14"
         assert self.file.date_of_change == "2019-02-14"
         assert self.file.date_of_period is None
-        assert isinstance(self.file.document, str)
         assert self.file.document_count == 1
         assert self.file.effectiveness_date is None
-        assert isinstance(self.file.file, str)
         assert self.file.file_number == "005-33632"
         assert self.file.film_number == 19607502
-        assert isinstance(self.file.header, str)
         assert self.file.is_amendment is False
         assert self.file.is_html is True
         assert self.file.is_xml is False
@@ -118,13 +115,10 @@ class TestFilingNPORT:
         assert self.file.date_filed == "2022-10-25"
         assert self.file.date_of_change == "2022-10-25"
         assert self.file.date_of_period == "2022-08-31"
-        assert isinstance(self.file.document, str)
         assert self.file.document_count == 1
         assert self.file.effectiveness_date is None
-        assert isinstance(self.file.file, str)
         assert self.file.file_number == "811-09102"
         assert self.file.film_number == 221328659
-        assert isinstance(self.file.header, str)
         assert self.file.has_short_positions is False
         assert self.file.is_amendment is False
         assert self.file.is_html is False

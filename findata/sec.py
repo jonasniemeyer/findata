@@ -331,25 +331,25 @@ class _SECFiling:
         
         self._file = file.replace("&nbsp;", " ")
 
-        if "<SEC-HEADER>" in self.file:
+        if "<SEC-HEADER>" in self._file:
             header_open, header_close = "<SEC-HEADER>", "</SEC-HEADER>"
-        elif "<IMS-HEADER>" in self.file:
+        elif "<IMS-HEADER>" in self._file:
             header_open, header_close = "<IMS-HEADER>", "</IMS-HEADER>"
         else:
             raise utils.DatasetError(f"Could not find a header section")
-        self._header = self._file[self.file.find(header_open):self.file.find(header_close)] + header_close
-        self._document = self.file[self.file.find("<DOCUMENT>"):]
+        self._header = self._file[self._file.find(header_open):self._file.find(header_close)] + header_close
+        self._document = self._file[self._file.find("<DOCUMENT>"):]
         
-        self._is_html = True if ("<html>" in self.file or "<HTML>" in self.file) else False
-        self._is_xml = True if ("<xml>" in self.file or "<XML>" in self.file) else False
+        self._is_html = True if ("<html>" in self._file or "<HTML>" in self._file) else False
+        self._is_xml = True if ("<xml>" in self._file or "<XML>" in self._file) else False
         
-        file_number = re.findall(r"SEC FILE NUMBER:\t([0-9\-]+)", self.header)
+        file_number = re.findall(r"SEC FILE NUMBER:\t([0-9\-]+)", self._header)
         if len(file_number) == 0:
             file_number = None
         else:
             self._file_number = file_number[0]
         
-        film_number = re.findall(r"FILM NUMBER:\t{2}([0-9\-]+)", self.header)
+        film_number = re.findall(r"FILM NUMBER:\t{2}([0-9\-]+)", self._header)
         if len(film_number) == 0:
             film_number = None
         else:
@@ -384,12 +384,12 @@ class _SECFiling:
         Some documents only have a filer entity (e.g. Form 10-K), some documents have filer and subject entities (e.g. Form 13D) and some have
         reporting owner and issuer entities (e.g. Form 4).
         """
-        self._document_count = int(re.findall(r"PUBLIC DOCUMENT COUNT:\t{2}([0-9]+)", self.header)[0])
-        self._accession_number = re.findall(r"ACCESSION NUMBER:\t{2}([0-9\-]+)", self.header)[0]
-        self._submission_type = re.findall(r"CONFORMED SUBMISSION TYPE:\t(.+)", self.header)[0]
+        self._document_count = int(re.findall(r"PUBLIC DOCUMENT COUNT:\t{2}([0-9]+)", self._header)[0])
+        self._accession_number = re.findall(r"ACCESSION NUMBER:\t{2}([0-9\-]+)", self._header)[0]
+        self._submission_type = re.findall(r"CONFORMED SUBMISSION TYPE:\t(.+)", self._header)[0]
         self._is_amendment = self._check_amendment()
         
-        date_filed = re.findall(r"FILED AS OF DATE:\t{2}([0-9]{8})", self.header)[0]
+        date_filed = re.findall(r"FILED AS OF DATE:\t{2}([0-9]{8})", self._header)[0]
         date_filed = dt.date(
             year=int(date_filed[:4]),
             month=int(date_filed[4:6]),
@@ -397,7 +397,7 @@ class _SECFiling:
         ).isoformat()
         self._date_filed = date_filed
         
-        date_of_period = re.findall(r"CONFORMED PERIOD OF REPORT:\t([0-9]{8})", self.header)
+        date_of_period = re.findall(r"CONFORMED PERIOD OF REPORT:\t([0-9]{8})", self._header)
         if len(date_of_period) == 0:
             date_of_period = None
         else:
@@ -409,7 +409,7 @@ class _SECFiling:
             ).isoformat()
         self._date_of_period = date_of_period
 
-        date_of_change = re.findall(r"DATE AS OF CHANGE:\t{2}([0-9]{8})", self.header)
+        date_of_change = re.findall(r"DATE AS OF CHANGE:\t{2}([0-9]{8})", self._header)
         if len(date_of_change) == 0:
             date_of_change = None
         else:
@@ -421,7 +421,7 @@ class _SECFiling:
             ).isoformat()
             self._date_of_change = date_of_change
 
-        effectiveness_date = re.findall(r"EFFECTIVENESS DATE:\t{2}([0-9]{8})", self.header)
+        effectiveness_date = re.findall(r"EFFECTIVENESS DATE:\t{2}([0-9]{8})", self._header)
         if len(effectiveness_date) == 0:
             effectiveness_date = None
         else:
@@ -435,22 +435,22 @@ class _SECFiling:
         
         indices = []
         
-        filer_indices = [item.start() for item in re.finditer(r"FILER:", self.header)]
+        filer_indices = [item.start() for item in re.finditer(r"FILER:", self._header)]
         if len(filer_indices) == 0:
-            filer_indices = [item.start() for item in re.finditer(r"FILED BY:", self.header)]
+            filer_indices = [item.start() for item in re.finditer(r"FILED BY:", self._header)]
         
         for index in filer_indices:
             indices.append(index)
         
-        subject_index = self.header.find("SUBJECT COMPANY:") 
+        subject_index = self._header.find("SUBJECT COMPANY:") 
         if subject_index != -1:
             indices.append(subject_index)
         
-        reporting_owner_indices = [item.start() for item in re.finditer(r"REPORTING-OWNER:", self.header)]
+        reporting_owner_indices = [item.start() for item in re.finditer(r"REPORTING-OWNER:", self._header)]
         for index in reporting_owner_indices:
             indices.append(index)
         
-        issuer_index = self.header.find("ISSUER:")
+        issuer_index = self._header.find("ISSUER:")
         if issuer_index != -1:
             indices.append(issuer_index)
         
@@ -470,18 +470,18 @@ class _SECFiling:
             if len(index) != 0:
                 for item in index:
                     if indices.index(item)+1 == len(indices):
-                        subsection = self.header[item:]
+                        subsection = self._header[item:]
                     else:
-                        subsection = self.header[item:indices[indices.index(item)+1]]
+                        subsection = self._header[item:indices[indices.index(item)+1]]
                     data.append(self._parse_entity_data(subsection))
             else:
                 data = None
         else:
             if index != -1:
                 if indices.index(index)+1 == len(indices):
-                    subsection = self.header[index:]
+                    subsection = self._header[index:]
                 else:
-                    subsection = self.header[index:indices[indices.index(index)+1]]
+                    subsection = self._header[index:indices[indices.index(index)+1]]
                 data = self._parse_entity_data(subsection)
             else:
                 data = None           
@@ -533,7 +533,7 @@ class _SECFiling:
         
         business_address, mail_address = self._parse_addresses(section)
         
-        if self.header.find("FORMER COMPANY:") == -1:
+        if self._header.find("FORMER COMPANY:") == -1:
             former_names = None
         else:
             former_names = re.findall(r"FORMER CONFORMED NAME:\t(.+)\n\s+DATE OF NAME CHANGE:\t([0-9]{8})", section)
@@ -680,13 +680,6 @@ class _SECFiling:
         return self._date_of_period
 
     @property
-    def document(self) -> str:
-        """
-        Returns the document section of the filing.
-        """
-        return self._document
-
-    @property
     def document_count(self) -> int:
         """
         Returns the document count this filing represents to the submitting entity.
@@ -701,13 +694,6 @@ class _SECFiling:
         return self._effectiveness_date
     
     @property
-    def file(self) -> str:
-        """
-        Returns the whole filing, comprising of the header section and the filing-specific document section.
-        """
-        return self._file
-    
-    @property
     def file_number(self) -> str:
         """
         Returns the filing's file number.
@@ -720,13 +706,6 @@ class _SECFiling:
         Returns the filing's film number.
         """
         return self._film_number
-    
-    @property
-    def header(self) -> str:
-        """
-        Returns the header section of the filing.
-        """
-        return self._header
 
     @property
     def is_amendment(self) -> bool:
@@ -752,7 +731,7 @@ class _SECFiling:
     @property
     def submission_type(self) -> str:
         """
-        Returns the submission type (e.g. "SC-13D" or "4").
+        Returns the submission type (e.g. "SC-13D").
         """
         return self._submission_type
 
@@ -812,7 +791,7 @@ class Filing3(_SECFiling):
         if not self.is_xml:
             raise NotImplementedError("Filing 3 classes can only be called on XML compliant files")
 
-        self._soup = BeautifulSoup(self.document.replace("\n", ""), "html.parser")
+        self._soup = BeautifulSoup(self._document.replace("\n", ""), "html.parser")
 
         self._parse_owner()
         self._non_derivative_securities = self._parse_non_derivative_securities()
@@ -1415,9 +1394,9 @@ class Filing13G(_SECFiling):
 
     def _parse_document(self) -> None:
         if self.is_html:
-            document = BeautifulSoup(self.document).get_text()
+            document = BeautifulSoup(self._document).get_text()
         else:
-            document = self.document
+            document = self._document
 
         for match in (
             r"(?i)([A-Z]+[,\s]*[0-9]{1,2}[,\s]+[0-9]{2,4})\[?[0-9]*\]?[\s\-_]*\(?Date\s*of\s*Event[\s,]*Which\s*Requires\s*Filing\s*of\s*(?:this|the|)\s*Statement\)?",
@@ -1435,7 +1414,7 @@ class Filing13G(_SECFiling):
                 break
         self._date_of_period = pd.to_datetime(self._date_of_period).date().isoformat()
 
-        self._group_members = re.findall(r"GROUP MEMBERS:\t{2}(.+)", self.header)
+        self._group_members = re.findall(r"GROUP MEMBERS:\t{2}(.+)", self._header)
 
         if self.is_amendment:
             for match in (
@@ -1606,7 +1585,7 @@ class Filing13F(_SECFiling):
     
     def _parse_document(self) -> None:
         if self.is_xml:
-            self._soup = BeautifulSoup(self.document, "lxml")
+            self._soup = BeautifulSoup(self._document, "lxml")
             if self.is_amendment:
                 amendment_type = self._soup.find("amendmenttype").text
                 amendment_number = int(self._soup.find("amendmentno").text)
@@ -1617,9 +1596,9 @@ class Filing13F(_SECFiling):
             else:
                 self._amendment_information = None
 
-            if "n1:formData" in self.document:
+            if "n1:formData" in self._document:
                 prefix = "n1:"
-            elif "ns1:formData" in self.document:
+            elif "ns1:formData" in self._document:
                 prefix = "ns1:"
             else:
                 prefix = ""
@@ -1651,9 +1630,9 @@ class Filing13F(_SECFiling):
         return
     
     def _parse_signature_from_xml(self) -> dict:
-        if "n1:signatureBlock" in self.document:
+        if "n1:signatureBlock" in self._document:
             prefix = "n1:"
-        elif "ns1:signatureBlock" in self.document:
+        elif "ns1:signatureBlock" in self._document:
             prefix = "ns1:"
         else:
             prefix = ""
@@ -1681,9 +1660,9 @@ class Filing13F(_SECFiling):
         if self.submission_type == "13F-NT":
             return None
         
-        if "n1:summaryPage" in self.document:
+        if "n1:summaryPage" in self._document:
             prefix = "n1:"
-        elif "ns1:summaryPage" in self.document:
+        elif "ns1:summaryPage" in self._document:
             prefix = "ns1:"
         else:
             prefix = ""
@@ -1727,9 +1706,9 @@ class Filing13F(_SECFiling):
         }
     
     def _parse_holdings_from_xml(self) -> list:       
-        if "n1:infoTable" in self.document:
+        if "n1:infoTable" in self._document:
             prefix = "n1:"
-        elif "ns1:infoTable" in self.document:
+        elif "ns1:infoTable" in self._document:
             prefix = "ns1:"
         else:
             prefix = ""
@@ -1999,7 +1978,7 @@ class FilingNPORT(_SECFiling):
         Parse the filing-specific data. If the document is not XML-compliant, raise a NotImplementedError.
         """
         if self.is_xml:
-            self._soup = BeautifulSoup(self.document, "lxml")
+            self._soup = BeautifulSoup(self._document, "lxml")
             self._general_information = self._parse_general_information()
             self._fund_information = self._parse_fund_information()
             self._investments = self._parse_investments()
