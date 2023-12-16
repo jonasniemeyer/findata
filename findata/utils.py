@@ -23,6 +23,7 @@ HEADERS_FAKE["User-Agent"] = "JohnDoe@gmail.com"
 
 TIPRANKS_HEADERS = deepcopy(HEADERS)
 YAHOO_HEADERS = deepcopy(HEADERS)
+
 if "private.cfg" in os.listdir(Path(__file__).parent):
     cfg = configparser.ConfigParser(interpolation=None)
     cfg.read(rf"{Path(__file__).parent}\private.cfg")
@@ -35,6 +36,8 @@ else:
     FRED_API_KEY = None
     CHROMEDRIVER_PATH = f"{Path(__file__).parents[3]}/chromedriver.exe"
     YAHOO_CRUMB = None
+
+_companies = None
 
 SERVER_ERROR_MESSAGE = b"<?xml version='1.0' encoding='UTF-8'?><Error><Code>AccessDenied</Code><Message>Access denied.</Message><Details>Anonymous caller does not have storage.objects.get access to the Google Cloud Storage object. Permission 'storage.objects.get' denied on resource (or it may not exist).</Details></Error>"
 

@@ -4149,7 +4149,9 @@ class SECFundamentals:
         elif isinstance(cik, int):
             self._cik = cik
         elif isinstance(ticker, str):
-            companies = sec_companies()
+            if utils._companies is None:
+                utils._companies = sec_companies()
+            companies = utils._companies
             cik = [item["cik"] for item in companies if item["ticker"] == ticker]
             if cik == []:
                 raise ValueError(f'Could not find a corresponding CIK to the ticker "{ticker}".')
