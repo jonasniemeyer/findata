@@ -255,8 +255,9 @@ def sec_filings(
     filings = []
     for file in files:
         info = file["_source"]
+        entity_cik = int(info["ciks"][0])
         accession_number = info["adsh"]
-        filing_url = f"https://www.sec.gov/Archives/edgar/data/{cik}/{accession_number.replace('-', '')}/{accession_number}-index.htm"
+        filing_url = f"https://www.sec.gov/Archives/edgar/data/{entity_cik}/{accession_number.replace('-', '')}/{accession_number}-index.htm"
         document_url = filing_url.replace("-index.htm", ".txt")
         filings.append(
             {
