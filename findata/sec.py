@@ -175,6 +175,7 @@ def latest_sec_filings(start=pd.to_datetime("today").isoformat(), timestamps=Fal
 
 def sec_filings(
     cik=None,
+    ticker=None,
     form_types=None,
     start="1900-01-01",
     end=pd.to_datetime("today").date().isoformat()
@@ -186,6 +187,8 @@ def sec_filings(
     ----------------------
     cik : int
         The CIK of the issuing entity
+    ticker: str
+        The ticker of the issuance
     form_types : list or str
         Either a list of form types or "all" or "any" to retrieve filings of all form types
     start : str
@@ -227,11 +230,26 @@ def sec_filings(
     # the POST request has to change the entityName parameter to q to fetch filings
     if isinstance(cik, str) and re.match(r"(S|C)[0-9]{9}", cik):
         params["q"] = cik
-    else:
-        if isinstance(cik, int):
-            params["entityName"] = f"{cik:010}"
+    elif isinstance(cik, str):
+        params["entityName"] = cik
+    elif isinstance(cik, int):
+        params["entityName"] = f"{cik:010}"
+    elif isinstance(ticker, str):
+        if utils._companies is None:
+            utils._companies = sec_companies()
+        cik = [item["cik"] for item in utils._companies if item["ticker"] == ticker]
+        if cik == []:
+            if utils._mutualfunds is None:
+                utils._mutualfunds = sec_mutualfunds()
+            cik = [item["series_cik"] for item in utils._mutualfunds if item["ticker"] == ticker]
+            if cik == []:
+                raise ValueError(f'Could not find a corresponding CIK to the ticker "{ticker}".')
+            else:
+                cik = cik[0]
+                params["q"] = cik
         else:
-            params["entityName"] = cik
+            cik = cik[0]
+            params["entityName"] = f"{cik:010}"
 
     files = requests.post(base_url, json=params, headers=utils.HEADERS_FAKE).json()["hits"]["hits"]
     filings = []
