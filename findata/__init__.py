@@ -26,6 +26,8 @@ from .sec import (
     Filing3,
     Filing4,
     Filing5,
+    Filing10K,
+    Filing10Q,
     Filing13D,
     Filing13G,
     Filing13F,

@@ -4319,8 +4319,8 @@ class SECFundamentals:
 
 
 class Filing10K(_SECFiling):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, filing_type="10-K", **kwargs):
+        super().__init__(filing_type, **kwargs)
         
         assert len(self.filer) != 0
         
@@ -4335,7 +4335,7 @@ class Filing10K(_SECFiling):
                 """
             )
         
-        self._parse()
+        self._parse_document()
     
     @property
     def filer(self) -> list:
@@ -4381,7 +4381,7 @@ class Filing10K(_SECFiling):
     def data(self) -> dict:
         return self._data
     
-    def _parse(self) -> None:
+    def _parse_document(self) -> None:
         sections = self._document.split("<FILENAME>")
         
         statement_section = [section for section in sections if re.findall("^[a-z0-9-]+\.xsd\n", section)][0]
@@ -4535,3 +4535,8 @@ class Filing10K(_SECFiling):
 
     def _parse_descriptions(self) -> None:
         return
+
+
+class Filing10q(Filing10K):
+    def __init__(self, filing_type="10-Q", **kwargs):
+        super().__init__(filing_type, **kwargs)
