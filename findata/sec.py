@@ -4316,3 +4316,222 @@ class SECFundamentals:
         date1 = pd.to_datetime(date1)
         date2 = pd.to_datetime(date2)
         return (date1.year - date2.year) * 12 + date1.month - date2.month
+
+
+class Filing10K(_SECFiling):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        
+        assert len(self.filer) != 0
+        
+        try:
+            assert "</XBRL>" in self._document and "</XBRL>" in self._document
+        except AssertionError:
+            raise NotImplementedError(
+                """
+                The Filing10K and Filing10Q classes can only be called on documents that include XBRL data.
+                The SEC first issued rules in 2009 and required companies to adopt XBRL formatting in the next three years.
+                10-K and 10-Q filings from 2013 onwards should therefore contain XBRL data.
+                """
+            )
+        
+        self._parse()
+    
+    @property
+    def filer(self) -> list:
+        return self._filer
+
+    @property
+    def income_statement(self) -> dict:
+        return self._income_statement
+
+    @property
+    def comprehensive_income_statement(self) -> dict:
+        return self._comprehensive_income_statement
+    
+    @property
+    def balance_sheet(self) -> dict:
+        return self._balance_sheet
+    
+    @property
+    def cashflow_statement(self) -> dict:
+        return self._cashflow_statement
+
+    @property
+    def shareholders_equity_statement(self) -> dict:
+        return self._shareholders_equity
+
+    @property
+    def reports(self):
+        return self._reports
+
+    @property
+    def statements(self) -> dict:
+        return {key: value for key, value in self.reports.items() if value["type"] == "Statement"}
+
+    @property
+    def disclosures(self) -> dict:
+        return {key: value for key, value in self.reports.items() if value["type"] == "Disclosure"}
+
+    @property
+    def other_reports(self) -> dict:
+        return {key: value for key, value in self.reports.items() if value["type"] not in ("Disclosure", "Statement")}
+
+    @property
+    def data(self) -> dict:
+        return self._data
+    
+    def _parse(self) -> None:
+        sections = self._document.split("<FILENAME>")
+        
+        statement_section = [section for section in sections if re.findall("^[a-z0-9-]+\.xsd\n", section)][0]
+        start_index = statement_section.lower().find("<xbrl")
+        self._statement_section = BeautifulSoup(statement_section[start_index:], "lxml-xml")
+        self._parse_statement_section()
+        
+        label_section = [section for section in sections if re.findall("^[a-z0-9-]+_lab\.xml\n", section)][0]
+        start_index = label_section.lower().find("<xbrl")
+        self._label_section = BeautifulSoup(label_section[start_index:], "lxml-xml")
+        self._parse_label_section()
+        
+        presentation_section = [section for section in sections if re.findall("^[a-z0-9-]+_pre\.xml\n", section)][0]
+        start_index = presentation_section.lower().find("<xbrl")
+        self._presentation_section = BeautifulSoup(presentation_section[start_index:], "lxml-xml")
+        self._parse_presentation_section()
+        
+        value_section = [section for section in sections if re.findall("^[a-z0-9-_]+_htm.xml\n", section)][0]
+        start_index = value_section.lower().find("<xbrl")
+        self._value_section = BeautifulSoup(value_section[start_index:], "lxml-xml")
+        self._parse_value_section()
+        
+        #self._description_section = BeautifulSoup([section for section in sections if re.findall("^MetaLinks.json\n", section)][0])
+    
+    def _parse_statement_section(self) -> None:
+        self._statements = []
+        self._company_elements = []
+        
+        # parse company-specific elements
+        for tag in self._statement_section.find_all("xs:element"):
+            self._company_elements.append(
+                {
+                    "name": tag.get("name"),
+                    "id": tag.get("id"),
+                    "type": tag.get("type"),
+                    "abstract": tag.get("abstract"),
+                    "nillable": tag.get("nillable"),
+                    "balance": tag.get("xbrli:balance"),
+                    "substitution_group": tag.get("substitutionGroup")
+                }
+            )
+        
+        # parse statements and disclosures
+        for statement in self._statement_section.find_all("link:roleType"):
+            statement_type, title = re.findall("(?i)[0-9]+ - ([a-z]+) - (.+)", statement.find("link:definition").text)[0]
+            
+            self._statements.append(
+                {
+                    "title": title,
+                    "uri": statement.get("roleURI"),
+                    "id": statement.get("id"),
+                    "type": statement_type
+                }
+            )
+    
+    def _parse_presentation_section(self) -> None:
+        statements = self._presentation_section.find_all("link:presentationLink")
+        
+        self._presentation = {}
+        for statement in statements:
+            statement_id = statement.get("xlink:role").split("/")[-1]
+            self._presentation[statement_id] = {}
+            
+            for tag in statement.find_all("link:presentationArc"):
+                order = int(tag.get("order"))
+                parent = tag.get("xlink:from").split("_")[-2]
+                var = tag.get("xlink:to").split("_")[-2]
+                label = tag.get("preferredLabel").split("/")[-1]
+                
+                self._presentation[statement_id][var] = {
+                    "parent": parent,
+                    "order": order,
+                    "preferred_label": label
+                }
+
+    def _parse_label_section(self) -> None:
+        self._labels = {}
+        for tag in self._label_section.find_all("link:label"):
+            label_id = tag.get("xlink:label").split("_")[-1]
+            if label_id not in self._labels:
+                self._labels[label_id] = {}
+            
+            self._labels[label_id][tag.get("xlink:role").split("/")[-1]] = tag.text.strip()        
+    
+    def _parse_value_section(self) -> None:
+        context = {}
+        for tag in self._value_section.find_all("context"):
+            period = tag.find("period")
+            if period.find("instant") is None:
+                start = period.find("startDate").text
+                end = period.find("endDate").text
+            else:
+                start = None
+                end = period.find("instant").text
+            
+            if tag.find("segment") is None:
+                segments = None
+            else:
+                segments = []
+                for segment_tag in tag.find("segment").find_all("xbrldi:explicitMember"):
+                    segments.append(segment_tag.text.strip().split(":")[-1])
+                
+                if tag.find("segment").find("xbrldi:typedMember") is not None:
+                    for segment_tag in tag.find("segment").find("xbrldi:typedMember").find_all(re.compile(".+")):
+                         segments.append(segment_tag.text.strip().split(":")[-1])
+        
+            context[tag.get("id")] = {
+                "start": start,
+                "end": end,
+                "segments": segments
+            }
+        
+        units = {}
+        for tag in self._value_section.find_all("unit"):
+            if tag.find("unitnumerator") is not None:
+                numerator = tag.find("unitNumerator").find("measure").text
+                denominator = tag.find("unitDenominator").find("measure").text
+                units[tag.get("id")] = {
+                    "numerator": numerator,
+                    "denominator": denominator
+                }
+            else:
+                units[tag.get("id")] = tag.find("measure").text
+        
+        self._values = {}
+        
+        for tag in self._value_section.find("xbrl").find_all(re.compile("^(?!context|unit).+"), recursive=False):
+            if tag.name == "schemaRef" or tag.get("contextRef") is None: continue
+            var = tag.name
+            if var not in self._values:
+                self._values[var] = []
+
+            value = tag.text
+            if value.isdigit():
+                if "." in value:
+                    value = float(value)
+                else:
+                    value = int(value)
+            elif value.lower() in ("true", "yes"):
+                value = True
+            elif value.lower() in ("false", "no"):
+                value = False
+
+            data = {
+                "value": value,
+                "context": context[tag.get("contextRef")],
+                "unit": None if tag.get("unitRef") is None else units[tag.get("unitRef")]
+            }
+
+            self._values[var].append(data)
+
+    def _parse_descriptions(self) -> None:
+        return
