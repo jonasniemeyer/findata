@@ -4537,6 +4537,6 @@ class Filing10K(_SECFiling):
         return
 
 
-class Filing10q(Filing10K):
+class Filing10Q(Filing10K):
     def __init__(self, filing_type="10-Q", **kwargs):
         super().__init__(filing_type, **kwargs)
