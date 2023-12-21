@@ -4446,7 +4446,7 @@ class Filing10K(_SECFiling):
             self._presentation[statement_id] = {}
             
             for tag in statement.find_all("link:presentationArc"):
-                order = int(tag.get("order"))
+                order = int(float(tag.get("order")))
                 parent = tag.get("xlink:from").split("_")[-2]
                 var = tag.get("xlink:to").split("_")[-2]
                 label = tag.get("preferredLabel").split("/")[-1]
