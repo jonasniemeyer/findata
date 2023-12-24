@@ -1115,7 +1115,7 @@ class YahooReader:
             url=f"https://storage.googleapis.com/iexcloud-hl37opg/api/logos/{self.ticker.replace('-', '.')}.png",
             headers=utils.YAHOO_HEADERS
         ).content
-        if response != b"\n":
+        if response != b"\n" and response != utils.SERVER_ERROR_MESSAGE:
             return response
 
         return None
