@@ -73,7 +73,9 @@ class CMEReader:
         if not hasattr(self, "driver"):
             if browser == "chrome":
                 options = webdriver.ChromeOptions()
-                options.add_experimental_option('excludeSwitches', ['enable-logging'])
+                options.add_argument("--headless=new")
+                options.add_argument(f"--user-agent={utils.HEADERS['User-Agent']}")
+                options.add_experimental_option("excludeSwitches", ["enable-logging"])
                 self.driver = webdriver.Chrome(service=Service(utils.CHROMEDRIVER_PATH), options=options)
             else:
                 raise NotImplementedError("CMEReader is only implemented for the Google Chrome Browser")
@@ -90,14 +92,12 @@ class CMEReader:
             except common.exceptions.TimeoutException:
                 pass
             i += 1
-        
-        try:
-            button_survey = WebDriverWait(self.driver, 2).until(
-                EC.element_to_be_clickable((By.XPATH, f"/html/body/div[13]/div[2]/div/div[1]/button"))
+
+        if self.commodity == "Aluminum":
+            button_survey = WebDriverWait(self.driver, 20).until(
+                EC.element_to_be_clickable((By.XPATH, f"/html/body/div[12]/div/div[1]/div/div/div[1]/button"))
             )
             button_survey.click()
-        except common.exceptions.TimeoutException:
-            pass
 
     def _parse(self) -> dict:
         data = {}
@@ -113,18 +113,6 @@ class CMEReader:
             time.sleep(1)
             button_expand.click()
 
-        deleted = False
-        index = 0
-        while not deleted and index < 20:
-            try:
-                button_advertising = WebDriverWait(self.driver, 0.5).until(
-                    EC.element_to_be_clickable((By.XPATH, f"/html/body/div[{index}]/div/div/div/div[2]/a"))
-                )
-                button_advertising.click()
-                deleted = True
-            except common.exceptions.TimeoutException:
-                index += 1
-
         self.driver.execute_script(f"window.scrollBy(0, {-y_distance+300})")
         time.sleep(1)
 
@@ -133,6 +121,7 @@ class CMEReader:
         button.click()
         no_dates = len(div.find_elements(by=By.CSS_SELECTOR, value="div[role='presentation']"))
         assert no_dates != 0
+
         for index in range(1, no_dates+1):
             date_btn = self.driver.find_element(by=By.XPATH, value=f"/html/body/main/div/div[3]/div[3]/div/div/div/div/div/div[2]/div/div/div/div/div/div[5]/div/div/div/div/div/div[1]/div[2]/div/div/div/div/div[{index}]")
             date = pd.to_datetime(date_btn.get_attribute("data-value"))
@@ -193,6 +182,3 @@ class CMEReader:
         data = self._parse()
         self.driver.quit()
         return data
-
-if __name__ == "__main__":
-    print(CMEReader("WTI Crude Oil").read())
