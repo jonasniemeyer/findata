@@ -1103,22 +1103,19 @@ class YahooReader:
         return data
 
     def logo(self) -> Optional[bytes]:
-        response = requests.get(
-            url=f"https://storage.googleapis.com/iexcloud-hl37opg/api/logos/{self.ticker.replace('-', '.')}.png",
-            headers=utils.YAHOO_HEADERS
-        ).content
-        if response != utils.PLACEHOLDER_LOGO and response != utils.SERVER_ERROR_MESSAGE:
-            if response == b"\n":
-                return None
-            return response
-
         if self.profile() is not None and "website" in self.profile().keys():
             response = requests.get(
                 url=f"https://logo.clearbit.com/{self.profile()['website']}",
                 headers=utils.YAHOO_HEADERS
             ).content
-            if response == b"\n":
-                return None
+            if response != b"\n":
+                return response
+
+        response = requests.get(
+            url=f"https://storage.googleapis.com/iexcloud-hl37opg/api/logos/{self.ticker.replace('-', '.')}.png",
+            headers=utils.YAHOO_HEADERS
+        ).content
+        if response != b"\n":
             return response
 
         return None
