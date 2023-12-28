@@ -117,6 +117,8 @@ class MacrotrendsReader:
         if not hasattr(self, "driver"):
             if browser == "chrome":
                 options = webdriver.ChromeOptions()
+                options.add_argument("--headless=new")
+                options.add_argument(f"--user-agent={utils.HEADERS['User-Agent']}")
                 options.add_experimental_option("excludeSwitches", ["enable-logging"])
                 self.driver = webdriver.Chrome(options=options)
             else:
