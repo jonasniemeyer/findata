@@ -12,7 +12,7 @@ def finra_margin_debt(timestamps=False) -> pd.DataFrame:
     if timestamps:
         df.index = [int(date.timestamp()) for date in df.index]
     df = df.iloc[::-1, :] * 1_000_000
-    df.columns = ["debit_margin", "credit_cash", "credit_margin"]
+    df.columns = ["debit_margin_accounts", "credit_cash_accounts", "credit_margin_accounts"]
     return df
 
 

@@ -12,7 +12,7 @@ from requests import HTTPError
 
 def test_finra_margin_debt():
     df = finra_margin_debt()
-    assert all(col in ("debit", "credit_cash_accounts", "credit_margin_accounts") for col in df)
+    assert all(col in ("debit_margin_accounts", "credit_cash_accounts", "credit_margin_accounts") for col in df)
     assert all(isinstance(date, pd.Timestamp) for date in df.index)
     assert all(df[col].dtype in ("int64", "float64") for col in df.columns)
 
