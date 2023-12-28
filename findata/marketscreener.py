@@ -62,7 +62,7 @@ class MarketscreenerReader:
         
         board_members = []
         
-        rows = self._company_soup.find("h3", string=re.compile("\s*Members of the board\s*")).find_next("tbody").find_all("tr")
+        rows = self._company_soup.find("h3", string=re.compile(r"\s*Members of the board\s*")).find_next("tbody").find_all("tr")
         for row in rows:
             cells = row.find_all("td")
             name = cells[0].find("div").find("a").text.strip()
@@ -241,14 +241,13 @@ class MarketscreenerReader:
                     name = cells[0].find(string=True).strip()
                     if name != "Nbr of stocks (in thousands)":
                         continue
-                    name = "Shares Outstanding"
                     for index, cell in enumerate(cells[1:]):
                         year = years[index]
                         if cell.text.strip() == "-":
                             value = None
                         else:
-                            value = int(float(cell.text.replace(" ", "").replace(",", ".")) * 1e3)
-                        data[year][name] = value
+                            value = int(float(cell.text.strip().replace(" ", "").replace(",", "")) * 1e3)
+                        data[year]["Shares Outstanding"] = value
         
         return data
 
@@ -279,7 +278,7 @@ class MarketscreenerReader:
             self._get_company_information()
         
         managers = []
-        rows = self._company_soup.find("h3", string=re.compile("\s*Managers\s*")).find_next("tbody").find_all("tr")
+        rows = self._company_soup.find("h3", string=re.compile(r"\s*Managers\s*")).find_next("tbody").find_all("tr")
         for row in rows:
             cells = row.find_all("td")
             name = cells[0].find("div").find("a").text.strip()
