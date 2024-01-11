@@ -111,6 +111,7 @@ def test_nasdaq_rss():
 
 
 def test_wsj_news():
+    import time
     for sections in (
         WSJNews.us_sections,
         WSJNews.business_sections,
@@ -122,6 +123,7 @@ def test_wsj_news():
         WSJNews.columns,
         WSJNews.reviews
     ):
+        time.sleep(20)
         for section in sections:
             start = last_week
             articles = []
