@@ -21,7 +21,7 @@ class TestMarketscreenerReader:
             assert isinstance(member["name"], str)
             assert isinstance(member["title"], str)
             assert isinstance(member["age"], (int, NoneType))
-            assert isinstance(member["joined"], (int, NoneType))
+            assert isinstance(member["joined"], (str, NoneType))
 
     def test_country_information(self):
         info = self.reader.country_information()
@@ -104,7 +104,7 @@ class TestMarketscreenerReader:
             assert isinstance(manager["name"], str)
             assert isinstance(manager["title"], str)
             assert isinstance(manager["age"], (int, NoneType))
-            assert isinstance(manager["joined"], (int, NoneType))
+            assert isinstance(manager["joined"], (str, NoneType))
 
     def test_news(self):
         for news_type in (

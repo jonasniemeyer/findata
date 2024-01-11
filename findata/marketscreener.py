@@ -76,7 +76,7 @@ class MarketscreenerReader:
             if joined == "-":
                 joined = None
             else:
-                joined = int(joined)
+                joined = pd.to_datetime(joined).date().isoformat()
             
             board_members.append(
                 {
@@ -292,7 +292,7 @@ class MarketscreenerReader:
             if joined == "-":
                 joined = None
             else:
-                joined = int(joined)
+                joined = pd.to_datetime(joined).date().isoformat()
             
             managers.append(
                 {
