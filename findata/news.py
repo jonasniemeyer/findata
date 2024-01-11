@@ -500,12 +500,12 @@ class WSJNews:
     }
     
     opinions = {
-        "Editorials": "types/review-outlook-u-s",
-        "Commentary": "types/commentary-u-s",
-        "Future View": "types/future-view",
-        "Letters to the Editor": "types/letters",
-        "The Weekend Interview": "types/the-saturday-interview",
-        "Notable & Quotable": "types/notable-quotable",
+        #"Editorials": "types/review-outlook-u-s",
+        #"Commentary": "types/commentary-u-s",
+        #"Future View": "types/future-view",
+        #"Letters to the Editor": "types/letters",
+        #"The Weekend Interview": "types/the-saturday-interview",
+        #"Notable & Quotable": "types/notable-quotable",
     }
     
     books_art_sections = {
