@@ -373,7 +373,7 @@ class OnvistaFundReader(_OnvistaAbstractReader):
                 "abbr": data["isoCountry"]
             },
             "intitial_charge": round(data["maxPctInitialFee"]/100, 6),
-            "ter": round(data["ongoingCharges"]/100, 6),
+            "ter": round(data["ongoingCharges"]/100, 6) if "ongoingCharges" in data else None,
             "management_fee": round(data["managementFeeExPostMifid"]/100, 6),
             "custodian_fee": round(data["custodianBankFeePct"]/100, 6) if "custodianBankFeePct" in data else None
         }
