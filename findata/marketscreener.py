@@ -173,7 +173,7 @@ class MarketscreenerReader:
 
                 analysts = cell.get("title")
                 if analysts is not None:
-                    analysts = int(re.findall("Number of financial analysts who provided an estimate : ([0-9]+)", analysts)[0])
+                    analysts = int(re.findall("Number of financial analysts who provided an estimate: ([0-9]+)", analysts)[0])
                 data[year][f"{name} Analysts"] = analysts
         
         # if annual data is parsed, parse also Balance Sheet and Cashflow Items
@@ -217,7 +217,7 @@ class MarketscreenerReader:
 
                     analysts = cell.get("title")
                     if analysts is not None:
-                        analysts = int(re.findall("Number of financial analysts who provided an estimate : ([0-9]+)", analysts)[0])
+                        analysts = int(re.findall("Number of financial analysts who provided an estimate: ([0-9]+)", analysts)[0])
                     data[year][f"{name} Analysts"] = analysts
 
             header = self._financial_soup.find("h3", string="Valuation")
