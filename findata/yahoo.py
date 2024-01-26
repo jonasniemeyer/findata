@@ -1146,6 +1146,7 @@ class YahooReader:
         """
 
         parameters = {
+            "crumb": utils.YAHOO_CRUMB,
             "getAllData": True,
             "date": date,
             "strikeMin": strike_min,
