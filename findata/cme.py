@@ -95,7 +95,7 @@ class CMEReader:
 
         if self.commodity == "Aluminum":
             button_survey = WebDriverWait(self.driver, 20).until(
-                EC.element_to_be_clickable((By.XPATH, f"/html/body/div[12]/div/div[1]/div/div/div[1]/button"))
+                EC.element_to_be_clickable((By.XPATH, f"/html/body/div[11]/div/div[1]/div/div/div[1]/button"))
             )
             button_survey.click()
 
