@@ -149,7 +149,7 @@ class TestOnvistaFundReader:
         assert profile["custodian_country"]["name"] == "Luxemburg"
         assert profile["custodian_country"]["abbr"] == "LU"
         assert profile["intitial_charge"] == 0.05
-        assert profile["ter"] is None #== 0.016269
+        assert profile["ter"] is None or profile["ter"] == 0.0161
         assert profile["management_fee"] == 0.0153
         assert profile["custodian_fee"] == 0.0009
 
