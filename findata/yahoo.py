@@ -1397,7 +1397,7 @@ class YahooReader:
         params = {"yfin-usr-qry": identifier}
         response = requests.get(cls._quote_url, params=params, headers=utils.YAHOO_HEADERS)
         try:
-            ticker = re.findall(fr"{cls._quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response.url)[0].strip()
+            ticker = re.findall(fr"{cls._quote_url}([A-Z0-9\.]+)\?.tsrc=fin-srch", response.url)[0].strip()
             return ticker
         except IndexError:
             # check if the http requests are rate limited or if the ticker does not exist
@@ -1406,13 +1406,13 @@ class YahooReader:
                 try:
                     params_appl = {"yfin-usr-qry": "US0378331005"}
                     response_appl = requests.get(cls._quote_url, params=params_appl, headers=utils.YAHOO_HEADERS)
-                    ticker = re.findall(fr"{cls._quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response_appl.url)[0].strip()
+                    ticker = re.findall(fr"{cls._quote_url}([A-Z0-9\.]+)\?.tsrc=fin-srch", response_appl.url)[0].strip()
                     limited = False
                 except IndexError:
                     print(f"Rate limited: Pause {pause} seconds")
                     time.sleep(pause)
             try:
-                ticker = re.findall(fr"{cls._quote_url}(?P<ticker>.+)\?p=(?P=ticker)&.tsrc=fin-srch", response.url)[0].strip()
+                ticker = re.findall(fr"{cls._quote_url}([A-Z0-9\.]+)\?.tsrc=fin-srch", response.url)[0].strip()
             except IndexError:
                 ticker = None
             return ticker
