@@ -6,7 +6,7 @@ NoneType = type(None)
 
 class TestMarketscreenerReader:
     def setup_class(cls):
-        cls.reader = MarketscreenerReader("AAPL")
+        cls.reader = MarketscreenerReader("US0378331005")
 
     def test_general_methods(self):
         assert self.reader.currency() == "USD"
