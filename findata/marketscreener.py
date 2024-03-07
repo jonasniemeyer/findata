@@ -75,8 +75,11 @@ class MarketscreenerReader:
             joined = cells[3].text
             if joined == "-":
                 joined = None
-            else:
+            elif re.findall("[0-9]+-[0-9]+-[0-9]+", joined):
                 joined = pd.to_datetime(joined).date().isoformat()
+            else:
+                current_year = pd.to_datetime("today").year
+                joined = pd.to_datetime(f"{joined} {current_year}").date().isoformat()
             
             board_members.append(
                 {
