@@ -128,11 +128,11 @@ def sp_index_data(timestamps=False) -> dict:
 
     yearly_op_eps = op_eps.iloc[blank1+1:blank2, :]
     eps = yearly_op_eps[yearly_op_eps.index.str.contains("EPS")]
-    eps.index = [pd.to_datetime(f"{item.split()[0].replace('E', '')}-12-31") for item in eps.index]
+    eps.index = [pd.to_datetime(f"{item.split()[0].replace('EPS', '')}-12-31") for item in eps.index]
     if timestamps:
         eps.index = [int(date.timestamp()) for date in eps.index]
     pe = yearly_op_eps[yearly_op_eps.index.str.contains("P/E")]
-    pe.index = [pd.to_datetime(f"{item.split()[0].replace('E', '')}-12-31") for item in pe.index]
+    pe.index = [pd.to_datetime(f"{item.split()[0].replace('P/E', '')}-12-31") for item in pe.index]
     if timestamps:
         pe.index = [int(date.timestamp()) for date in pe.index]
     operating_data = {
@@ -154,11 +154,11 @@ def sp_index_data(timestamps=False) -> dict:
 
     yearly_reported_eps = reported_eps.iloc[blank1+1:blank2, :]
     eps = yearly_reported_eps[yearly_reported_eps.index.str.contains("EPS")]
-    eps.index = [pd.to_datetime(f"{item.split()[0].replace('E', '')}-12-31") for item in eps.index]
+    eps.index = [pd.to_datetime(f"{item.split()[0].replace('EPS', '')}-12-31") for item in eps.index]
     if timestamps:
         eps.index = [int(date.timestamp()) for date in eps.index]
     pe = yearly_op_eps[yearly_op_eps.index.str.contains("P/E")]
-    pe.index = [pd.to_datetime(f"{item.split()[0].replace('E', '')}-12-31") for item in pe.index]
+    pe.index = [pd.to_datetime(f"{item.split()[0].replace('P/E', '')}-12-31") for item in pe.index]
     if timestamps:
         pe.index = [int(date.timestamp()) for date in pe.index]
     reported_data = {
