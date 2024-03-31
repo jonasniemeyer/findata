@@ -73,6 +73,7 @@ class AQRReader:
         )
         df.index = [cls._from_excel_ordinal(item) if bool_ else item for (item, bool_) in zip(df.index, df.index.astype(str).str.isdigit())]
         df.index = pd.to_datetime(df.index)
+        df = df[~df.index.duplicated(keep="first")]
         if timestamps:
             df.index = [int(date.timestamp()) for date in df.index]
         return df
