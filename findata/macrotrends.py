@@ -4,6 +4,7 @@ import re
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from . import utils
@@ -171,7 +172,12 @@ class MacrotrendsReader:
         Parses the table and returns a dictionary of dates as keys and dictionaries as values,
         each having the variables as keys and the data of the variable at the respective date as values
         """
-        footer = self.driver.find_element(by=By.XPATH, value="/html/body/div[3]/footer")
+        for index in range(0, 6):
+            try:
+                footer = self.driver.find_element(by=By.XPATH, value=f"/html/body/div[{index}]/footer")
+            except NoSuchElementException:
+                pass
+
         actions = ActionChains(self.driver)
         actions.move_to_element(footer).perform()
         self.slider = self.driver.find_element(by=By.ID, value="jqxScrollThumbhorizontalScrollBarjqxgrid")
