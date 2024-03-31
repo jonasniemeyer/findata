@@ -15,7 +15,7 @@ class TestClassMethods:
     def test_currencies(self):
         currencies = self.reader.currencies()
         assert isinstance(currencies, list)
-        assert len(currencies) == 165
+        assert len(currencies) == 166
         assert {
             "short_name": "USD",
             "long_name": "US Dollar",
