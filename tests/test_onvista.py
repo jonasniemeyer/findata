@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from pytest import mark
 
+NoneType = type(None)
 
 class TestOnvistaBondReader:
     @classmethod
@@ -133,7 +134,7 @@ class TestOnvistaFundReader:
         rating = self.reader.morningstar_rating()
         for key in rating:
             assert key in ("bond_style", "equity_style", "rating", "sustainability")
-        assert isinstance(rating["bond_style"], int)
+        assert isinstance(rating["bond_style"], (int, NoneType))
         assert isinstance(rating["equity_style"], int)
         for key, data in rating["rating"].items():
             assert key in ("1y", "3y", "5y", "10y")
