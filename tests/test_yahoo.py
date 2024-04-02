@@ -42,7 +42,7 @@ class TestEquity:
     
     def test_profile(self):
         profile = self.reader.profile()
-        assert len(profile) == 14
+        assert len(profile) == 15
         assert profile["address1"] == "One Apple Park Way"
         assert profile["address2"] is None
         assert profile["address3"] is None
@@ -52,6 +52,7 @@ class TestEquity:
         assert profile["country"] == "United States"
         assert profile["phone"] == "408 996 1010"
         assert profile["website"] == "https://www.apple.com"
+        assert profile["investor_relations_website"] == "https://investor.apple.com/"
         assert profile["industry"] == "Consumer Electronics"
         assert profile["sector"] == "Technology"
         assert isinstance(profile["employees"], int)

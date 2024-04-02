@@ -1271,6 +1271,8 @@ class YahooReader:
                 data["description"] = unescape(data["description"])
         if "website" in data.keys():
             data["website"] = data["website"].replace("http:", "https:")
+        if "irWebsite" in data.keys():
+            data["investor_relations_website"] = data.pop("irWebsite").replace("http:", "https:")
         if "industry" in data.keys():
             data["industry"] = None if data["industry"] == "" else data["industry"]
         if "sector" in data.keys():
