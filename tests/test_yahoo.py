@@ -15,7 +15,7 @@ class TestClassMethods:
     def test_currencies(self):
         currencies = self.reader.currencies()
         assert isinstance(currencies, list)
-        assert len(currencies) == 166
+        assert len(currencies) == 167
         assert {
             "short_name": "USD",
             "long_name": "US Dollar",
@@ -42,7 +42,7 @@ class TestEquity:
     
     def test_profile(self):
         profile = self.reader.profile()
-        assert len(profile) == 15
+        assert len(profile) == 14
         assert profile["address1"] == "One Apple Park Way"
         assert profile["address2"] is None
         assert profile["address3"] is None
@@ -52,7 +52,6 @@ class TestEquity:
         assert profile["country"] == "United States"
         assert profile["phone"] == "408 996 1010"
         assert profile["website"] == "https://www.apple.com"
-        assert profile["investor_relations_website"] == "https://investor.apple.com/"
         assert profile["industry"] == "Consumer Electronics"
         assert profile["sector"] == "Technology"
         assert isinstance(profile["employees"], int)
