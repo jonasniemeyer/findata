@@ -1399,7 +1399,7 @@ class YahooReader:
         params = {"yfin-usr-qry": identifier}
         response = requests.get(cls._quote_url, params=params, headers=utils.YAHOO_HEADERS)
         try:
-            ticker = re.findall(fr"{cls._quote_url}([A-Z0-9\.]+)\?.tsrc=fin-srch", response.url)[0].strip()
+            ticker = re.findall(r"https://finance.yahoo.com/quote/([A-Z0-9\.]+)/", response.url)[0].strip()
             return ticker
         except IndexError:
             # check if the http requests are rate limited or if the ticker does not exist
