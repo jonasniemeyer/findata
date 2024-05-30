@@ -173,12 +173,12 @@ class YahooReader:
 
             html_data = {}
             dates = {}
-            header = soup.find_all("div", {"class": "D(tbr) C($primaryColor)"})
+            header = soup.find_all("div", {"class": "row svelte-1ezv2n5"})
             assert len(header) == 1
             
             header = header[0].find_all("div", recursive=False)
             for index, tag in enumerate(header[1:]):
-                date = tag.find("span").text.upper()
+                date = tag.text.upper()
                 if date != "TTM":
                     date = pd.to_datetime(date).date()
                     last_day = calendar.monthrange(date.year, date.month)[1]
