@@ -383,7 +383,7 @@ class _SECFiling:
         """
         file = requests.get(
             url=url,
-            headers=utils.HEADERS
+            headers=utils.HEADERS_FAKE
         ).text
         if "<Message>The specified key does not exist.</Message>" in file:
             raise utils.DatasetError(f'No filing exists for url "{url}"')
