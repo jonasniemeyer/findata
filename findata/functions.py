@@ -31,7 +31,7 @@ def lei_to_cik(lei: str) -> Optional[int]:
 
 def shiller_data(timestamps=False) -> pd.DataFrame:
     df = pd.read_excel(
-        io="http://www.econ.yale.edu/~shiller/data/ie_data.xls",
+        io="https://img1.wsimg.com/blobby/go/e5e77e0b-59d1-44d9-ab25-4763ac982e53/downloads/ie_data.xls",
         sheet_name="Data",
         skiprows=(0,1,2,3,4,5,7),
         skipfooter=1,
