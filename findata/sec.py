@@ -28,7 +28,7 @@ def sec_companies() -> list:
         name : str
             The name of the entity
     """
-    items = requests.get("https://www.sec.gov/files/company_tickers.json", headers=utils.HEADERS).json()
+    items = requests.get("https://www.sec.gov/files/company_tickers.json", headers=utils.HEADERS_FAKE).json()
     items = [
         {
             "cik": item["cik_str"],
@@ -60,7 +60,7 @@ def sec_mutualfunds() -> list:
         entity_cik : int
             The CIK of the issuing entity
     """
-    items = requests.get("https://www.sec.gov/files/company_tickers_mf.json", headers=utils.HEADERS).json()["data"]
+    items = requests.get("https://www.sec.gov/files/company_tickers_mf.json", headers=utils.HEADERS_FAKE).json()["data"]
     items = [
         {
             "ticker": item[3].replace("(", "").replace(")", "").upper() if item[3] not in ("", "N/A") else None,
@@ -118,7 +118,7 @@ def latest_sec_filings(start=pd.to_datetime("today").isoformat(), timestamps=Fal
             "start": page_counter,
             "count": 100
         }
-        html = requests.get(url="https://www.sec.gov/cgi-bin/browse-edgar", params=params, headers=utils.HEADERS).text
+        html = requests.get(url="https://www.sec.gov/cgi-bin/browse-edgar", params=params, headers=utils.HEADERS_FAKE).text
         soup = BeautifulSoup(html, "lxml")
         tables = soup.find_all("table")
         if len(tables) != 8:
@@ -322,6 +322,8 @@ class _SECFiling:
     -----------------------
     None
     """
+    session = requests.Session()
+
     def __init__(
         self,
         form_type="all",
@@ -376,12 +378,12 @@ class _SECFiling:
         
         self._parse_header()
 
-    @staticmethod
-    def _from_url(url: str) -> str:
+    @classmethod
+    def _from_url(cls, url: str) -> str:
         """
         Takes the document url, retrieves the document file from the web and returns it. If the document file does not exist, raise a DatasetError instead.
         """
-        file = requests.get(
+        file = cls.session.get(
             url=url,
             headers=utils.HEADERS_FAKE
         ).text
@@ -4223,7 +4225,7 @@ class SECFundamentals:
         self._var_keys = set()
 
         url = f"https://data.sec.gov/api/xbrl/companyfacts/CIK{self.cik:010}.json"
-        json = requests.get(url=url, headers=utils.HEADERS).json()
+        json = requests.get(url=url, headers=utils.HEADERS_FAKE).json()
 
         self._name = json["entityName"]
         facts = json["facts"]
@@ -4384,17 +4386,17 @@ class Filing10K(_SECFiling):
     def _parse_document(self) -> None:
         sections = self._document.split("<FILENAME>")
         
-        statement_section = [section for section in sections if re.findall("^[a-z0-9-]+\.xsd\n", section)][0]
+        statement_section = [section for section in sections if re.findall("^[a-z0-9-]+\\.xsd\n", section)][0]
         start_index = statement_section.lower().find("<xbrl")
         self._statement_section = BeautifulSoup(statement_section[start_index:], "lxml-xml")
         self._parse_statement_section()
         
-        label_section = [section for section in sections if re.findall("^[a-z0-9-]+_lab\.xml\n", section)][0]
+        label_section = [section for section in sections if re.findall("^[a-z0-9-]+_lab\\.xml\n", section)][0]
         start_index = label_section.lower().find("<xbrl")
         self._label_section = BeautifulSoup(label_section[start_index:], "lxml-xml")
         self._parse_label_section()
         
-        presentation_section = [section for section in sections if re.findall("^[a-z0-9-]+_pre\.xml\n", section)][0]
+        presentation_section = [section for section in sections if re.findall("^[a-z0-9-]+_pre\\.xml\n", section)][0]
         start_index = presentation_section.lower().find("<xbrl")
         self._presentation_section = BeautifulSoup(presentation_section[start_index:], "lxml-xml")
         self._parse_presentation_section()
