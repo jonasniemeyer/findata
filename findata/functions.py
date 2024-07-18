@@ -79,7 +79,7 @@ def sp_index_data(timestamps=False) -> dict:
     data = {}
 
     #parse quarterly per-share data 
-    quarterly_data = pd.read_excel(response, sheet_name="QUARTERLY DATA", skiprows=5, index_col=0)
+    quarterly_data = pd.read_excel(response, sheet_name="QUARTERLY DATA", skiprows=5, index_col=0, engine="openpyxl")
     quarterly_data.index.name = "date"
     quarterly_data.rename(
         columns={
@@ -99,7 +99,7 @@ def sp_index_data(timestamps=False) -> dict:
         quarterly_data.index = [int(date.timestamp()) for date in quarterly_data.index]
 
     #parse sector-eps and -price data
-    sector_data = pd.read_excel(response, sheet_name="SECTOR EPS", skiprows=5, index_col=0).iloc[:, 1:-1]
+    sector_data = pd.read_excel(response, sheet_name="SECTOR EPS", skiprows=5, index_col=0, engine="openpyxl").iloc[:, 1:-1]
     sector_data.index.name = "date"
     sector_data = sector_data.T
     sector_data.columns = [item.strip() if isinstance(item, str) else item for item in sector_data.columns]
