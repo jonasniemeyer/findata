@@ -1,7 +1,5 @@
 import re
-import requests
 from findata.sec import _SECFiling
-from findata.utils import HEADERS
 from findata import (
     latest_sec_filings,
     sec_companies,
@@ -66,8 +64,7 @@ def test_latest_sec_filings():
 class TestSECFiling:
     @classmethod
     def setup_class(cls):
-        file = requests.get(url="https://www.sec.gov/Archives/edgar/data/320193/000119312519041014/0001193125-19-041014.txt", headers=HEADERS).text
-        cls.file = _SECFiling(file=file)
+        cls.file = _SECFiling(url="https://www.sec.gov/Archives/edgar/data/320193/000119312519041014/0001193125-19-041014.txt")
     
     def test_attributes(self):
         assert self.file.accession_number  == "0001193125-19-041014"
